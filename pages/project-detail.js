@@ -6,22 +6,39 @@
 
   async function mount(ctx) {
     var container = ctx.container;
+    var cleanups = [];
 
+    // Set nav state
     if (MBC.features.nav) {
-      MBC.features.nav.setState({ theme: "light", bg: "none", blur: false });
+      MBC.features.nav.setState({ theme: 'light', bg: 'none', blur: false });
     }
 
-    var videoCleanup = MBC.features.videos ? MBC.features.videos.initStandalone({ container: container }) : null;
+    // Videos
+    if (MBC.features.videos) {
+      var videoCleanup = MBC.features.videos.initStandalone({ container: container });
+      if (typeof videoCleanup === 'function') {
+        cleanups.push(videoCleanup);
+      }
+    }
+
+    // Finsweet components
+    if (MBC.features.finsweet) {
+      await MBC.features.finsweet.init(container, { modules: ['modal'] });
+    }
 
     return function cleanup() {
-      if (typeof videoCleanup === "function") videoCleanup();
+      cleanups.forEach(function (fn) {
+        if (typeof fn === 'function') {
+          try { fn(); } catch (_) {}
+        }
+      });
     };
   }
 
   function unmount() {}
 
   MBC.pages.projectDetail = {
-    webflowTier: "ix",
+    webflowTier: 'ix',
     mount: mount,
     unmount: unmount
   };

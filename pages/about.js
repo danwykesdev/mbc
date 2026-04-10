@@ -4,18 +4,36 @@
 
   MBC.pages = MBC.pages || {};
 
-  async function mount() {
+  async function mount(ctx) {
+    var container = ctx.container;
+    var cleanups = [];
+
+    // Set nav state
     if (MBC.features.nav) {
-      MBC.features.nav.setState({ theme: "dark", bg: "solid", blur: true });
+      MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: true });
     }
 
-    return function cleanup() {};
+    // Videos (if any)
+    if (MBC.features.videos) {
+      var videoCleanup = MBC.features.videos.initStandalone({ container: container });
+      if (typeof videoCleanup === 'function') {
+        cleanups.push(videoCleanup);
+      }
+    }
+
+    return function cleanup() {
+      cleanups.forEach(function (fn) {
+        if (typeof fn === 'function') {
+          try { fn(); } catch (_) {}
+        }
+      });
+    };
   }
 
   function unmount() {}
 
   MBC.pages.about = {
-    webflowTier: "light",
+    webflowTier: 'light',
     mount: mount,
     unmount: unmount
   };

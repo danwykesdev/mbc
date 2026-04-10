@@ -6,41 +6,57 @@
 
   async function mount(ctx) {
     var container = ctx.container;
+    var cleanups = [];
 
+    // Set nav state
     if (MBC.features.nav) {
-      MBC.features.nav.setState({ theme: "dark", bg: "none", blur: false });
+      MBC.features.nav.setState({ theme: 'dark', bg: 'none', blur: false });
     }
 
-    if (typeof window.scrollTo === "function") {
+    // Scroll to top
+    if (typeof window.scrollTo === 'function') {
       window.scrollTo(0, 0);
     }
 
-    if (MBC.core.state.lenis && typeof MBC.core.state.lenis.scrollTo === "function") {
+    if (MBC.core.state.lenis && typeof MBC.core.state.lenis.scrollTo === 'function') {
       MBC.core.state.lenis.scrollTo(0, { immediate: true });
     }
 
-    var heroRoot = container.querySelector(".hero-animate");
-    if (heroRoot && typeof gsap !== "undefined") {
-      MBC.core.state.heroAnimating = true;
-
-      var tl = gsap.timeline({
-        onComplete: function () {
-          MBC.core.state.heroAnimating = false;
-        }
-      });
-
-      tl.fromTo(heroRoot, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.4, ease: "power2.out" });
-
-      MBC.core.cleanup.add(function () {
-        tl.kill();
-        MBC.core.state.heroAnimating = false;
-      });
+    // Hero animation
+    if (MBC.features.hero) {
+      var heroCleanup = MBC.features.hero.init(container);
+      if (typeof heroCleanup === 'function') {
+        cleanups.push(heroCleanup);
+      }
     }
 
-    var videoCleanup = MBC.features.videos ? MBC.features.videos.initStandalone({ container: container }) : null;
+    // Custom tabs
+    if (MBC.features.tabs) {
+      var tabsCleanup = MBC.features.tabs.init(container);
+      if (typeof tabsCleanup === 'function') {
+        cleanups.push(tabsCleanup);
+      }
+    }
+
+    // Videos (modals)
+    if (MBC.features.videos) {
+      var videoCleanup = MBC.features.videos.initStandalone({ container: container });
+      if (typeof videoCleanup === 'function') {
+        cleanups.push(videoCleanup);
+      }
+    }
+
+    // Finsweet components
+    if (MBC.features.finsweet) {
+      await MBC.features.finsweet.init(container, { modules: ['modal'] });
+    }
 
     return function cleanup() {
-      if (typeof videoCleanup === "function") videoCleanup();
+      cleanups.forEach(function (fn) {
+        if (typeof fn === 'function') {
+          try { fn(); } catch (_) {}
+        }
+      });
     };
   }
 
@@ -49,7 +65,7 @@
   }
 
   MBC.pages.home = {
-    webflowTier: "ix",
+    webflowTier: 'ix',
     mount: mount,
     unmount: unmount
   };
