@@ -5,35 +5,18 @@
   MBC.pages = MBC.pages || {};
 
   async function mount(ctx) {
-    var container = ctx.container;
-    var cleanups = [];
-
-    // Set nav state
+    // About only needs IX — no videos, no finsweet
     if (MBC.features.nav) {
       MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: true });
     }
 
-    // Videos (if any)
-    if (MBC.features.videos) {
-      var videoCleanup = MBC.features.videos.initStandalone({ container: container });
-      if (typeof videoCleanup === 'function') {
-        cleanups.push(videoCleanup);
-      }
-    }
-
-    return function cleanup() {
-      cleanups.forEach(function (fn) {
-        if (typeof fn === 'function') {
-          try { fn(); } catch (_) {}
-        }
-      });
-    };
+    return function cleanup() {};
   }
 
   function unmount() {}
 
   var moduleDef = {
-    webflowTier: 'light',
+    webflowTier: 'ix',
     mount: mount,
     unmount: unmount
   };

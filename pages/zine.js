@@ -14,6 +14,11 @@
     var container = ctx.container;
     var cleanups = [];
 
+    // FS Slider MUST init before pagination so slider DOM is ready
+    if (MBC.features.finsweet) {
+      await MBC.features.finsweet.init(container, { modules: ['slider', 'pagination'] });
+    }
+
     // Scroll to list anchor
     function scrollToAnchor() {
       var anchor = queryOne(container, "[fs-list-element='scroll-anchor']", true);
