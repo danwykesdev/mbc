@@ -11,6 +11,8 @@
   if (window.__MBC_APP_ACTIVE) return;
   window.__MBC_APP_ACTIVE = true;
 
+  var initialHomeCoverTimer = null;
+
   function getEntryScriptSrc() {
     var currentScript = document.currentScript;
     var scripts;
@@ -156,10 +158,23 @@
     cover.style.transition = 'opacity 220ms ease';
 
     (document.body || document.documentElement).appendChild(cover);
+
+    if (initialHomeCoverTimer) {
+      clearTimeout(initialHomeCoverTimer);
+    }
+
+    initialHomeCoverTimer = setTimeout(function () {
+      releaseInitialHomeCover();
+    }, 1200);
   }
 
   function releaseInitialHomeCover() {
     var cover = document.getElementById('mbc-home-startup-cover');
+
+    if (initialHomeCoverTimer) {
+      clearTimeout(initialHomeCoverTimer);
+      initialHomeCoverTimer = null;
+    }
 
     if (!cover) return;
 
@@ -474,5 +489,10 @@
 
   // Start Barba
   ensureInitialHomeCover();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', releaseInitialHomeCover, { once: true });
+  }
+
   initBarba();
 })();
