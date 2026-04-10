@@ -23,16 +23,16 @@
     'features/scroll-direction': { src: 'features/scroll-direction.js', deps: ['core/state'] },
     'features/tabs': { src: 'features/tabs.js', deps: [], domCheck: '.project_component' },
     'features/hero': { src: 'features/hero.js', deps: ['core/state'], domCheck: '.hero-animate' },
-    'features/videos': { src: 'features/videos.js', deps: [], domCheck: '[fs-modal-element]' },
+    'features/videos': { src: 'features/videos.js', deps: [], domCheck: '#videoLoad, #video, [data-video], [data-vimeo-id], [fs-modal-element]' },
     'features/finsweet': { src: 'features/finsweet.js', deps: [], domCheck: '[fs-list-element], [fs-modal-element], [fs-slider-element], [fs-filter-element]' },
-    'features/horizontal-scroll': { src: 'features/horizontal-scroll.js', deps: ['core/state'], domCheck: '[data-horizontal-scroll]' },
+    'features/horizontal-scroll': { src: 'features/horizontal-scroll.js', deps: ['core/state'], domCheck: '[data-horizontal-scroll], [data-horizontal-scroll-wrap], [data-horizontal-track], [data-horizontal-scroll-panel]' },
 
     // Pages - loaded based on barba namespace
-    'pages/home': { src: 'pages/home.js', deps: ['features/lenis', 'features/nav'], namespace: 'home' },
-    'pages/projects': { src: 'pages/projects.js', deps: ['features/lenis', 'features/nav', 'features/horizontal-scroll'], namespace: 'projects' },
-    'pages/project-detail': { src: 'pages/project-detail.js', deps: ['features/lenis', 'features/nav'], namespace: 'project-detail' },
-    'pages/about': { src: 'pages/about.js', deps: ['features/lenis', 'features/nav'], namespace: 'about' },
-    'pages/default': { src: 'pages/default.js', deps: ['features/lenis', 'features/nav'], namespace: 'default' }
+    'pages/home': { src: 'pages/home.js', deps: ['features/lenis', 'features/nav', 'features/hero', 'features/tabs', 'features/videos', 'features/finsweet', 'features/horizontal-scroll'], namespace: 'home' },
+    'pages/projects': { src: 'pages/projects.js', deps: ['features/lenis', 'features/nav', 'features/horizontal-scroll', 'features/finsweet'], namespace: 'projects' },
+    'pages/project-detail': { src: 'pages/project-detail.js', deps: ['features/lenis', 'features/nav', 'features/videos', 'features/finsweet'], namespace: 'project-detail' },
+    'pages/about': { src: 'pages/about.js', deps: ['features/lenis', 'features/nav', 'features/videos'], namespace: 'about' },
+    'pages/default': { src: 'pages/default.js', deps: ['features/lenis', 'features/nav', 'features/videos'], namespace: 'default' }
   };
 
   var loadedModules = {};
@@ -269,9 +269,9 @@
     var pageModule = getPageModule(namespace);
 
     // 3. Detect external script needs
-    var needsFinsweetModal = hasDomFeature(container, '[fs-modal-element]');
-    var needsVimeo = hasDomFeature(container, '#videoLoad, #video, [data-vimeo-id], [data-modal-video]');
-    var needsFinsweetList = hasDomFeature(container, '[fs-list-element], [fs-slider-element], [fs-filter-element]');
+    var needsFinsweetModal = hasDomFeature(container, '[fs-modal-element]') || hasDomFeature(document, '[fs-modal-element]');
+    var needsVimeo = hasDomFeature(container, '#videoLoad, #video, [data-video], [data-vimeo-id], [data-modal-video]') || hasDomFeature(document, '#videoLoad, #video, [data-video], [data-vimeo-id], [data-modal-video]');
+    var needsFinsweetList = hasDomFeature(container, '[fs-list-element], [fs-slider-element], [fs-filter-element]') || hasDomFeature(document, '[fs-list-element], [fs-slider-element], [fs-filter-element]');
     var needsFinsweet = needsFinsweetModal || needsFinsweetList;
 
     // 4. Collect all modules to load

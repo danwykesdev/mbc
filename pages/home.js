@@ -1,4 +1,6 @@
 (function () {
+console.log('home page loaded');
+
   window.MBC = window.MBC || {};
   var MBC = window.MBC;
 
@@ -35,6 +37,14 @@
       var tabsCleanup = MBC.features.tabs.init(container);
       if (typeof tabsCleanup === 'function') {
         cleanups.push(tabsCleanup);
+      }
+    }
+
+    // Horizontal scroll section (used on home too)
+    if (MBC.features.horizontalScroll) {
+      var hsCleanup = MBC.features.horizontalScroll.init(container);
+      if (typeof hsCleanup === 'function') {
+        cleanups.push(hsCleanup);
       }
     }
 

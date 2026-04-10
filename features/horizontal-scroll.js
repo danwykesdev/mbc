@@ -10,46 +10,61 @@
   MBC.features = MBC.features || {};
 
   function initHorizontalScroll(container) {
-    var scrollSection = container.querySelector('[data-horizontal-scroll]');
-    if (!scrollSection || typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
+    var wrap = container.querySelector('[data-horizontal-scroll-wrap]');
+    if (!wrap || typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
       return null;
     }
 
-    var track = scrollSection.querySelector('[data-horizontal-track]');
-    if (!track) return null;
+    var existing = ScrollTrigger.getById('horizontal-pin');
+    if (existing) existing.kill();
 
-    var items = Array.from(track.children);
-    if (!items.length) return null;
+    var panels = gsap.utils.toArray(container.querySelectorAll('[data-horizontal-scroll-panel]'));
+    if (panels.length < 2) return null;
 
-    // Calculate total scroll distance
-    var getScrollAmount = function () {
-      var trackWidth = track.scrollWidth;
-      var viewportWidth = window.innerWidth;
-      return -(trackWidth - viewportWidth);
-    };
+    var vw = window.innerWidth;
+    wrap.style.paddingRight = vw < 768 ? '20px' : vw < 992 ? '40px' : '80px';
 
-    // Create the horizontal scroll tween
-    var tween = gsap.to(track, {
-      x: getScrollAmount,
-      ease: 'none'
+    var first = panels[0];
+    var second = panels[1];
+    var gap = 14;
+
+    if (first && second) {
+      var a = first.getBoundingClientRect();
+      var b = second.getBoundingClientRect();
+      gap = Math.max(0, b.left - (a.left + a.width)) || (parseFloat(getComputedStyle(first).marginRight) || 14);
+    }
+
+    var last = panels[panels.length - 1];
+    last.style.marginRight = vw < 768 ? '1rem' : vw < 992 ? '1.5rem' : '2rem';
+
+    var total = 0;
+    panels.forEach(function (p, i) {
+      total += i < panels.length - 1 ? p.offsetWidth + gap : p.offsetWidth;
     });
 
-    // Create ScrollTrigger
-    var st = ScrollTrigger.create({
-      trigger: scrollSection,
-      start: 'top top',
-      end: function () {
-        return '+=' + Math.abs(getScrollAmount());
+    total += parseFloat(getComputedStyle(last).marginRight) || 0;
+    total += parseFloat(getComputedStyle(wrap).paddingRight) || 0;
+
+    var distance = Math.max(0, total - vw);
+    if (distance <= 0) return null;
+
+    var tween = gsap.to(panels, {
+      x: function () {
+        return -distance;
       },
-      pin: true,
-      scrub: 1,
-      animation: tween,
-      invalidateOnRefresh: true,
-      id: 'horizontal-pin',
-      onRefresh: function () {
-        // Recalculate on resize
-        tween.vars.x = getScrollAmount();
-        tween.invalidate();
+      ease: 'none',
+      scrollTrigger: {
+        id: 'horizontal-pin',
+        trigger: wrap,
+        start: 'top top',
+        end: function () {
+          return '+=' + distance;
+        },
+        scrub: 1,
+        pin: true,
+        pinSpacing: true,
+        anticipatePin: 1,
+        invalidateOnRefresh: true
       }
     });
 
@@ -62,7 +77,8 @@
 
     // Cleanup function
     return function cleanup() {
-      st.kill();
+      if (tween && tween.scrollTrigger) tween.scrollTrigger.kill();
+      if (tween) tween.kill();
       window.removeEventListener('resize', onResize);
     };
   }

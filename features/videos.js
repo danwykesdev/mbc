@@ -16,7 +16,7 @@
   function createVimeoPlayer(element) {
     if (typeof Vimeo === 'undefined' || !Vimeo.Player) return null;
 
-    var vimeoId = element.getAttribute('data-vimeo-id');
+    var vimeoId = element.getAttribute('data-vimeo-id') || element.getAttribute('data-video');
     var iframe = element.querySelector('iframe[src*="vimeo"]');
 
     if (!vimeoId && !iframe) return null;
@@ -43,10 +43,37 @@
    * Initialize background videos
    */
   function initBackgroundVideos(container) {
-    var bgVideo = container.querySelector('#videoLoad, [data-bg-video]');
+    var bgVideo = container.querySelector('#videoLoad, [data-bg-video]') || document.getElementById('videoLoad');
     if (!bgVideo) return null;
 
-    var player = createVimeoPlayer(bgVideo);
+    var player = null;
+
+    if (bgVideo.getAttribute('data-video')) {
+      var bgId = bgVideo.getAttribute('data-video');
+      var bgTarget = bgVideo;
+
+      if (bgVideo.tagName && bgVideo.tagName.toLowerCase() !== 'div') {
+        bgTarget = document.createElement('div');
+        bgTarget.id = bgVideo.id;
+        bgTarget.className = bgVideo.className;
+        bgTarget.style.cssText = 'width:100%;height:100%;position:absolute;top:0;left:0;';
+        bgTarget.setAttribute('data-video', bgId);
+        bgVideo.parentNode.replaceChild(bgTarget, bgVideo);
+      } else {
+        bgTarget.innerHTML = '';
+      }
+
+      player = new Vimeo.Player(bgTarget, {
+        id: bgId,
+        autoplay: true,
+        loop: true,
+        muted: true,
+        background: true,
+        autopause: false
+      });
+    } else {
+      player = createVimeoPlayer(bgVideo);
+    }
 
     if (player && typeof player.play === 'function') {
       player.play().catch(function () {
@@ -67,22 +94,52 @@
   function initModalVideos(container) {
     var openers = Array.from(container.querySelectorAll('[fs-modal-element="open"]'));
     var closers = Array.from(container.querySelectorAll('[fs-modal-element="close"]'));
+    var modalVideoEl = container.querySelector('#video') || document.getElementById('video');
+    var stableWrapper = null;
+    var modalVideoId = null;
 
-    if (!openers.length && !closers.length) return null;
+    if (!openers.length) {
+      openers = Array.from(document.querySelectorAll('[fs-modal-element="open"]'));
+    }
+
+    if (!closers.length) {
+      closers = Array.from(document.querySelectorAll('[fs-modal-element="close"]'));
+    }
+
+    if (modalVideoEl) {
+      modalVideoId = modalVideoEl.getAttribute('data-video') || modalVideoEl.getAttribute('data-vimeo-id');
+      stableWrapper = document.createElement('div');
+      stableWrapper.id = modalVideoEl.id;
+      stableWrapper.className = modalVideoEl.className;
+      stableWrapper.style.cssText = 'width:100%;height:100%;';
+      if (modalVideoId) stableWrapper.setAttribute('data-video', modalVideoId);
+      modalVideoEl.parentNode.replaceChild(stableWrapper, modalVideoEl);
+    }
+
+    if (!openers.length && !closers.length && !stableWrapper) return null;
 
     function onOpen(e) {
       var modalId = e.currentTarget.getAttribute('data-modal-id');
-      if (!modalId) return;
-
-      var modal = document.querySelector('[fs-modal-element="modal"][data-modal-id="' + modalId + '"]');
-      if (!modal) return;
-
-      var videoContainer = modal.querySelector('[data-modal-video], #video');
-      if (!videoContainer) return;
 
       // Create player if not exists
       if (!activePlayer) {
-        activePlayer = createVimeoPlayer(videoContainer);
+        if (stableWrapper && modalVideoId) {
+          activePlayer = new Vimeo.Player(stableWrapper, {
+            id: modalVideoId,
+            autoplay: true,
+            loop: true,
+            controls: false,
+            muted: false,
+            autopause: false
+          });
+        } else if (modalId) {
+          var modal = document.querySelector('[fs-modal-element="modal"][data-modal-id="' + modalId + '"]');
+          if (!modal) return;
+
+          var videoContainer = modal.querySelector('[data-modal-video], #video');
+          if (!videoContainer) return;
+          activePlayer = createVimeoPlayer(videoContainer);
+        }
       }
 
       if (activePlayer && typeof activePlayer.play === 'function') {
