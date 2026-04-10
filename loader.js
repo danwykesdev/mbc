@@ -54,6 +54,7 @@
   var EXTERNAL_SCRIPTS = {
     'finsweet-attributes': { url: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes@2/attributes.js', type: 'module' },
     'finsweet-modal': { url: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-modal@1/modal.js', type: 'module' },
+    'finsweet-a11y': { url: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-a11y@1/a11y.js', type: 'module' },
     'vimeo-player': { url: 'https://player.vimeo.com/api/player.js', type: 'classic' }
   };
 
@@ -358,9 +359,13 @@
       });
     }
 
-    // Load Finsweet modal if needed (ES module)
+    // Load Finsweet modal + a11y if needed (standalone ES modules, NOT the full library)
     if (needsFinsweetModal) {
       promise = promise.then(function () {
+        return traceAsync('route external finsweet-a11y', function () {
+          return loadExternalScript('finsweet-a11y', EXTERNAL_SCRIPTS['finsweet-a11y']);
+        });
+      }).then(function () {
         return traceAsync('route external finsweet-modal', function () {
           return loadExternalScript('finsweet-modal', EXTERNAL_SCRIPTS['finsweet-modal']);
         });

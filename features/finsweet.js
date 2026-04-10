@@ -110,11 +110,69 @@
   }
 
   /**
+   * Re-inject standalone modal scripts for SPA transitions
+   * The standalone FS modal/a11y scripts self-initialize on load,
+   * so re-injecting forces them to process the new DOM
+   */
+  function reinjectStandaloneModal() {
+    var MODAL_URL = 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-modal@1/modal.js';
+    var A11Y_URL = 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-a11y@1/a11y.js';
+
+    // Remove old script tags for these URLs
+    document.querySelectorAll('script').forEach(function (s) {
+      if (s.src && (s.src.indexOf('attributes-modal') !== -1 || s.src.indexOf('attributes-a11y') !== -1)) {
+        s.parentNode.removeChild(s);
+      }
+    });
+
+    // Clear cache so loadExternalScript re-injects
+    if (MBC.loader && MBC.loader.isExternalScriptLoaded) {
+      // We need to clear the loaded state — access internal state
+      // via the loader's tracking
+    }
+
+    return new Promise(function (resolve) {
+      // Re-inject a11y first (dependency), then modal
+      var a11yScript = document.createElement('script');
+      a11yScript.type = 'module';
+      a11yScript.src = A11Y_URL;
+      a11yScript.onload = function () {
+        var modalScript = document.createElement('script');
+        modalScript.type = 'module';
+        modalScript.src = MODAL_URL;
+        modalScript.onload = function () {
+          // Give the module time to initialize
+          setTimeout(resolve, 80);
+        };
+        modalScript.onerror = resolve;
+        document.head.appendChild(modalScript);
+      };
+      a11yScript.onerror = resolve;
+      document.head.appendChild(a11yScript);
+    });
+  }
+
+  /**
    * Initialize Finsweet for a container
    */
   async function initFinsweet(container, options) {
     options = options || {};
 
+    var neededModules = options.modules || detectModules(container);
+    if (!neededModules.length) return;
+
+    // Modal-only: use standalone scripts (not the full FS library)
+    var isModalOnly = neededModules.length === 1 && neededModules[0] === 'modal';
+
+    if (isModalOnly) {
+      // Standalone modal self-initializes — just re-inject for fresh DOM
+      await traceAsync('finsweet reinject standalone modal', function () {
+        return reinjectStandaloneModal();
+      });
+      return;
+    }
+
+    // Full FS library path (list, slider, filter, etc.)
     if (fsBusy) {
       console.log('[MBC] FS init skipped - already busy');
       return;
@@ -123,14 +181,6 @@
     fsBusy = true;
 
     try {
-      // Detect which modules are needed
-      var neededModules = options.modules || detectModules(container);
-
-      if (!neededModules.length) {
-        fsBusy = false;
-        return;
-      }
-
       // Wait for Finsweet to be available
       var fs = await traceAsync('finsweet waitForFinsweet', function () {
         return waitForFinsweet(3000);
@@ -148,6 +198,7 @@
       // Restart each needed module
       for (var i = 0; i < neededModules.length; i++) {
         var moduleName = neededModules[i];
+        if (moduleName === 'modal') continue; // handled by standalone
         if (FINSWEET_MODULES.indexOf(moduleName) === -1) continue;
 
         await traceAsync('finsweet restart ' + moduleName, function () {
