@@ -41,7 +41,7 @@
 
   // External scripts that may be loaded dynamically
   var EXTERNAL_SCRIPTS = {
-    'finsweet-attributes': 'https://cdn.jsdelivr.net/npm/@finsweet/attributes@2.0.11/dist/attributes.js',
+    'finsweet-attributes': 'https://cdn.jsdelivr.net/npm/@finsweet/attributes@2/attributes.js',
     'finsweet-modal': 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-modal@1/modal.js',
     'vimeo-player': 'https://player.vimeo.com/api/player.js'
   };
