@@ -79,6 +79,40 @@
     modules.forEach(moduleReady);
   }
 
+  function dispatchSyntheticEvents() {
+    try {
+      document.dispatchEvent(new Event("readystatechange"));
+    } catch (_) {}
+
+    try {
+      window.dispatchEvent(new Event("load"));
+    } catch (_) {}
+
+    try {
+      window.dispatchEvent(new Event("resize"));
+    } catch (_) {}
+  }
+
+  async function runReadyPass(includeIX) {
+    if (typeof window.Webflow.ready === "function") {
+      window.Webflow.ready();
+    }
+
+    runModules();
+
+    if (includeIX) {
+      initIX();
+    }
+
+    dispatchSyntheticEvents();
+
+    if (typeof ScrollTrigger !== "undefined") {
+      ScrollTrigger.refresh(true);
+    }
+
+    await MBC.core.utils.wait(90);
+  }
+
   /**
    * Reinitialize Webflow - simplified osmo.md approach
    * 
@@ -91,62 +125,24 @@
     if (!window.Webflow) return;
 
     var mode = tier || "light";
+    var includeIX = mode === "ix" || mode === "full";
 
     // Full reset for page transitions
-    if (mode === "full") {
+    if (mode === "full" || mode === "ix") {
       if (typeof window.Webflow.destroy === "function") {
         window.Webflow.destroy();
       }
     }
 
-    // Always run ready and modules
-    if (typeof window.Webflow.ready === "function") {
-      window.Webflow.ready();
-    }
-    runModules();
-
-    // IX reinit for interactive pages
-    if (mode === "ix" || mode === "full") {
-      initIX();
-    }
-
-    // Trigger resize for layout recalculation
-    try {
-      window.dispatchEvent(new Event("resize"));
-    } catch (_) {}
-
-    // Small delay for layout to settle
-    await MBC.core.utils.wait(50);
+    await runReadyPass(includeIX);
+    await runReadyPass(includeIX);
   }
 
   async function refreshUI() {
     if (!window.Webflow) return;
 
-    if (typeof window.Webflow.ready === "function") {
-      window.Webflow.ready();
-    }
-    runModules();
-    initIX();
-
-    try {
-      window.dispatchEvent(new Event("resize"));
-    } catch (_) {}
-
-    if (typeof ScrollTrigger !== "undefined") {
-      ScrollTrigger.refresh(true);
-    }
-
-    await MBC.core.utils.wait(90);
-
-    if (typeof window.Webflow.ready === "function") {
-      window.Webflow.ready();
-    }
-    runModules();
-    initIX();
-
-    if (typeof ScrollTrigger !== "undefined") {
-      ScrollTrigger.refresh(true);
-    }
+    await runReadyPass(true);
+    await runReadyPass(true);
   }
 
   /**

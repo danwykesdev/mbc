@@ -106,6 +106,23 @@
     }
   }
 
+  function prepareHomeHeroState() {
+    if (typeof gsap === 'undefined') return;
+
+    var nav = document.querySelector('.nav');
+    var navItems = document.querySelectorAll('[data-load-items="nav-item"], [data-load-item="nav"], [data-load-items="nav"]');
+
+    if (nav) {
+      gsap.killTweensOf(nav);
+      gsap.set(nav, { yPercent: -100, autoAlpha: 0 });
+    }
+
+    if (navItems.length) {
+      gsap.killTweensOf(navItems);
+      gsap.set(navItems, { autoAlpha: 0, x: -10 });
+    }
+  }
+
   function bindSharedFeatures() {
     if (MBC.features.mobileNav) {
       var mobileCleanup = MBC.features.mobileNav.init();
@@ -197,6 +214,10 @@
     }
 
     barba.hooks.beforeEnter(function (data) {
+      if (isHomeNamespace(data && data.next ? data.next.namespace : 'default')) {
+        prepareHomeHeroState();
+      }
+
       if (typeof gsap !== 'undefined') {
         var nextNamespace = data && data.next ? data.next.namespace : 'default';
         var nextState = {
@@ -265,6 +286,10 @@
         once: function (data) {
           var namespace = data.next.namespace || 'default';
           var container = data.next.container;
+
+          if (isHomeNamespace(namespace)) {
+            prepareHomeHeroState();
+          }
 
           return loadModulesForRoute(data).then(function () {
             initGlobalFeatures();

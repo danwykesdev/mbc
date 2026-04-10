@@ -8,6 +8,68 @@
 
   MBC.features = MBC.features || {};
 
+  function setElementVisible(element) {
+    if (!element || !element.style) return;
+
+    element.style.opacity = '1';
+    element.style.visibility = 'visible';
+    element.style.display = '';
+  }
+
+  function setIframeVisible(element) {
+    if (!element || !element.querySelectorAll) return;
+
+    Array.from(element.querySelectorAll('iframe')).forEach(function (iframe) {
+      if (!iframe || !iframe.style) return;
+      iframe.style.opacity = '1';
+      iframe.style.visibility = 'visible';
+      iframe.style.display = 'block';
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+    });
+  }
+
+  function forceStopPlayer(player) {
+    if (!player) return;
+
+    if (typeof player.pause === 'function') {
+      player.pause().catch(function () {});
+    }
+
+    if (typeof player.setCurrentTime === 'function') {
+      player.setCurrentTime(0).catch(function () {});
+    }
+
+    if (typeof player.setVolume === 'function') {
+      player.setVolume(0).catch(function () {});
+    }
+
+    if (typeof player.setMuted === 'function') {
+      player.setMuted(true).catch(function () {});
+    }
+
+    if (typeof player.unload === 'function') {
+      player.unload().catch(function () {});
+    }
+  }
+
+  function isModalHidden(modal) {
+    if (!modal) return true;
+    if (modal.hasAttribute('hidden')) return true;
+    if (modal.getAttribute('aria-hidden') === 'true') return true;
+    if (modal.classList && modal.classList.contains('is-hidden')) return true;
+    if (modal.classList && modal.classList.contains('w-condition-invisible')) return true;
+
+    if (typeof window.getComputedStyle === 'function') {
+      var styles = window.getComputedStyle(modal);
+      if (styles.display === 'none' || styles.visibility === 'hidden' || styles.opacity === '0') {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   /**
    * Create Vimeo player from element
    */
@@ -72,14 +134,16 @@
       });
     } else {
       player = createVimeoPlayer(bgVideo);
+      bgTarget = bgVideo;
     }
+
+    setElementVisible(bgTarget || bgVideo);
+    setIframeVisible(bgTarget || bgVideo);
 
     if (player && typeof player.ready === 'function') {
       player.ready().then(function () {
-        if (bgTarget && bgTarget.style) {
-          bgTarget.style.opacity = '1';
-          bgTarget.style.visibility = 'visible';
-        }
+        setElementVisible(bgTarget || bgVideo);
+        setIframeVisible(bgTarget || bgVideo);
 
         if (typeof player.play === 'function') {
           player.play().catch(function () {
@@ -91,6 +155,11 @@
       player.play().catch(function () {
       });
     }
+
+    setTimeout(function () {
+      setElementVisible(bgTarget || bgVideo);
+      setIframeVisible(bgTarget || bgVideo);
+    }, 250);
 
     return function cleanup() {
       if (player && typeof player.destroy === 'function') {
@@ -110,6 +179,7 @@
     var modalVideoId = null;
     var modalPlayer = null;
     var modalElements = Array.from(container.querySelectorAll('[fs-modal-element="modal"]'));
+    var modalObserver = null;
 
     if (!modalElements.length) {
       modalElements = Array.from(document.querySelectorAll('[fs-modal-element="modal"]'));
@@ -136,23 +206,7 @@
     if (!openers.length && !closers.length && !stableWrapper) return null;
 
     function resetPlayerState() {
-      if (!modalPlayer) return;
-
-      if (typeof modalPlayer.pause === 'function') {
-        modalPlayer.pause().catch(function () {});
-      }
-
-      if (typeof modalPlayer.setCurrentTime === 'function') {
-        modalPlayer.setCurrentTime(0).catch(function () {});
-      }
-
-      if (typeof modalPlayer.setVolume === 'function') {
-        modalPlayer.setVolume(0).catch(function () {});
-      }
-
-      if (typeof modalPlayer.setMuted === 'function') {
-        modalPlayer.setMuted(true).catch(function () {});
-      }
+      forceStopPlayer(modalPlayer);
     }
 
     function onOpen(e) {
@@ -190,10 +244,30 @@
       if (modalPlayer && typeof modalPlayer.play === 'function') {
         modalPlayer.play().catch(function () {});
       }
+
+      setTimeout(function () {
+        if (modalPlayer && typeof modalPlayer.play === 'function') {
+          modalPlayer.play().catch(function () {});
+        }
+      }, 120);
     }
 
     function onClose() {
       resetPlayerState();
+    }
+
+    function onDocumentClick(e) {
+      var trigger = e.target && e.target.closest ? e.target.closest('[fs-modal-element="close"], [data-modal-close], .w-close, .w-lightbox-close, [aria-label="Close"]') : null;
+      if (!trigger) return;
+
+      setTimeout(onClose, 0);
+      setTimeout(onClose, 180);
+    }
+
+    function onEscape(e) {
+      if (e.key !== 'Escape') return;
+      setTimeout(onClose, 0);
+      setTimeout(onClose, 180);
     }
 
     openers.forEach(function (el) {
@@ -209,6 +283,26 @@
       el.addEventListener('animationend', onClose);
     });
 
+    document.addEventListener('click', onDocumentClick, true);
+    document.addEventListener('keydown', onEscape, true);
+
+    if (typeof MutationObserver !== 'undefined' && modalElements.length) {
+      modalObserver = new MutationObserver(function () {
+        modalElements.forEach(function (modal) {
+          if (isModalHidden(modal)) {
+            onClose();
+          }
+        });
+      });
+
+      modalElements.forEach(function (modal) {
+        modalObserver.observe(modal, {
+          attributes: true,
+          attributeFilter: ['class', 'style', 'hidden', 'aria-hidden']
+        });
+      });
+    }
+
     return function cleanup() {
       openers.forEach(function (el) {
         el.removeEventListener('click', onOpen);
@@ -220,6 +314,14 @@
         el.removeEventListener('transitionend', onClose);
         el.removeEventListener('animationend', onClose);
       });
+
+      document.removeEventListener('click', onDocumentClick, true);
+      document.removeEventListener('keydown', onEscape, true);
+
+      if (modalObserver) {
+        modalObserver.disconnect();
+        modalObserver = null;
+      }
 
       resetPlayerState();
 

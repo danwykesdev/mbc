@@ -9,6 +9,23 @@
     var container = ctx.container;
     var cleanups = [];
 
+    function prepareHeroEntryState() {
+      if (typeof gsap === 'undefined') return;
+
+      var nav = document.querySelector('.nav');
+      var navItems = document.querySelectorAll('[data-load-items="nav-item"], [data-load-item="nav"], [data-load-items="nav"]');
+
+      if (nav) {
+        gsap.killTweensOf(nav);
+        gsap.set(nav, { yPercent: -100, autoAlpha: 0 });
+      }
+
+      if (navItems.length) {
+        gsap.killTweensOf(navItems);
+        gsap.set(navItems, { autoAlpha: 0, x: -10 });
+      }
+    }
+
     function wait(ms) {
       return new Promise(function (resolve) {
         setTimeout(resolve, ms);
@@ -101,6 +118,8 @@
 
     // Hero animation
     if (MBC.features.hero) {
+      prepareHeroEntryState();
+
       var heroCleanup = MBC.features.hero.init(container);
       if (typeof heroCleanup === 'function') {
         cleanups.push(heroCleanup);
@@ -152,7 +171,7 @@
   }
 
   var moduleDef = {
-    webflowTier: 'ix',
+    webflowTier: 'full',
     mount: mount,
     unmount: unmount
   };
