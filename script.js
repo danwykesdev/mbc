@@ -1355,10 +1355,12 @@
     initStandaloneVideos(container, "home");
     dlog(`${source}:videos:init`);
 
-    initTabHoverAnimation(container);
-    dlog(`${source}:tabs-hover:init`);
-
-    resetUnderlineHoverStates(container);
+    requestAnimationFrame(() => {
+      if (!document.body.contains(container)) return;
+      initTabHoverAnimation(container);
+      dlog(`${source}:tabs-hover:init`);
+      resetUnderlineHoverStates(container);
+    });
   }
 
   async function finalizeHomeInteractiveUI(token, container, source = "home-final") {
@@ -1373,9 +1375,6 @@
     if (isStale(token)) return false;
 
     rebindHomeInteractiveUI(container, source);
-
-    await runVisibleWebflowUIPass(token, `${source}:ui:post-bind`);
-    if (isStale(token)) return false;
 
     await wait(40);
     if (isStale(token)) return false;
@@ -2247,12 +2246,7 @@
       dlog("home:mount:start", { isFirstLoad, token });
       inspectHome(container, "home:pre-ui");
 
-      await forceWebflowRestartSafe(token, "home-pre-hero", {
-        includeReadystatechange: true,
-        includeLoad: true,
-        includeResize: true,
-        secondPass: true
-      });
+      await runVisibleWebflowPass({ withIX: true });
       if (isStale(token)) return;
 
       await waitForLayout();
