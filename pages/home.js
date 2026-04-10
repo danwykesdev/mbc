@@ -9,6 +9,45 @@
     var container = ctx.container;
     var cleanups = [];
 
+    function loadDeferredHomeFeatures() {
+      var jobs = [];
+
+      if (!MBC.loader) {
+        return Promise.resolve();
+      }
+
+      if (container.querySelector('[data-horizontal-scroll], [data-horizontal-scroll-wrap], [data-horizontal-track], [data-horizontal-scroll-panel]')) {
+        jobs.push(MBC.loader.loadModule('features/horizontal-scroll'));
+      }
+
+      if (container.querySelector('.project_component')) {
+        jobs.push(MBC.loader.loadModule('features/tabs'));
+      }
+
+      if (container.querySelector('#videoLoad, #video, [data-video], [data-vimeo-id], [data-modal-video]')) {
+        jobs.push(
+          MBC.loader.loadExternalScript('vimeo-player', 'https://player.vimeo.com/api/player.js').then(function () {
+            return MBC.loader.loadModule('features/videos');
+          })
+        );
+      }
+
+      if (container.querySelector('[fs-modal-element]')) {
+        jobs.push(
+          MBC.loader.loadExternalScript('finsweet-modal', {
+            url: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-modal@1/modal.js',
+            type: 'module'
+          }).then(function () {
+            return MBC.loader.loadModule('features/finsweet');
+          })
+        );
+      }
+
+      return Promise.all(jobs).catch(function (err) {
+        console.warn('[MBC] Home deferred features failed to load', err);
+      });
+    }
+
     function releaseStartupCover() {
       var cover = document.getElementById('mbc-home-startup-cover');
 
@@ -55,6 +94,8 @@
     }
 
     async function initVideosAfterHero() {
+      await loadDeferredHomeFeatures();
+
       if (!MBC.features.videos) return;
 
       if (!document.body.contains(container)) return;
@@ -71,6 +112,10 @@
 
     async function finalizeHomeInteractiveUI() {
       await waitForHeroToSettle();
+
+      if (!document.body.contains(container)) return;
+
+      await loadDeferredHomeFeatures();
 
       if (!document.body.contains(container)) return;
 

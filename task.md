@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-10 22:41 BST
+Last updated: 2026-04-10 22:49 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -15,6 +15,7 @@ Last updated: 2026-04-10 22:41 BST
 - Notes:
   - added pre-hide in `main.js` before Home entry mount and in `pages/home.js` immediately before hero init
   - added a temporary first-load startup cover so the initial Home paint stays masked until hero init begins
+  - deferred noncritical Home modules so the hero animation does not wait for videos, Finsweet, tabs, or horizontal-scroll on first paint
   - `features/hero.js` still owns the reveal animation timing
 - Verification needed:
   - initial page load on Home
@@ -60,3 +61,4 @@ Last updated: 2026-04-10 22:41 BST
 - 2026-04-10: added nav pre-hide, stronger Vimeo modal/background handling, and stronger Webflow/IX refresh passes; all remain unverified until browser testing passes
 - 2026-04-10: added a Home-only startup cover to hide the first-load delay before the hero animation begins
 - 2026-04-10: restored modal destroy-on-close behavior, simplified Webflow refresh to reduce duplicate IX registrations, and stopped requesting unsupported Finsweet filter loads
+- 2026-04-10: deferred noncritical Home modules during initial page load so the hero can start before videos/Finsweet/tabs finish loading

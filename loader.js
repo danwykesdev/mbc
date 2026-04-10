@@ -40,6 +40,7 @@
   var loadingPromises = {};
   var basePath = '';
   var SHARED_FEATURE_MODULES = ['features/lenis', 'features/mobile-nav', 'features/scroll-direction', 'features/load-animations'];
+  var HOME_DEFERRED_FEATURES = ['features/videos', 'features/finsweet', 'features/horizontal-scroll', 'features/tabs'];
   var NAMESPACE_ALIASES = {
     project: 'projects',
     project_detail: 'project-detail',
@@ -264,6 +265,18 @@
     return features;
   }
 
+  function filterInitialFeatures(namespace, features) {
+    var ns = normalizeNamespace(namespace);
+
+    if (ns !== 'home') {
+      return features;
+    }
+
+    return features.filter(function (moduleId) {
+      return HOME_DEFERRED_FEATURES.indexOf(moduleId) === -1;
+    });
+  }
+
   /**
    * Get page module for namespace
    */
@@ -284,15 +297,15 @@
    */
   function loadForPage(container, namespace) {
     // 1. Detect features needed for this container
-    var features = detectFeatures(container);
+    var features = filterInitialFeatures(namespace, detectFeatures(container));
 
     // 2. Get page module for namespace
     var pageModule = getPageModule(namespace);
 
     // 3. Detect external script needs
-    var needsFinsweetModal = hasDomFeature(container, '[fs-modal-element]') || hasDomFeature(document, '[fs-modal-element]');
-    var needsVimeo = hasDomFeature(container, '#videoLoad, #video, [data-video], [data-vimeo-id], [data-modal-video]') || hasDomFeature(document, '#videoLoad, #video, [data-video], [data-vimeo-id], [data-modal-video]');
-    var needsFinsweetAttributes = hasDomFeature(container, '[fs-list-element], [fs-slider-element], [fs-filter-element]') || hasDomFeature(document, '[fs-list-element], [fs-slider-element], [fs-filter-element]');
+    var needsFinsweetModal = hasDomFeature(container, '[fs-modal-element]');
+    var needsVimeo = hasDomFeature(container, '#videoLoad, #video, [data-video], [data-vimeo-id], [data-modal-video]');
+    var needsFinsweetAttributes = hasDomFeature(container, '[fs-list-element], [fs-slider-element], [fs-filter-element]');
     var needsFinsweet = needsFinsweetModal || needsFinsweetAttributes;
 
     // 4. Collect all modules to load
