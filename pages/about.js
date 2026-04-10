@@ -32,9 +32,15 @@
 
   function unmount() {}
 
-  MBC.pages.about = {
+  var moduleDef = {
     webflowTier: 'light',
     mount: mount,
     unmount: unmount
   };
+
+  MBC.pages.about = moduleDef;
+
+  if (MBC.core && MBC.core.registry) {
+    MBC.core.registry.register('about', moduleDef);
+  }
 })();

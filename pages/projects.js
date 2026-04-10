@@ -37,9 +37,15 @@
 
   function unmount() {}
 
-  MBC.pages.projects = {
+  var moduleDef = {
     webflowTier: 'full',
     mount: mount,
     unmount: unmount
   };
+
+  MBC.pages.projects = moduleDef;
+
+  if (MBC.core && MBC.core.registry) {
+    MBC.core.registry.register('projects', moduleDef);
+  }
 })();

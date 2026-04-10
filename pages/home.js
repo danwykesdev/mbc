@@ -64,9 +64,16 @@
     MBC.core.state.heroAnimating = false;
   }
 
-  MBC.pages.home = {
+  var moduleDef = {
     webflowTier: 'ix',
     mount: mount,
     unmount: unmount
   };
+
+  MBC.pages.home = moduleDef;
+
+  // Self-register with the page registry
+  if (MBC.core && MBC.core.registry) {
+    MBC.core.registry.register('home', moduleDef);
+  }
 })();

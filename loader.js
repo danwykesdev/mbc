@@ -40,10 +40,11 @@
   var basePath = '';
 
   // External scripts that may be loaded dynamically
+  // type: 'module' means it's an ES module that needs type="module"
   var EXTERNAL_SCRIPTS = {
-    'finsweet-attributes': 'https://cdn.jsdelivr.net/npm/@finsweet/attributes@2/attributes.js',
-    'finsweet-modal': 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-modal@1/modal.js',
-    'vimeo-player': 'https://player.vimeo.com/api/player.js'
+    'finsweet-attributes': { url: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes@2/attributes.js', type: 'module' },
+    'finsweet-modal': { url: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-modal@1/modal.js', type: 'module' },
+    'vimeo-player': { url: 'https://player.vimeo.com/api/player.js', type: 'classic' }
   };
 
   // Track which external scripts are loaded
@@ -73,15 +74,21 @@
   /**
    * Load a single script and return a promise
    */
-  function loadScript(src) {
-    if (loadingPromises[src]) {
-      return loadingPromises[src];
+  function loadScript(src, scriptType) {
+    var cacheKey = src + (scriptType || '');
+
+    if (loadingPromises[cacheKey]) {
+      return loadingPromises[cacheKey];
     }
 
     var promise = new Promise(function (resolve, reject) {
       var script = document.createElement('script');
       script.src = src;
       script.async = true;
+
+      if (scriptType === 'module') {
+        script.type = 'module';
+      }
 
       script.onload = function () {
         resolve();
@@ -94,14 +101,14 @@
       document.head.appendChild(script);
     });
 
-    loadingPromises[src] = promise;
+    loadingPromises[cacheKey] = promise;
     return promise;
   }
 
   /**
    * Load external script (like Finsweet Attributes, Vimeo)
    */
-  function loadExternalScript(name, url) {
+  function loadExternalScript(name, urlOrConfig) {
     if (loadedExternalScripts[name]) {
       return Promise.resolve();
     }
@@ -110,7 +117,17 @@
       return loadingPromises['external:' + name];
     }
 
-    var promise = loadScript(url).then(function () {
+    // Support both string URL and config object
+    var url, scriptType;
+    if (typeof urlOrConfig === 'string') {
+      url = urlOrConfig;
+      scriptType = 'classic';
+    } else {
+      url = urlOrConfig.url;
+      scriptType = urlOrConfig.type || 'classic';
+    }
+
+    var promise = loadScript(url, scriptType).then(function () {
       loadedExternalScripts[name] = true;
       delete loadingPromises['external:' + name];
     });
@@ -274,7 +291,7 @@
       });
     }
 
-    // Load Finsweet modal if needed (standalone modal script)
+    // Load Finsweet modal if needed (ES module)
     if (needsFinsweetModal) {
       promise = promise.then(function () {
         return loadExternalScript('finsweet-modal', EXTERNAL_SCRIPTS['finsweet-modal']);

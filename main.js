@@ -1,24 +1,36 @@
 /**
  * MBC Main Entry Point
  * Bootstraps the modular system with Barba.js transitions
+ *
+ * Environment: Set window.MBC_ENV before this script to control mode
+ *   'local'      - loads from local server (e.g. localhost:3000)
+ *   'production' - loads from GitHub via jsDelivr CDN
+ *   auto (default) - detects from script src
  */
 (function () {
   if (window.__MBC_APP_ACTIVE) return;
   window.__MBC_APP_ACTIVE = true;
 
-  // Set module base path
-  // Auto-detect jsDelivr vs local hosting
-  var isJsDelivr = typeof document !== 'undefined' &&
-    document.currentScript &&
-    document.currentScript.src &&
-    document.currentScript.src.indexOf('jsdelivr.net') !== -1;
+  // Environment detection
+  var env = window.MBC_ENV || 'auto';
 
-  if (isJsDelivr) {
-    // jsDelivr serves files at repo root
-    window.MBC.loader.setBasePath('https://cdn.jsdelivr.net/gh/danwykesdev/mbc@main');
+  if (env === 'auto') {
+    var scriptSrc = document.currentScript && document.currentScript.src || '';
+    env = scriptSrc.indexOf('jsdelivr.net') !== -1 ? 'production' :
+         (scriptSrc.indexOf('localhost') !== -1 ? 'local' : 'production');
+  }
+
+  // Set module base path based on environment
+  if (env === 'local') {
+    // Local development - adjust port/path as needed
+    window.MBC.loader.setBasePath('http://localhost:3000');
   } else {
-    // Local/Webflow hosting - adjust as needed
-    window.MBC.loader.setBasePath('/js');
+    // Production - GitHub via jsDelivr
+    window.MBC.loader.setBasePath('https://cdn.jsdelivr.net/gh/danwykesdev/mbc@main');
+  }
+
+  if (window.MBC_DEBUG || env === 'local') {
+    console.log('[MBC] Environment:', env, '| Base path:', env === 'local' ? 'http://localhost:3000' : 'jsDelivr');
   }
 
   var MBC = window.MBC;
