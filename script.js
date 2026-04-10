@@ -954,91 +954,195 @@
   }
 
   function initTabHoverAnimation(container) {
-    const mm = gsap.matchMedia();
+    const root = container.querySelector(".project_component") || container;
+    const tabs = Array.from(root.querySelectorAll(".project__link"));
+    const panes = Array.from(root.querySelectorAll(".project__tab-pane"));
 
-    mm.add("(min-width: 992px)", () => {
-      const tabsWrapper = container.querySelector(".w-tabs");
-      const tabLinks = container.querySelectorAll(".project__link");
-      const tabPanes = container.querySelectorAll(".project__tab-pane");
-      const defaultPane = container.querySelector(".projects__default-pane");
+    if (!tabs.length || !panes.length) return;
 
-      if (!tabsWrapper || !tabLinks.length || !tabPanes.length) return;
+    let activeName =
+      tabs.find((t) => t.classList.contains("w--current"))?.getAttribute("data-w-tab") ||
+      tabs[0]?.getAttribute("data-w-tab") ||
+      "event-production";
 
-      let activeTl = null;
+    let timers = [];
+    let activeTl = null;
 
-      function showDefaultPane() {
-        activeTl?.kill();
+    const clearTimers = () => {
+      timers.forEach(clearTimeout);
+      timers = [];
+    };
 
-        if (!defaultPane) return;
+    const later = (fn, delay) => {
+      const id = setTimeout(fn, delay);
+      timers.push(id);
+    };
 
-        gsap.set(defaultPane, { display: "block", autoAlpha: 1 });
+    const getPane = (name) => panes.find((p) => p.getAttribute("data-w-tab") === name);
 
-        const imgs = defaultPane.querySelectorAll("img");
-        if (!imgs.length) return;
+    const getList = (pane, name) => {
+      if (!pane) return null;
+      return pane.querySelector(`.project_url-list[data-projects="${name}"]`);
+    };
 
-        activeTl = gsap.fromTo(
-          imgs, { autoAlpha: 0, y: 12 },
-          {
-            autoAlpha: 1,
-            y: 0,
-            duration: 0.45,
-            stagger: 0.06
-          }
-        );
+    const getTextItems = (list) => {
+      if (!list) return [];
+      return Array.from(
+        list.querySelectorAll(".service-item-mask > a, .service-item-mask > .w-inline-block")
+      );
+    };
+
+    const resetAll = () => {
+      if (activeTl) {
+        activeTl.kill();
+        activeTl = null;
       }
 
-      tabLinks.forEach((link, index) => {
-        const handler = () => {
-          const pane = tabPanes[index];
-          if (!pane) return;
-
-          if (defaultPane) gsap.set(defaultPane, { display: "none", autoAlpha: 0 });
-
-          const images = pane.querySelectorAll("img");
-          const textLinks = pane.querySelectorAll(".is-link");
-
-          activeTl?.kill();
-          activeTl = gsap.timeline({ defaults: { ease: "power2.out" } });
-
-          if (images.length) {
-            activeTl.fromTo(
-              images, { autoAlpha: 0, y: 12 },
-              {
-                autoAlpha: 1,
-                y: 0,
-                duration: 0.45,
-                stagger: 0.06
-              },
-              0
-            );
-          }
-
-          if (textLinks.length) {
-            activeTl.fromTo(
-              textLinks, { autoAlpha: 0, y: 10 },
-              {
-                autoAlpha: 1,
-                y: 0,
-                duration: 0.35,
-                stagger: 0.04
-              },
-              0.05
-            );
-          }
-        };
-
-        link.addEventListener("mouseenter", handler);
-        registerCleanup(() => link.removeEventListener("mouseenter", handler));
+      tabs.forEach((tab) => {
+        tab.classList.remove("is-active", "w--current");
+        tab.setAttribute("aria-selected", "false");
+        tab.setAttribute("tabindex", "-1");
       });
 
-      const leaveHandler = () => showDefaultPane();
-      tabsWrapper.addEventListener("mouseleave", leaveHandler);
-      registerCleanup(() => tabsWrapper.removeEventListener("mouseleave", leaveHandler));
+      panes.forEach((pane) => {
+        pane.classList.remove("is-active", "w--tab-active");
+        pane.style.display = "none";
+        pane.style.opacity = "0";
+        pane.style.visibility = "hidden";
 
-      showDefaultPane();
+        pane.querySelectorAll(".images_grid-item").forEach((el) => {
+          el.classList.remove("is-visible");
+          el.style.visibility = "";
+          el.style.opacity = "";
+        });
+
+        pane.querySelectorAll(".project_url-list").forEach((list) => {
+          list.classList.remove("is-active");
+          list.style.display = "none";
+          list.style.opacity = "";
+          list.style.visibility = "";
+
+          getTextItems(list).forEach((el) => {
+            el.classList.remove("is-visible", "is-hiding");
+            el.style.visibility = "";
+          });
+        });
+      });
+    };
+
+    const animatePane = (pane, name) => {
+      const list = getList(pane, name);
+      const images = Array.from(pane.querySelectorAll(".images_grid-item"));
+      const textItems = getTextItems(list);
+
+      if (list) {
+        list.classList.add("is-active");
+        list.style.display = "flex";
+        list.style.opacity = "1";
+        list.style.visibility = "visible";
+      }
+
+      if (typeof gsap !== "undefined") {
+        activeTl = gsap.timeline({ defaults: { ease: "power2.out" } });
+
+        if (images.length) {
+          activeTl.fromTo(
+            images,
+            { autoAlpha: 0, y: 12 },
+            { autoAlpha: 1, y: 0, duration: 0.45, stagger: 0.06, clearProps: "all" },
+            0
+          );
+        }
+
+        if (textItems.length) {
+          activeTl.fromTo(
+            textItems,
+            { autoAlpha: 0, y: 10 },
+            { autoAlpha: 1, y: 0, duration: 0.35, stagger: 0.04, clearProps: "all" },
+            0.04
+          );
+        }
+      } else {
+        images.forEach((el) => {
+          el.classList.add("is-visible");
+          el.style.visibility = "visible";
+          if (name === "event-production") el.style.opacity = "1";
+        });
+
+        textItems.forEach((el, index) => {
+          later(() => {
+            el.classList.add("is-visible");
+            el.style.visibility = "visible";
+          }, 100 + index * 45);
+        });
+      }
+    };
+
+    const activate = (name) => {
+      if (!name) return;
+      clearTimers();
+      resetAll();
+
+      const tab = tabs.find((t) => t.getAttribute("data-w-tab") === name);
+      const pane = getPane(name);
+      if (!tab || !pane) return;
+
+      tab.classList.add("is-active", "w--current");
+      tab.setAttribute("aria-selected", "true");
+      tab.removeAttribute("tabindex");
+
+      pane.classList.add("is-active", "w--tab-active");
+      pane.style.display = window.innerWidth <= 992 ? "flex" : "block";
+      pane.style.opacity = "1";
+      pane.style.visibility = "visible";
+
+      animatePane(pane, name);
+      activeName = name;
+    };
+
+    const keepCurrentVisible = () => activate(activeName);
+
+    tabs.forEach((tab) => {
+      const name = tab.getAttribute("data-w-tab");
+
+      const onEnter = () => {
+        if (window.innerWidth < 992) return;
+        if (name === activeName) return;
+        activate(name);
+      };
+
+      const onClick = (e) => {
+        e.preventDefault();
+        if (name === activeName) return;
+        activate(name);
+      };
+
+      tab.addEventListener("mouseenter", onEnter);
+      tab.addEventListener("click", onClick);
+      registerCleanup(() => {
+        tab.removeEventListener("mouseenter", onEnter);
+        tab.removeEventListener("click", onClick);
+      });
     });
 
-    registerCleanup(() => mm.revert());
+    const onLeave = () => {
+      if (window.innerWidth < 992) return;
+      keepCurrentVisible();
+    };
+
+    root.addEventListener("mouseleave", onLeave);
+    registerCleanup(() => root.removeEventListener("mouseleave", onLeave));
+
+    resetAll();
+    keepCurrentVisible();
+
+    registerCleanup(() => {
+      clearTimers();
+      if (activeTl) {
+        activeTl.kill();
+        activeTl = null;
+      }
+    });
   }
 
   function initHorizontalScrolling(container) {
