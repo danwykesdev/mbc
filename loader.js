@@ -41,6 +41,7 @@
   var basePath = '';
   var SHARED_FEATURE_MODULES = ['features/lenis', 'features/mobile-nav', 'features/scroll-direction', 'features/load-animations'];
   var HOME_DEFERRED_FEATURES = ['features/videos', 'features/finsweet', 'features/horizontal-scroll', 'features/tabs'];
+  var isBundledRuntime = !!window.__MBC_BUNDLED_RUNTIME__;
   var NAMESPACE_ALIASES = {
     project: 'projects',
     project_detail: 'project-detail',
@@ -54,6 +55,12 @@
     'finsweet-modal': { url: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-modal@1/modal.js', type: 'module' },
     'vimeo-player': { url: 'https://player.vimeo.com/api/player.js', type: 'classic' }
   };
+
+  if (isBundledRuntime) {
+    Object.keys(MODULES).forEach(function (moduleId) {
+      loadedModules[moduleId] = true;
+    });
+  }
 
   // Track which external scripts are loaded
   var loadedExternalScripts = {};
@@ -217,6 +224,11 @@
    * Load a module and its dependencies
    */
   function loadModule(moduleId) {
+    if (isBundledRuntime && MODULES[moduleId]) {
+      loadedModules[moduleId] = true;
+      return Promise.resolve();
+    }
+
     if (loadedModules[moduleId]) {
       return Promise.resolve();
     }

@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-10 22:51 BST
+Last updated: 2026-04-10 23:02 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -17,6 +17,7 @@ Last updated: 2026-04-10 22:51 BST
   - added a temporary first-load startup cover so the initial Home paint stays masked until hero init begins
   - deferred noncritical Home modules so the hero animation does not wait for videos, Finsweet, tabs, or horizontal-scroll on first paint
   - added a hard fallback release for the startup cover so Home never stays black while long network tasks continue
+  - added a bundled production runtime path so Home no longer depends on a multi-request internal module waterfall in production
   - `features/hero.js` still owns the reveal animation timing
 - Verification needed:
   - initial page load on Home
@@ -64,3 +65,4 @@ Last updated: 2026-04-10 22:51 BST
 - 2026-04-10: restored modal destroy-on-close behavior, simplified Webflow refresh to reduce duplicate IX registrations, and stopped requesting unsupported Finsweet filter loads
 - 2026-04-10: deferred noncritical Home modules during initial page load so the hero can start before videos/Finsweet/tabs finish loading
 - 2026-04-10: added a timeout/DOMContentLoaded fallback so the Home startup cover releases even if full mount is still waiting on slower work
+- 2026-04-10: added a bundled production runtime build (`dist/mbc.runtime.js`) so the modular source can ship as a single production file
