@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-10 23:02 BST
+Last updated: 2026-04-10 23:06 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -66,3 +66,4 @@ Last updated: 2026-04-10 23:02 BST
 - 2026-04-10: deferred noncritical Home modules during initial page load so the hero can start before videos/Finsweet/tabs finish loading
 - 2026-04-10: added a timeout/DOMContentLoaded fallback so the Home startup cover releases even if full mount is still waiting on slower work
 - 2026-04-10: added a bundled production runtime build (`dist/mbc.runtime.js`) so the modular source can ship as a single production file
+- 2026-04-10: added `[MBC Trace]` console timings around key awaited loader, lifecycle, Home, and Finsweet operations for runtime diagnosis

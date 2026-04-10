@@ -11,6 +11,19 @@
   var FINSWEET_MODULES = ['list', 'modal', 'slider', 'filter'];
   var fsBusy = false;
 
+  function traceAsync(label, promiseFactory) {
+    var start = performance.now();
+    console.log('[MBC Trace] start:', label);
+
+    return Promise.resolve().then(promiseFactory).then(function (result) {
+      console.log('[MBC Trace] done:', label, Math.round(performance.now() - start) + 'ms');
+      return result;
+    }).catch(function (err) {
+      console.log('[MBC Trace] fail:', label, Math.round(performance.now() - start) + 'ms');
+      throw err;
+    });
+  }
+
   function wait(ms) {
     return new Promise(function (resolve) {
       setTimeout(resolve, ms);
@@ -119,7 +132,9 @@
       }
 
       // Wait for Finsweet to be available
-      var fs = await waitForFinsweet(3000);
+      var fs = await traceAsync('finsweet waitForFinsweet', function () {
+        return waitForFinsweet(3000);
+      });
 
       if (!fs || typeof fs.load !== 'function') {
         console.warn('[MBC] Finsweet Attributes not available');
@@ -135,11 +150,15 @@
         var moduleName = neededModules[i];
         if (FINSWEET_MODULES.indexOf(moduleName) === -1) continue;
 
-        await restartModule(fs, moduleName, 2000);
+        await traceAsync('finsweet restart ' + moduleName, function () {
+          return restartModule(fs, moduleName, 2000);
+        });
       }
 
       // Wait for things to settle
-      await wait(100);
+      await traceAsync('finsweet settle wait 100ms', function () {
+        return wait(100);
+      });
 
     } catch (e) {
       console.error('[MBC] Finsweet init failed:', e);

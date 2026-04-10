@@ -4,6 +4,19 @@
 
   MBC.core = MBC.core || {};
 
+  function traceAsync(label, promiseFactory) {
+    var start = performance.now();
+    console.log('[MBC Trace] start:', label);
+
+    return Promise.resolve().then(promiseFactory).then(function (result) {
+      console.log('[MBC Trace] done:', label, Math.round(performance.now() - start) + 'ms');
+      return result;
+    }).catch(function (err) {
+      console.log('[MBC Trace] fail:', label, Math.round(performance.now() - start) + 'ms');
+      throw err;
+    });
+  }
+
   async function unmountCurrent(token) {
     var state = MBC.core.state;
     var utils = MBC.core.utils;
@@ -42,22 +55,30 @@
 
     var tier = pageModule.webflowTier || "light";
 
-    await utils.waitForLayout();
+    await traceAsync('lifecycle waitForLayout pre-reinit ' + namespace, function () {
+      return utils.waitForLayout();
+    });
     if (state.isStale(token)) return;
 
-    await MBC.core.webflow.reinit(tier);
+    await traceAsync('lifecycle webflow.reinit ' + namespace + ' (' + tier + ')', function () {
+      return MBC.core.webflow.reinit(tier);
+    });
     if (state.isStale(token)) return;
 
-    await utils.waitForLayout();
+    await traceAsync('lifecycle waitForLayout post-reinit ' + namespace, function () {
+      return utils.waitForLayout();
+    });
     if (state.isStale(token)) return;
 
-    var pageCleanup = await pageModule.mount({
-      token: token,
-      state: state,
-      data: data,
-      isFirstLoad: !!options.isFirstLoad,
-      container: container,
-      namespace: namespace
+    var pageCleanup = await traceAsync('lifecycle mount page ' + namespace, function () {
+      return pageModule.mount({
+        token: token,
+        state: state,
+        data: data,
+        isFirstLoad: !!options.isFirstLoad,
+        container: container,
+        namespace: namespace
+      });
     });
 
     if (typeof pageCleanup === "function") {

@@ -9,6 +9,19 @@
     var container = ctx.container;
     var cleanups = [];
 
+    function traceAsync(label, promiseFactory) {
+      var start = performance.now();
+      console.log('[MBC Trace] start:', label);
+
+      return Promise.resolve().then(promiseFactory).then(function (result) {
+        console.log('[MBC Trace] done:', label, Math.round(performance.now() - start) + 'ms');
+        return result;
+      }).catch(function (err) {
+        console.log('[MBC Trace] fail:', label, Math.round(performance.now() - start) + 'ms');
+        throw err;
+      });
+    }
+
     function loadDeferredHomeFeatures() {
       var jobs = [];
 
@@ -43,7 +56,9 @@
         );
       }
 
-      return Promise.all(jobs).catch(function (err) {
+      return traceAsync('home deferred feature batch', function () {
+        return Promise.all(jobs);
+      }).catch(function (err) {
         console.warn('[MBC] Home deferred features failed to load', err);
       });
     }
@@ -94,7 +109,9 @@
     }
 
     async function initVideosAfterHero() {
-      await loadDeferredHomeFeatures();
+      await traceAsync('home initVideosAfterHero deferred load', function () {
+        return loadDeferredHomeFeatures();
+      });
 
       if (!MBC.features.videos) return;
 
@@ -111,25 +128,35 @@
     }
 
     async function finalizeHomeInteractiveUI() {
-      await waitForHeroToSettle();
+      await traceAsync('home waitForHeroToSettle', function () {
+        return waitForHeroToSettle();
+      });
 
       if (!document.body.contains(container)) return;
 
-      await loadDeferredHomeFeatures();
+      await traceAsync('home finalize deferred load', function () {
+        return loadDeferredHomeFeatures();
+      });
 
       if (!document.body.contains(container)) return;
 
       if (MBC.core.webflow && typeof MBC.core.webflow.refreshUI === 'function') {
-        await MBC.core.webflow.refreshUI();
+        await traceAsync('home webflow.refreshUI', function () {
+          return MBC.core.webflow.refreshUI();
+        });
       } else if (MBC.core.webflow && typeof MBC.core.webflow.refreshIX === 'function') {
         MBC.core.webflow.refreshIX();
       }
 
-      await wait(50);
+      await traceAsync('home settle wait 50ms', function () {
+        return wait(50);
+      });
 
       if (!document.body.contains(container)) return;
 
-      await initVideosAfterHero();
+      await traceAsync('home initVideosAfterHero', function () {
+        return initVideosAfterHero();
+      });
 
       if (MBC.features.tabs) {
         var tabsCleanup = MBC.features.tabs.init(container);
@@ -143,12 +170,16 @@
       }
 
       if (MBC.features.finsweet) {
-        await MBC.features.finsweet.init(container, { modules: ['modal'] });
+        await traceAsync('home finsweet modal init', function () {
+          return MBC.features.finsweet.init(container, { modules: ['modal'] });
+        });
       }
     }
 
     async function playPostHeroIntro() {
-      await waitForHeroToSettle();
+      await traceAsync('home waitForHeroToSettle for intro', function () {
+        return waitForHeroToSettle();
+      });
 
       if (!document.body.contains(container)) return;
 
@@ -213,7 +244,9 @@
 
     // Finsweet components
     if (MBC.features.finsweet) {
-      await MBC.features.finsweet.init(container, { modules: ['modal'] });
+      await traceAsync('home initial finsweet modal init', function () {
+        return MBC.features.finsweet.init(container, { modules: ['modal'] });
+      });
     }
 
     finalizeHomeInteractiveUI();

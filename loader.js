@@ -65,6 +65,19 @@
   // Track which external scripts are loaded
   var loadedExternalScripts = {};
 
+  function traceAsync(label, promiseFactory) {
+    var start = performance.now();
+    console.log('[MBC Trace] start:', label);
+
+    return Promise.resolve().then(promiseFactory).then(function (result) {
+      console.log('[MBC Trace] done:', label, Math.round(performance.now() - start) + 'ms');
+      return result;
+    }).catch(function (err) {
+      console.log('[MBC Trace] fail:', label, Math.round(performance.now() - start) + 'ms');
+      throw err;
+    });
+  }
+
   /**
    * Set the base path for loading modules
    */
@@ -156,7 +169,9 @@
       scriptType = urlOrConfig.type || 'classic';
     }
 
-    var promise = loadScript(url, scriptType).then(function () {
+    var promise = traceAsync('external ' + name, function () {
+      return loadScript(url, scriptType);
+    }).then(function () {
       loadedExternalScripts[name] = true;
       delete loadingPromises['external:' + name];
     });
@@ -247,11 +262,13 @@
       if (!loadedModules[depId]) {
         var dep = MODULES[depId];
         if (dep) {
-          promise = promise.then(function () {
-            return loadScript(basePath + dep.src);
-          }).then(function () {
-            loadedModules[depId] = true;
-          });
+            promise = promise.then(function () {
+              return traceAsync('module ' + depId, function () {
+                return loadScript(basePath + dep.src);
+              });
+            }).then(function () {
+              loadedModules[depId] = true;
+            });
         }
       }
     });
@@ -334,14 +351,18 @@
     // Load Vimeo player if needed
     if (needsVimeo) {
       promise = promise.then(function () {
-        return loadExternalScript('vimeo-player', EXTERNAL_SCRIPTS['vimeo-player']);
+        return traceAsync('route external vimeo-player', function () {
+          return loadExternalScript('vimeo-player', EXTERNAL_SCRIPTS['vimeo-player']);
+        });
       });
     }
 
     // Load Finsweet modal if needed (ES module)
     if (needsFinsweetModal) {
       promise = promise.then(function () {
-        return loadExternalScript('finsweet-modal', EXTERNAL_SCRIPTS['finsweet-modal']);
+        return traceAsync('route external finsweet-modal', function () {
+          return loadExternalScript('finsweet-modal', EXTERNAL_SCRIPTS['finsweet-modal']);
+        });
       });
     }
 
@@ -352,21 +373,29 @@
       loaded.push(moduleId);
 
       promise = promise.then(function () {
-        return loadModule(moduleId);
+        return traceAsync('route module ' + moduleId, function () {
+          return loadModule(moduleId);
+        });
       });
     });
 
     // 7. Load Finsweet Attributes if needed (list/filter/slider)
     if (needsFinsweetAttributes) {
       promise = promise.then(function () {
-        return loadExternalScript('finsweet-attributes', EXTERNAL_SCRIPTS['finsweet-attributes']);
+        return traceAsync('route external finsweet-attributes', function () {
+          return loadExternalScript('finsweet-attributes', EXTERNAL_SCRIPTS['finsweet-attributes']);
+        });
       }).then(function () {
         // Also load our Finsweet integration module
-        return loadModule('features/finsweet');
+        return traceAsync('route module features/finsweet', function () {
+          return loadModule('features/finsweet');
+        });
       });
     }
 
-    return promise.then(function () {
+    return traceAsync('loadForPage ' + normalizeNamespace(namespace), function () {
+      return promise;
+    }).then(function () {
       return {
         features: features,
         pageModule: pageModule,
