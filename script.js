@@ -430,6 +430,7 @@
 
     try {
       window.Webflow?.ready?.();
+      initIXModules();
 
       runWebflowModuleReady([
         "links",
@@ -453,6 +454,7 @@
       if (isStale(token)) return false;
 
       window.Webflow?.ready?.();
+      initIXModules();
 
       runWebflowModuleReady([
         "links",
@@ -1265,6 +1267,7 @@
     if (isStale(token)) return false;
 
     dlog(`${source}:ui:start`);
+
     await runVisibleWebflowUIPass(token, `${source}:ui`);
     if (isStale(token)) return false;
 
@@ -1272,6 +1275,13 @@
     if (isStale(token)) return false;
 
     rebindHomeInteractiveUI(container, source);
+
+    await runVisibleWebflowUIPass(token, `${source}:ui:post-bind`);
+    if (isStale(token)) return false;
+
+    await wait(40);
+    if (isStale(token)) return false;
+
     inspectHome(container, `${source}:inspect`);
 
     return !isStale(token);
