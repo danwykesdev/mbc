@@ -101,19 +101,20 @@ Namespace values should match the page modules:
 Replace your current bundle script with:
 
 ```html
-<!-- In <head> -->
+<!-- In <head> or project settings -->
 <script src="https://cdn.jsdelivr.net/npm/@barba/core@2.10.3/dist/barba.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.17/dist/lenis.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/ScrollTrigger.min.js"></script>
-<script src="https://player.vimeo.com/api/player.js"></script>
 
 <!-- In </body> before closing -->
-<script src="/js/loader.js"></script>
-<script src="/js/main.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/danwykesdev/mbc@main/loader.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/danwykesdev/mbc@main/main.js"></script>
 ```
 
-**Note:** Finsweet Attributes script is now loaded dynamically by `loader.js` only when `[fs-*]` attributes are detected. Remove the static Finsweet script tag.
+**Notes:**
+- **GSAP/ScrollTrigger** - Loaded by Webflow automatically, no need to add
+- **Vimeo Player** - Loaded dynamically by `loader.js` when video elements detected
+- **Finsweet Attributes** - Loaded dynamically by `loader.js` when `[fs-*]` attributes detected
+- Remove any static Finsweet or Vimeo script tags
 
 ## How It Works
 

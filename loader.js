@@ -12,7 +12,7 @@
     'core/state': { src: 'core/state.js', deps: [] },
     'core/utils': { src: 'core/utils.js', deps: [] },
     'core/cleanup': { src: 'core/cleanup.js', deps: [] },
-    'core/registry': { src: 'core/registry.js', deps: ['core/state'] },
+    'core/registry': { src: 'core/page-registry.js', deps: ['core/state'] },
     'core/webflow': { src: 'core/webflow-manager.js', deps: ['core/state', 'core/utils'] },
     'core/lifecycle': { src: 'core/lifecycle.js', deps: ['core/state', 'core/cleanup', 'core/registry', 'core/webflow'] },
 
