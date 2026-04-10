@@ -8,6 +8,7 @@
   async function mount(ctx) {
     var container = ctx.container;
     var cleanups = [];
+    var deferredHomeFeaturesPromise = null;
 
     function traceAsync(label, promiseFactory) {
       var start = performance.now();
@@ -23,6 +24,10 @@
     }
 
     function loadDeferredHomeFeatures() {
+      if (deferredHomeFeaturesPromise) {
+        return deferredHomeFeaturesPromise;
+      }
+
       var jobs = [];
 
       if (!MBC.loader) {
@@ -56,11 +61,13 @@
         );
       }
 
-      return traceAsync('home deferred feature batch', function () {
+      deferredHomeFeaturesPromise = traceAsync('home deferred feature batch', function () {
         return Promise.all(jobs);
       }).catch(function (err) {
         console.warn('[MBC] Home deferred features failed to load', err);
       });
+
+      return deferredHomeFeaturesPromise;
     }
 
     function releaseStartupCover() {
@@ -109,10 +116,6 @@
     }
 
     async function initVideosAfterHero() {
-      await traceAsync('home initVideosAfterHero deferred load', function () {
-        return loadDeferredHomeFeatures();
-      });
-
       if (!MBC.features.videos) return;
 
       if (!document.body.contains(container)) return;
@@ -140,8 +143,27 @@
 
       if (!document.body.contains(container)) return;
 
+      await traceAsync('home initVideosAfterHero', function () {
+        return initVideosAfterHero();
+      });
+
+      if (MBC.features.tabs) {
+        var tabsCleanup = MBC.features.tabs.init(container);
+        if (typeof tabsCleanup === 'function') {
+          cleanups.push(tabsCleanup);
+        }
+      }
+
+      if (MBC.features.finsweet) {
+        await traceAsync('home finsweet modal init', function () {
+          return MBC.features.finsweet.init(container, { modules: ['modal'] });
+        });
+      }
+
+      if (!document.body.contains(container)) return;
+
       if (MBC.core.webflow && typeof MBC.core.webflow.refreshUI === 'function') {
-        await traceAsync('home webflow.refreshUI', function () {
+        await traceAsync('home webflow.refreshUI final', function () {
           return MBC.core.webflow.refreshUI();
         });
       } else if (MBC.core.webflow && typeof MBC.core.webflow.refreshIX === 'function') {
@@ -154,25 +176,8 @@
 
       if (!document.body.contains(container)) return;
 
-      await traceAsync('home initVideosAfterHero', function () {
-        return initVideosAfterHero();
-      });
-
-      if (MBC.features.tabs) {
-        var tabsCleanup = MBC.features.tabs.init(container);
-        if (typeof tabsCleanup === 'function') {
-          cleanups.push(tabsCleanup);
-        }
-      }
-
       if (MBC.features.loadAnimations && typeof MBC.features.loadAnimations.resetHoverStates === 'function') {
         MBC.features.loadAnimations.resetHoverStates(container);
-      }
-
-      if (MBC.features.finsweet) {
-        await traceAsync('home finsweet modal init', function () {
-          return MBC.features.finsweet.init(container, { modules: ['modal'] });
-        });
       }
     }
 
@@ -240,13 +245,6 @@
       if (typeof backgroundVideoCleanup === 'function') {
         cleanups.push(backgroundVideoCleanup);
       }
-    }
-
-    // Finsweet components
-    if (MBC.features.finsweet) {
-      await traceAsync('home initial finsweet modal init', function () {
-        return MBC.features.finsweet.init(container, { modules: ['modal'] });
-      });
     }
 
     finalizeHomeInteractiveUI();

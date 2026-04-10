@@ -1,1 +1,4 @@
 node_modules/
+.hotplate
+README-MODULAR.md
+osmo.md

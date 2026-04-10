@@ -175,7 +175,8 @@
     var modalPlayer = null;
     var modalElements = Array.from(container.querySelectorAll('[fs-modal-element="modal"]'));
     var modalObserver = null;
-    var closeToken = 0;
+    var destroyTimeouts = [];
+    var modalEndHandlers = [];
 
     if (!modalElements.length) {
       modalElements = Array.from(document.querySelectorAll('[fs-modal-element="modal"]'));
@@ -201,18 +202,74 @@
 
     if (!openers.length && !closers.length && !stableWrapper) return null;
 
+    function clearDestroyTimeouts() {
+      destroyTimeouts.forEach(function (timeoutId) {
+        clearTimeout(timeoutId);
+      });
+      destroyTimeouts = [];
+    }
+
+    function queueDestroy(delay) {
+      destroyTimeouts.push(setTimeout(function () {
+        destroyModalPlayer();
+      }, delay));
+    }
+
+    function ensureStableWrapper(targetEl) {
+      if (!targetEl || !targetEl.parentNode) return stableWrapper;
+
+      if (stableWrapper && stableWrapper.parentNode && stableWrapper !== targetEl) {
+        return stableWrapper;
+      }
+
+      modalVideoId = targetEl.getAttribute('data-video') || targetEl.getAttribute('data-vimeo-id') || modalVideoId;
+
+      stableWrapper = document.createElement('div');
+      stableWrapper.id = targetEl.id || 'video';
+      stableWrapper.className = targetEl.className || '';
+      stableWrapper.style.cssText = 'width:100%;height:100%;';
+      if (modalVideoId) {
+        stableWrapper.setAttribute('data-video', modalVideoId);
+      }
+
+      targetEl.parentNode.replaceChild(stableWrapper, targetEl);
+      return stableWrapper;
+    }
+
+    function resolveModalTarget(modalId) {
+      if (stableWrapper && stableWrapper.parentNode) {
+        return stableWrapper;
+      }
+
+      if (modalId) {
+        var modal = document.querySelector('[fs-modal-element="modal"][data-modal-id="' + modalId + '"]');
+        if (modal) {
+          var nestedVideoEl = modal.querySelector('#video, [data-modal-video], [data-video], [data-vimeo-id]');
+          if (nestedVideoEl) {
+            return ensureStableWrapper(nestedVideoEl);
+          }
+        }
+      }
+
+      return stableWrapper;
+    }
+
     function destroyModalPlayer() {
       var currentPlayer = modalPlayer;
-      var currentToken;
 
-      if (!currentPlayer) return;
+      clearDestroyTimeouts();
 
       modalPlayer = null;
-      currentToken = closeToken + 1;
-      closeToken = currentToken;
+
+      if (!currentPlayer) {
+        if (stableWrapper) {
+          stableWrapper.innerHTML = '';
+        }
+        return;
+      }
 
       destroyPlayer(currentPlayer, stableWrapper).then(function () {
-        if (stableWrapper && closeToken === currentToken) {
+        if (stableWrapper) {
           stableWrapper.innerHTML = '';
         }
       });
@@ -220,26 +277,24 @@
 
     function onOpen(e) {
       var modalId = e.currentTarget.getAttribute('data-modal-id');
+      var targetEl = resolveModalTarget(modalId);
 
-      // Create player if not exists
+      clearDestroyTimeouts();
+
+      if (!targetEl || !modalVideoId || typeof Vimeo === 'undefined' || !Vimeo.Player) {
+        return;
+      }
+
       if (!modalPlayer) {
-        if (stableWrapper && modalVideoId) {
-          modalPlayer = new Vimeo.Player(stableWrapper, {
-            id: modalVideoId,
-            autoplay: true,
-            loop: true,
-            controls: false,
-            muted: false,
-            autopause: false
-          });
-        } else if (modalId) {
-          var modal = document.querySelector('[fs-modal-element="modal"][data-modal-id="' + modalId + '"]');
-          if (!modal) return;
-
-          var videoContainer = modal.querySelector('[data-modal-video], #video');
-          if (!videoContainer) return;
-          modalPlayer = createVimeoPlayer(videoContainer);
-        }
+        targetEl.innerHTML = '';
+        modalPlayer = new Vimeo.Player(targetEl, {
+          id: modalVideoId,
+          autoplay: true,
+          loop: true,
+          controls: false,
+          muted: false,
+          autopause: false
+        });
       }
 
       if (modalPlayer && typeof modalPlayer.ready === 'function') {
@@ -262,21 +317,23 @@
     }
 
     function onClose() {
-      destroyModalPlayer();
+      queueDestroy(0);
+      queueDestroy(120);
+      queueDestroy(300);
     }
 
     function onDocumentClick(e) {
       var trigger = e.target && e.target.closest ? e.target.closest('[fs-modal-element="close"], [data-modal-close], .w-close, .w-lightbox-close, [aria-label="Close"]') : null;
-      if (!trigger) return;
+      var clickedModal = e.target && e.target.closest ? e.target.closest('[fs-modal-element="modal"]') : null;
 
-      setTimeout(onClose, 0);
-      setTimeout(onClose, 180);
+      if (trigger || (clickedModal && e.target === clickedModal)) {
+        onClose();
+      }
     }
 
     function onEscape(e) {
       if (e.key !== 'Escape') return;
-      setTimeout(onClose, 0);
-      setTimeout(onClose, 180);
+      onClose();
     }
 
     openers.forEach(function (el) {
@@ -288,8 +345,25 @@
     });
 
     modalElements.forEach(function (el) {
-      el.addEventListener('transitionend', onClose);
-      el.addEventListener('animationend', onClose);
+      var transitionHandler = function () {
+        if (isModalHidden(el)) {
+          onClose();
+        }
+      };
+      var animationHandler = function () {
+        if (isModalHidden(el)) {
+          onClose();
+        }
+      };
+
+      modalEndHandlers.push({
+        element: el,
+        transitionHandler: transitionHandler,
+        animationHandler: animationHandler
+      });
+
+      el.addEventListener('transitionend', transitionHandler);
+      el.addEventListener('animationend', animationHandler);
     });
 
     document.addEventListener('click', onDocumentClick, true);
@@ -319,9 +393,9 @@
       closers.forEach(function (el) {
         el.removeEventListener('click', onClose);
       });
-      modalElements.forEach(function (el) {
-        el.removeEventListener('transitionend', onClose);
-        el.removeEventListener('animationend', onClose);
+      modalEndHandlers.forEach(function (entry) {
+        entry.element.removeEventListener('transitionend', entry.transitionHandler);
+        entry.element.removeEventListener('animationend', entry.animationHandler);
       });
 
       document.removeEventListener('click', onDocumentClick, true);
@@ -332,6 +406,7 @@
         modalObserver = null;
       }
 
+      clearDestroyTimeouts();
       destroyModalPlayer();
     };
   }
