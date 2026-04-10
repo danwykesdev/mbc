@@ -12,7 +12,8 @@
     initialLoadComplete: false,
     lenis: null,
     heroAnimating: false,
-    cleanupStack: []
+    pageCleanupStack: [],
+    globalCleanupStack: []
   };
 
   state.nextToken = function nextToken() {

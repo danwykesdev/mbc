@@ -21,6 +21,7 @@
     'features/nav': { src: 'features/nav.js', deps: [] },
     'features/mobile-nav': { src: 'features/mobile-nav.js', deps: [] },
     'features/scroll-direction': { src: 'features/scroll-direction.js', deps: ['core/state'] },
+    'features/load-animations': { src: 'features/load-animations.js', deps: ['core/state', 'core/utils'] },
     'features/tabs': { src: 'features/tabs.js', deps: [], domCheck: '.project_component' },
     'features/hero': { src: 'features/hero.js', deps: ['core/state'], domCheck: '.hero-animate' },
     'features/videos': { src: 'features/videos.js', deps: [], domCheck: '#videoLoad, #video, [data-video], [data-vimeo-id], [fs-modal-element]' },
@@ -38,6 +39,12 @@
   var loadedModules = {};
   var loadingPromises = {};
   var basePath = '';
+  var SHARED_FEATURE_MODULES = ['features/lenis', 'features/mobile-nav', 'features/scroll-direction', 'features/load-animations'];
+  var NAMESPACE_ALIASES = {
+    project: 'projects',
+    project_detail: 'project-detail',
+    zine_detail: 'zine-detail'
+  };
 
   // External scripts that may be loaded dynamically
   // type: 'module' means it's an ES module that needs type="module"
@@ -69,6 +76,20 @@
       return selector.some(function (s) { return !!container.querySelector(s); });
     }
     return false;
+  }
+
+  function normalizeNamespace(namespace) {
+    var utils = MBC.core && MBC.core.utils;
+
+    if (utils && typeof utils.normalizeNamespace === 'function') {
+      return utils.normalizeNamespace(namespace);
+    }
+
+    var value = String(namespace || '').toLowerCase().trim();
+
+    if (!value) return 'default';
+
+    return NAMESPACE_ALIASES[value] || value;
   }
 
   /**
@@ -247,7 +268,7 @@
    * Get page module for namespace
    */
   function getPageModule(namespace) {
-    var ns = String(namespace || '').toLowerCase();
+    var ns = normalizeNamespace(namespace);
 
     for (var moduleId in MODULES) {
       if (MODULES[moduleId].namespace === ns) {
@@ -276,6 +297,7 @@
 
     // 4. Collect all modules to load
     var modulesToLoad = ['core/state', 'core/utils', 'core/cleanup', 'core/registry', 'core/webflow', 'core/lifecycle'];
+    modulesToLoad = modulesToLoad.concat(SHARED_FEATURE_MODULES);
     modulesToLoad = modulesToLoad.concat(features);
     if (pageModule) {
       modulesToLoad.push(pageModule);

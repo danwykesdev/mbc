@@ -1,5 +1,4 @@
 (function () {
-console.log('home page loaded');
 
   window.MBC = window.MBC || {};
   var MBC = window.MBC;
@@ -9,6 +8,82 @@ console.log('home page loaded');
   async function mount(ctx) {
     var container = ctx.container;
     var cleanups = [];
+
+    function wait(ms) {
+      return new Promise(function (resolve) {
+        setTimeout(resolve, ms);
+      });
+    }
+
+    async function waitForHeroToSettle() {
+      var start = performance.now();
+
+      while (MBC.core.state.heroAnimating && performance.now() - start < 3200) {
+        await wait(50);
+      }
+    }
+
+    async function initVideosAfterHero() {
+      if (!MBC.features.videos) return;
+
+      if (!document.body.contains(container)) return;
+
+      var videoCleanup = MBC.features.videos.initStandalone({
+        container: container,
+        includeBackground: false,
+        includeModal: true
+      });
+      if (typeof videoCleanup === 'function') {
+        cleanups.push(videoCleanup);
+      }
+    }
+
+    async function finalizeHomeInteractiveUI() {
+      await waitForHeroToSettle();
+
+      if (!document.body.contains(container)) return;
+
+      if (MBC.core.webflow && typeof MBC.core.webflow.refreshUI === 'function') {
+        await MBC.core.webflow.refreshUI();
+      } else if (MBC.core.webflow && typeof MBC.core.webflow.refreshIX === 'function') {
+        MBC.core.webflow.refreshIX();
+      }
+
+      await wait(50);
+
+      if (!document.body.contains(container)) return;
+
+      await initVideosAfterHero();
+
+      if (MBC.features.tabs) {
+        var tabsCleanup = MBC.features.tabs.init(container);
+        if (typeof tabsCleanup === 'function') {
+          cleanups.push(tabsCleanup);
+        }
+      }
+
+      if (MBC.features.loadAnimations && typeof MBC.features.loadAnimations.resetHoverStates === 'function') {
+        MBC.features.loadAnimations.resetHoverStates(container);
+      }
+
+      if (MBC.features.finsweet) {
+        await MBC.features.finsweet.init(container, { modules: ['modal'] });
+      }
+    }
+
+    async function playPostHeroIntro() {
+      await waitForHeroToSettle();
+
+      if (!document.body.contains(container)) return;
+
+      if (MBC.features.loadAnimations) {
+        MBC.features.loadAnimations.playIntro(container, {
+          isFirstLoad: !!ctx.isFirstLoad,
+          includeNav: false,
+          excludeSelector: '.hero-animate, [data-hero]'
+        });
+      }
+    }
 
     // Set nav state
     if (MBC.features.nav) {
@@ -48,11 +123,10 @@ console.log('home page loaded');
       }
     }
 
-    // Videos (modals)
-    if (MBC.features.videos) {
-      var videoCleanup = MBC.features.videos.initStandalone({ container: container });
-      if (typeof videoCleanup === 'function') {
-        cleanups.push(videoCleanup);
+    if (MBC.features.videos && typeof MBC.features.videos.initBackground === 'function') {
+      var backgroundVideoCleanup = MBC.features.videos.initBackground(container);
+      if (typeof backgroundVideoCleanup === 'function') {
+        cleanups.push(backgroundVideoCleanup);
       }
     }
 
@@ -60,6 +134,9 @@ console.log('home page loaded');
     if (MBC.features.finsweet) {
       await MBC.features.finsweet.init(container, { modules: ['modal'] });
     }
+
+    finalizeHomeInteractiveUI();
+    playPostHeroIntro();
 
     return function cleanup() {
       cleanups.forEach(function (fn) {

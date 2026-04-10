@@ -14,15 +14,11 @@
       }, "page unmount failed");
     }
 
-    MBC.core.cleanup.runAll();
-
-    if (typeof ScrollTrigger !== "undefined") {
-      ScrollTrigger.getAll().forEach(function (st) {
-        st.kill();
-      });
-    }
+    MBC.core.cleanup.runPage();
 
     state.currentPageModule = null;
+    state.currentNamespace = "";
+    state.currentContainer = document;
   }
 
   async function mountNext(data, opts) {
@@ -44,6 +40,14 @@
       return;
     }
 
+    var tier = pageModule.webflowTier || "light";
+
+    await utils.waitForLayout();
+    if (state.isStale(token)) return;
+
+    await MBC.core.webflow.reinit(tier);
+    if (state.isStale(token)) return;
+
     await utils.waitForLayout();
     if (state.isStale(token)) return;
 
@@ -62,20 +66,18 @@
 
     state.currentPageModule = pageModule;
 
-    var tier = pageModule.webflowTier || "light";
-    await MBC.core.webflow.reinit(tier);
-
-    if (typeof ScrollTrigger !== "undefined") {
-      ScrollTrigger.refresh(true);
-    }
-
-    if (state.lenis && typeof state.lenis.start === "function") {
-      state.lenis.start();
-    }
-
     if (options.isFirstLoad) {
       state.initialLoadComplete = true;
     }
+
+    return {
+      token: token,
+      namespace: namespace,
+      container: container,
+      pageModule: pageModule,
+      webflowTier: tier,
+      isFirstLoad: !!options.isFirstLoad
+    };
   }
 
   MBC.core.lifecycle = {

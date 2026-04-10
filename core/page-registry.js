@@ -6,12 +6,22 @@
 
   var pages = {};
 
+  function normalize(namespace) {
+    var utils = MBC.core && MBC.core.utils;
+
+    if (utils && typeof utils.normalizeNamespace === "function") {
+      return utils.normalizeNamespace(namespace);
+    }
+
+    return String(namespace || "").toLowerCase().trim();
+  }
+
   function register(namespace, moduleDef) {
-    pages[String(namespace).toLowerCase()] = moduleDef;
+    pages[normalize(namespace)] = moduleDef;
   }
 
   function get(namespace) {
-    return pages[String(namespace || "").toLowerCase()] || pages.default || null;
+    return pages[normalize(namespace)] || pages.default || null;
   }
 
   MBC.core.registry = {

@@ -23,7 +23,7 @@
     }
 
     var containers = root.querySelectorAll('.crisp-loader');
-    var navItems = document.querySelectorAll('[data-load-items=nav], [data-load-items=nav-item]');
+    var navItems = document.querySelectorAll('[data-load-items="nav-item"], [data-load-item="nav"], [data-load-items="nav"]');
     var nav = document.querySelector('.nav');
 
     var config = {
@@ -38,7 +38,7 @@
     MBC.core.state.heroAnimating = true;
 
     if (nav) gsap.set(nav, { yPercent: -100, autoAlpha: 0, transition: 'none' });
-    if (navItems.length) gsap.set(navItems, { autoAlpha: 0, y: -10, transition: 'none' });
+    if (navItems.length) gsap.set(navItems, { autoAlpha: 0, x: -10, transition: 'none' });
 
     var mm = gsap.matchMedia();
     window.__homeHeroMM = mm;
@@ -56,6 +56,10 @@
         var masterTl = gsap.timeline({
           onComplete: function () {
             MBC.core.state.heroAnimating = false;
+
+            if (typeof window.__resetNavScrollHide === 'function') {
+              window.__resetNavScrollHide();
+            }
           }
         });
         window.__homeHeroTL = masterTl;
@@ -116,7 +120,7 @@
 
           items.forEach(function (item, i) {
             var startTime = i * (config.duration - config.overlap);
-            columnTl.to(item, { duration: config.duration }, startTime);
+            columnTl.to({}, { duration: config.duration }, startTime);
 
             var imgs = item.querySelectorAll('img');
             if (imgs.length) {
@@ -133,10 +137,8 @@
           });
 
           if (isDesktop) {
-            var headerRect = root.getBoundingClientRect();
             var containerRect = container.getBoundingClientRect();
-            var targetTop = headerRect.bottom - 80 - containerRect.height + 40;
-            var deltaY = targetTop - containerRect.top;
+            var deltaY = window.innerHeight - containerRect.bottom - 40;
 
             columnTl.to(
               container,
@@ -262,10 +264,11 @@
             navItems,
             {
               autoAlpha: 1,
-              y: 0,
-              duration: 0.5,
-              stagger: { from: 'center', amount: 0.3 },
-              ease: 'power2.out'
+              x: 0,
+              duration: 0.55,
+              ease: 'power2.out',
+              stagger: 0.04,
+              clearProps: 'transform,opacity,visibility,willChange'
             },
             'syncReveal+=0.2'
           );

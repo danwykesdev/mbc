@@ -20,17 +20,17 @@
          (scriptSrc.indexOf('localhost') !== -1 ? 'local' : 'production');
   }
 
+  var localBaseUrl = window.MBC_LOCAL_BASE_URL || '';
+  var localPort = window.MBC_LOCAL_PORT || '5500';
+  var resolvedBasePath = env === 'local'
+    ? (localBaseUrl || ('http://localhost:' + localPort))
+    : 'https://cdn.jsdelivr.net/gh/danwykesdev/mbc@main';
+
   // Set module base path based on environment
-  if (env === 'local') {
-    // Local development - adjust port/path as needed
-    window.MBC.loader.setBasePath('http://localhost:3000');
-  } else {
-    // Production - GitHub via jsDelivr
-    window.MBC.loader.setBasePath('https://cdn.jsdelivr.net/gh/danwykesdev/mbc@main');
-  }
+  window.MBC.loader.setBasePath(resolvedBasePath);
 
   if (window.MBC_DEBUG || env === 'local') {
-    console.log('[MBC] Environment:', env, '| Base path:', env === 'local' ? 'http://localhost:3000' : 'jsDelivr');
+    console.log('[MBC] Environment:', env, '| Base path:', resolvedBasePath);
   }
 
   var MBC = window.MBC;
@@ -55,26 +55,90 @@
    * Initialize global features that persist across transitions
    */
   function initGlobalFeatures() {
-    // Lenis smooth scroll
     if (MBC.features.lenis) {
       MBC.features.lenis.init();
     }
+  }
 
-    // Mobile nav (global)
+  function bindSharedFeatures() {
     if (MBC.features.mobileNav) {
-      var cleanup = MBC.features.mobileNav.init();
-      if (typeof cleanup === 'function') {
-        MBC.core.cleanup.add(cleanup);
+      var mobileCleanup = MBC.features.mobileNav.init();
+      if (typeof mobileCleanup === 'function') {
+        MBC.core.cleanup.addPage(mobileCleanup);
       }
     }
 
-    // Scroll direction detection
     if (MBC.features.scrollDirection) {
-      var cleanup = MBC.features.scrollDirection.init();
-      if (typeof cleanup === 'function') {
-        MBC.core.cleanup.add(cleanup);
+      var scrollCleanup = MBC.features.scrollDirection.init();
+      if (typeof scrollCleanup === 'function') {
+        MBC.core.cleanup.addPage(scrollCleanup);
       }
     }
+  }
+
+  var pendingPageLoad = null;
+
+  function isHomeNamespace(namespace) {
+    var utils = MBC.core && MBC.core.utils;
+    var normalized = utils && typeof utils.normalizeNamespace === 'function'
+      ? utils.normalizeNamespace(namespace)
+      : String(namespace || 'default').toLowerCase();
+
+    return normalized === 'home';
+  }
+
+  function loadModulesForRoute(data) {
+    if (!data || !data.next || !data.next.container) {
+      return Promise.resolve();
+    }
+
+    if (pendingPageLoad) {
+      return pendingPageLoad;
+    }
+
+    pendingPageLoad = MBC.loader.loadForPage(data.next.container, data.next.namespace);
+    return pendingPageLoad;
+  }
+
+  function settleAfterMount(container) {
+    resetPage(container);
+
+    if (MBC.core.webflow && typeof MBC.core.webflow.refreshIX === 'function') {
+      MBC.core.webflow.refreshIX();
+    }
+
+    if (MBC.core.state.lenis) {
+      if (typeof MBC.core.state.lenis.resize === 'function') {
+        MBC.core.state.lenis.resize();
+      }
+      if (typeof MBC.core.state.lenis.start === 'function') {
+        MBC.core.state.lenis.start();
+      }
+    }
+
+    if (typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.refresh(true);
+    }
+  }
+
+  function mountRoute(data, opts) {
+    return loadModulesForRoute(data).then(function () {
+      return MBC.core.lifecycle.mountNext(data, opts);
+    }).then(function (result) {
+      bindSharedFeatures();
+
+      if (MBC.features.loadAnimations && result && result.container) {
+        var loadAnimationCleanup = MBC.features.loadAnimations.init(result.container, {
+          disableIntroReveals: result.namespace === 'home',
+          forceScrollExcludeSelector: result.namespace === 'home' ? '.hero-animate, [data-hero]' : null
+        });
+        if (typeof loadAnimationCleanup === 'function') {
+          MBC.core.cleanup.addPage(loadAnimationCleanup);
+        }
+      }
+
+      return result;
+    });
   }
 
   /**
@@ -87,67 +151,57 @@
     }
 
     barba.hooks.beforeEnter(function (data) {
-      // Position new container on top during transition
       if (typeof gsap !== 'undefined') {
-        gsap.set(data.next.container, {
+        var nextNamespace = data && data.next ? data.next.namespace : 'default';
+        var nextState = {
           position: 'fixed',
           top: 0,
           left: 0,
           right: 0
-        });
+        };
+
+        if (!isHomeNamespace(nextNamespace)) {
+          nextState.autoAlpha = 0;
+        }
+
+        gsap.set(data.next.container, nextState);
       }
 
-      // Stop lenis during transition
       if (MBC.core.state.lenis && typeof MBC.core.state.lenis.stop === 'function') {
         MBC.core.state.lenis.stop();
       }
 
-      // Update Webflow page ID for IX targeting
       MBC.core.webflow.updatePageIdFromBarba(data);
+
+      return loadModulesForRoute(data);
     });
 
     barba.hooks.afterLeave(function () {
-      // Kill all ScrollTriggers from previous page (osmo pattern)
-      if (typeof ScrollTrigger !== 'undefined') {
-        ScrollTrigger.getAll().forEach(function (trigger) {
-          trigger.kill();
-        });
-      }
-
-      // Unmount current page module
-      MBC.core.lifecycle.unmountCurrent(MBC.core.state.navToken);
+      MBC.core.webflow.killScrollTriggers();
+      return MBC.core.lifecycle.unmountCurrent(MBC.core.state.navToken);
     });
 
     barba.hooks.enter(function () {
-      // Container positioning handled by Barba
     });
 
     barba.hooks.afterEnter(function (data) {
       var namespace = data.next.namespace || 'default';
       var container = data.next.container;
 
-      // Load required modules for this page
-      MBC.loader.loadForPage(container, namespace).then(function (info) {
-        // Mount the page module
-        return MBC.core.lifecycle.mountNext(data, { isFirstLoad: false });
+      return mountRoute(data, { isFirstLoad: false }).then(function () {
+        settleAfterMount(container);
+        return pageEnterAnimation(container, isHomeNamespace(namespace));
       }).then(function () {
-        // Run enter animation
-        return pageEnterAnimation(container, namespace === 'home');
-      }).then(function () {
-        // Reset page position
-        resetPage(container);
-
-        // Refresh ScrollTrigger
-        if (typeof ScrollTrigger !== 'undefined') {
-          ScrollTrigger.refresh();
+        if (!isHomeNamespace(namespace) && MBC.features.loadAnimations) {
+          MBC.features.loadAnimations.playIntro(container, {
+            isFirstLoad: false,
+            includeNav: false
+          });
         }
 
-        // Restart lenis
-        if (MBC.core.state.lenis) {
-          MBC.core.state.lenis.resize();
-          MBC.core.state.lenis.start();
-        }
+        pendingPageLoad = null;
       }).catch(function (err) {
+        pendingPageLoad = null;
         console.error('[MBC] Page transition failed:', err);
       });
     });
@@ -166,18 +220,21 @@
           var namespace = data.next.namespace || 'default';
           var container = data.next.container;
 
-          // Load modules for initial page
-          return MBC.loader.loadForPage(container, namespace).then(function (info) {
-            // Initialize global features
+          return loadModulesForRoute(data).then(function () {
             initGlobalFeatures();
+            return mountRoute(data, { isFirstLoad: true });
+          }).then(function () {
+            settleAfterMount(container);
+            return pageEnterAnimation(container, isHomeNamespace(namespace));
+          }).then(function () {
+            if (!isHomeNamespace(namespace) && MBC.features.loadAnimations) {
+              MBC.features.loadAnimations.playIntro(container, { isFirstLoad: true });
+            }
 
-            // Mount initial page
-            return MBC.core.lifecycle.mountNext(data, { isFirstLoad: true });
-          }).then(function () {
-            // Run initial animation
-            return pageEnterAnimation(container, namespace === 'home');
-          }).then(function () {
-            resetPage(container);
+            pendingPageLoad = null;
+          }).catch(function (err) {
+            pendingPageLoad = null;
+            throw err;
           });
         },
 

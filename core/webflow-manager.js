@@ -24,6 +24,18 @@
     }
   }
 
+  function killScrollTriggers() {
+    if (typeof ScrollTrigger === "undefined") return;
+
+    ScrollTrigger.getAll().forEach(function (trigger) {
+      try {
+        trigger.kill();
+      } catch (err) {
+        console.warn("[MBC] ScrollTrigger kill failed", err);
+      }
+    });
+  }
+
   /**
    * Run a Webflow module's ready/init/redraw method
    */
@@ -78,8 +90,10 @@
   async function reinit(tier) {
     if (!window.Webflow) return;
 
+    var mode = tier || "light";
+
     // Full reset for page transitions
-    if (tier === "full") {
+    if (mode === "full") {
       if (typeof window.Webflow.destroy === "function") {
         window.Webflow.destroy();
       }
@@ -92,7 +106,7 @@
     runModules();
 
     // IX reinit for interactive pages
-    if (tier === "ix" || tier === "full") {
+    if (mode === "ix" || mode === "full") {
       initIX();
     }
 
@@ -101,13 +115,38 @@
       window.dispatchEvent(new Event("resize"));
     } catch (_) {}
 
-    // Refresh ScrollTrigger
+    // Small delay for layout to settle
+    await MBC.core.utils.wait(50);
+  }
+
+  async function refreshUI() {
+    if (!window.Webflow) return;
+
+    if (typeof window.Webflow.ready === "function") {
+      window.Webflow.ready();
+    }
+    runModules();
+    initIX();
+
+    try {
+      window.dispatchEvent(new Event("resize"));
+    } catch (_) {}
+
     if (typeof ScrollTrigger !== "undefined") {
       ScrollTrigger.refresh(true);
     }
 
-    // Small delay for layout to settle
-    await MBC.core.utils.wait(50);
+    await MBC.core.utils.wait(90);
+
+    if (typeof window.Webflow.ready === "function") {
+      window.Webflow.ready();
+    }
+    runModules();
+    initIX();
+
+    if (typeof ScrollTrigger !== "undefined") {
+      ScrollTrigger.refresh(true);
+    }
   }
 
   /**
@@ -118,14 +157,13 @@
     try {
       window.dispatchEvent(new Event("resize"));
     } catch (_) {}
-    if (typeof ScrollTrigger !== "undefined") {
-      ScrollTrigger.refresh();
-    }
   }
 
   MBC.core.webflow = {
     updatePageIdFromBarba: updatePageIdFromBarba,
+    killScrollTriggers: killScrollTriggers,
     reinit: reinit,
+    refreshUI: refreshUI,
     refreshIX: refreshIX,
     initIX: initIX
   };

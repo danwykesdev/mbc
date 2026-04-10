@@ -8,8 +8,6 @@
 
   MBC.features = MBC.features || {};
 
-  var activePlayer = null;
-
   /**
    * Create Vimeo player from element
    */
@@ -47,10 +45,11 @@
     if (!bgVideo) return null;
 
     var player = null;
+    var bgTarget = null;
 
     if (bgVideo.getAttribute('data-video')) {
       var bgId = bgVideo.getAttribute('data-video');
-      var bgTarget = bgVideo;
+      bgTarget = bgVideo;
 
       if (bgVideo.tagName && bgVideo.tagName.toLowerCase() !== 'div') {
         bgTarget = document.createElement('div');
@@ -75,15 +74,27 @@
       player = createVimeoPlayer(bgVideo);
     }
 
-    if (player && typeof player.play === 'function') {
+    if (player && typeof player.ready === 'function') {
+      player.ready().then(function () {
+        if (bgTarget && bgTarget.style) {
+          bgTarget.style.opacity = '1';
+          bgTarget.style.visibility = 'visible';
+        }
+
+        if (typeof player.play === 'function') {
+          player.play().catch(function () {
+          });
+        }
+      }).catch(function () {
+      });
+    } else if (player && typeof player.play === 'function') {
       player.play().catch(function () {
-        // Autoplay might be blocked, that's ok
       });
     }
 
     return function cleanup() {
       if (player && typeof player.destroy === 'function') {
-        player.destroy();
+        player.destroy().catch(function () {});
       }
     };
   }
@@ -97,6 +108,12 @@
     var modalVideoEl = container.querySelector('#video') || document.getElementById('video');
     var stableWrapper = null;
     var modalVideoId = null;
+    var modalPlayer = null;
+    var modalElements = Array.from(container.querySelectorAll('[fs-modal-element="modal"]'));
+
+    if (!modalElements.length) {
+      modalElements = Array.from(document.querySelectorAll('[fs-modal-element="modal"]'));
+    }
 
     if (!openers.length) {
       openers = Array.from(document.querySelectorAll('[fs-modal-element="open"]'));
@@ -118,13 +135,33 @@
 
     if (!openers.length && !closers.length && !stableWrapper) return null;
 
+    function resetPlayerState() {
+      if (!modalPlayer) return;
+
+      if (typeof modalPlayer.pause === 'function') {
+        modalPlayer.pause().catch(function () {});
+      }
+
+      if (typeof modalPlayer.setCurrentTime === 'function') {
+        modalPlayer.setCurrentTime(0).catch(function () {});
+      }
+
+      if (typeof modalPlayer.setVolume === 'function') {
+        modalPlayer.setVolume(0).catch(function () {});
+      }
+
+      if (typeof modalPlayer.setMuted === 'function') {
+        modalPlayer.setMuted(true).catch(function () {});
+      }
+    }
+
     function onOpen(e) {
       var modalId = e.currentTarget.getAttribute('data-modal-id');
 
       // Create player if not exists
-      if (!activePlayer) {
+      if (!modalPlayer) {
         if (stableWrapper && modalVideoId) {
-          activePlayer = new Vimeo.Player(stableWrapper, {
+          modalPlayer = new Vimeo.Player(stableWrapper, {
             id: modalVideoId,
             autoplay: true,
             loop: true,
@@ -138,19 +175,25 @@
 
           var videoContainer = modal.querySelector('[data-modal-video], #video');
           if (!videoContainer) return;
-          activePlayer = createVimeoPlayer(videoContainer);
+          modalPlayer = createVimeoPlayer(videoContainer);
         }
       }
 
-      if (activePlayer && typeof activePlayer.play === 'function') {
-        activePlayer.play().catch(function () {});
+      if (modalPlayer && typeof modalPlayer.setVolume === 'function') {
+        modalPlayer.setVolume(1).catch(function () {});
+      }
+
+      if (modalPlayer && typeof modalPlayer.setMuted === 'function') {
+        modalPlayer.setMuted(false).catch(function () {});
+      }
+
+      if (modalPlayer && typeof modalPlayer.play === 'function') {
+        modalPlayer.play().catch(function () {});
       }
     }
 
     function onClose() {
-      if (activePlayer && typeof activePlayer.pause === 'function') {
-        activePlayer.pause();
-      }
+      resetPlayerState();
     }
 
     openers.forEach(function (el) {
@@ -161,6 +204,11 @@
       el.addEventListener('click', onClose);
     });
 
+    modalElements.forEach(function (el) {
+      el.addEventListener('transitionend', onClose);
+      el.addEventListener('animationend', onClose);
+    });
+
     return function cleanup() {
       openers.forEach(function (el) {
         el.removeEventListener('click', onOpen);
@@ -168,10 +216,16 @@
       closers.forEach(function (el) {
         el.removeEventListener('click', onClose);
       });
+      modalElements.forEach(function (el) {
+        el.removeEventListener('transitionend', onClose);
+        el.removeEventListener('animationend', onClose);
+      });
 
-      if (activePlayer && typeof activePlayer.destroy === 'function') {
-        activePlayer.destroy();
-        activePlayer = null;
+      resetPlayerState();
+
+      if (modalPlayer && typeof modalPlayer.destroy === 'function') {
+        modalPlayer.destroy().catch(function () {});
+        modalPlayer = null;
       }
     };
   }
@@ -181,18 +235,22 @@
    */
   function initStandaloneVideos(context) {
     var container = (context && context.container) || document;
+    var includeBackground = !context || context.includeBackground !== false;
+    var includeModal = !context || context.includeModal !== false;
     var cleanups = [];
 
-    // Background videos
-    var bgCleanup = initBackgroundVideos(container);
-    if (typeof bgCleanup === 'function') {
-      cleanups.push(bgCleanup);
+    if (includeBackground) {
+      var bgCleanup = initBackgroundVideos(container);
+      if (typeof bgCleanup === 'function') {
+        cleanups.push(bgCleanup);
+      }
     }
 
-    // Modal videos
-    var modalCleanup = initModalVideos(container);
-    if (typeof modalCleanup === 'function') {
-      cleanups.push(modalCleanup);
+    if (includeModal) {
+      var modalCleanup = initModalVideos(container);
+      if (typeof modalCleanup === 'function') {
+        cleanups.push(modalCleanup);
+      }
     }
 
     return function cleanup() {
@@ -205,6 +263,8 @@
   }
 
   MBC.features.videos = {
+    initBackground: initBackgroundVideos,
+    initModal: initModalVideos,
     initStandalone: initStandaloneVideos,
     createVimeoPlayer: createVimeoPlayer
   };

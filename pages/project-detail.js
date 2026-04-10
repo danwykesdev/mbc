@@ -13,17 +13,17 @@
       MBC.features.nav.setState({ theme: 'light', bg: 'none', blur: false });
     }
 
+    // Finsweet components
+    if (MBC.features.finsweet) {
+      await MBC.features.finsweet.init(container, { modules: ['modal'] });
+    }
+
     // Videos
     if (MBC.features.videos) {
       var videoCleanup = MBC.features.videos.initStandalone({ container: container });
       if (typeof videoCleanup === 'function') {
         cleanups.push(videoCleanup);
       }
-    }
-
-    // Finsweet components
-    if (MBC.features.finsweet) {
-      await MBC.features.finsweet.init(container, { modules: ['modal'] });
     }
 
     return function cleanup() {

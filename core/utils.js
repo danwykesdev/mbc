@@ -42,8 +42,18 @@
     };
   }
 
+  var NAMESPACE_ALIASES = {
+    project: "projects",
+    project_detail: "project-detail",
+    zine_detail: "zine-detail"
+  };
+
   function normalizeNamespace(ns) {
-    return String(ns || "").toLowerCase().trim();
+    var value = String(ns || "").toLowerCase().trim();
+
+    if (!value) return "default";
+
+    return NAMESPACE_ALIASES[value] || value;
   }
 
   function isHome(ns) {
