@@ -58,12 +58,7 @@
 
       requestAnimationFrame(function () {
         var y = window.scrollY;
-        var dir = y > lastY ? "down" : "up";
         var diff = y - lastY;
-
-        document.querySelectorAll("[data-scrolling-direction]").forEach(function (el) {
-          el.setAttribute("data-scrolling-direction", dir);
-        });
 
         if (y <= 0) {
           showNav();

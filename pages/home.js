@@ -143,6 +143,23 @@
 
       if (!document.body.contains(container)) return;
 
+      // refreshUI MUST run before finsweet/video init so IX2 is stable
+      // before Finsweet binds its event listeners
+      if (MBC.core.webflow && typeof MBC.core.webflow.refreshUI === 'function') {
+        await traceAsync('home webflow.refreshUI final', function () {
+          return MBC.core.webflow.refreshUI();
+        });
+      } else if (MBC.core.webflow && typeof MBC.core.webflow.refreshIX === 'function') {
+        MBC.core.webflow.refreshIX();
+      }
+
+      await traceAsync('home settle wait 50ms', function () {
+        return wait(50);
+      });
+
+      if (!document.body.contains(container)) return;
+
+      // Videos and Finsweet init AFTER refreshUI so listeners aren't clobbered
       await traceAsync('home initVideosAfterHero', function () {
         return initVideosAfterHero();
       });
@@ -159,20 +176,6 @@
           return MBC.features.finsweet.init(container, { modules: ['modal'] });
         });
       }
-
-      if (!document.body.contains(container)) return;
-
-      if (MBC.core.webflow && typeof MBC.core.webflow.refreshUI === 'function') {
-        await traceAsync('home webflow.refreshUI final', function () {
-          return MBC.core.webflow.refreshUI();
-        });
-      } else if (MBC.core.webflow && typeof MBC.core.webflow.refreshIX === 'function') {
-        MBC.core.webflow.refreshIX();
-      }
-
-      await traceAsync('home settle wait 50ms', function () {
-        return wait(50);
-      });
 
       if (!document.body.contains(container)) return;
 
@@ -247,8 +250,10 @@
       }
     }
 
-    finalizeHomeInteractiveUI();
-    playPostHeroIntro();
+    // Sequence: finalize (incl refreshUI) completes before intro reveals play
+    finalizeHomeInteractiveUI().then(function () {
+      playPostHeroIntro();
+    });
 
     return function cleanup() {
       cleanups.forEach(function (fn) {
