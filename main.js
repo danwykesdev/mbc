@@ -123,6 +123,55 @@
     }
   }
 
+  function getInitialNamespace() {
+    var container = document.querySelector('[data-barba="container"]');
+
+    if (container && container.getAttribute) {
+      return container.getAttribute('data-barba-namespace') || 'default';
+    }
+
+    return 'default';
+  }
+
+  function ensureInitialHomeCover() {
+    var cover;
+
+    if (!isHomeNamespace(getInitialNamespace())) {
+      return;
+    }
+
+    if (document.getElementById('mbc-home-startup-cover')) {
+      return;
+    }
+
+    cover = document.createElement('div');
+    cover.id = 'mbc-home-startup-cover';
+    cover.setAttribute('aria-hidden', 'true');
+    cover.style.position = 'fixed';
+    cover.style.inset = '0';
+    cover.style.zIndex = '2147483647';
+    cover.style.background = '#0d0d0d';
+    cover.style.opacity = '1';
+    cover.style.pointerEvents = 'none';
+    cover.style.transition = 'opacity 220ms ease';
+
+    (document.body || document.documentElement).appendChild(cover);
+  }
+
+  function releaseInitialHomeCover() {
+    var cover = document.getElementById('mbc-home-startup-cover');
+
+    if (!cover) return;
+
+    cover.style.opacity = '0';
+
+    setTimeout(function () {
+      if (cover.parentNode) {
+        cover.parentNode.removeChild(cover);
+      }
+    }, 260);
+  }
+
   function bindSharedFeatures() {
     if (MBC.features.mobileNav) {
       var mobileCleanup = MBC.features.mobileNav.init();
@@ -424,5 +473,6 @@
   });
 
   // Start Barba
+  ensureInitialHomeCover();
   initBarba();
 })();

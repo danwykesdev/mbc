@@ -9,6 +9,20 @@
     var container = ctx.container;
     var cleanups = [];
 
+    function releaseStartupCover() {
+      var cover = document.getElementById('mbc-home-startup-cover');
+
+      if (!cover) return;
+
+      cover.style.opacity = '0';
+
+      setTimeout(function () {
+        if (cover.parentNode) {
+          cover.parentNode.removeChild(cover);
+        }
+      }, 260);
+    }
+
     function prepareHeroEntryState() {
       if (typeof gsap === 'undefined') return;
 
@@ -119,11 +133,14 @@
     // Hero animation
     if (MBC.features.hero) {
       prepareHeroEntryState();
+      releaseStartupCover();
 
       var heroCleanup = MBC.features.hero.init(container);
       if (typeof heroCleanup === 'function') {
         cleanups.push(heroCleanup);
       }
+    } else {
+      releaseStartupCover();
     }
 
     // Custom tabs

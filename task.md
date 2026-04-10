@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-10 22:10 BST
+Last updated: 2026-04-10 22:16 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -14,6 +14,7 @@ Last updated: 2026-04-10 22:10 BST
 - Report: nav is visible first, then animates
 - Notes:
   - added pre-hide in `main.js` before Home entry mount and in `pages/home.js` immediately before hero init
+  - added a temporary first-load startup cover so the initial Home paint stays masked until hero init begins
   - `features/hero.js` still owns the reveal animation timing
 - Verification needed:
   - initial page load on Home
@@ -56,3 +57,4 @@ Last updated: 2026-04-10 22:10 BST
 ## Change log
 - 2026-04-10: created task log and recorded current known issues from runtime review
 - 2026-04-10: added nav pre-hide, stronger Vimeo modal/background handling, and stronger Webflow/IX refresh passes; all remain unverified until browser testing passes
+- 2026-04-10: added a Home-only startup cover to hide the first-load delay before the hero animation begins
