@@ -29,6 +29,9 @@
   // Set to false once QA is done
   const DEBUG_HOME = true;
 
+  // Isolation mode to stabilize home first, then re-enable modules incrementally.
+  const HOME_ISOLATION_MODE = true;
+
   function dlog(label, payload) {
     if (!DEBUG_HOME) return;
     if (payload === undefined) {
@@ -967,7 +970,14 @@
       const tabPanes = container.querySelectorAll(".project__tab-pane");
       const defaultPane = container.querySelector(".projects__default-pane");
 
-      if (!tabsWrapper || !tabLinks.length || !tabPanes.length) return;
+      if (!tabsWrapper || !tabLinks.length || !tabPanes.length) {
+        dlog("home:tabs-hover:missing", {
+          tabsWrapper: !!tabsWrapper,
+          tabLinks: tabLinks.length,
+          tabPanes: tabPanes.length
+        });
+        return;
+      }
 
       let activeTl = null;
 
@@ -991,6 +1001,12 @@
           }
         );
       }
+
+      dlog("home:tabs-hover:bound", {
+        tabLinks: tabLinks.length,
+        tabPanes: tabPanes.length,
+        hasDefaultPane: !!defaultPane
+      });
 
       tabLinks.forEach((link, index) => {
         const handler = () => {
@@ -2154,6 +2170,11 @@
   async function mountNamespace(namespace, container, token, { isFirstLoad = false } = {}) {
     const ns = String(namespace || "").toLowerCase();
 
+    if (HOME_ISOLATION_MODE && !isHomeNS(ns)) {
+      dlog("isolation:skip-namespace", ns);
+      return;
+    }
+
     switch (ns) {
     case "home": {
       dlog("home:mount:start", { isFirstLoad, token });
@@ -2628,16 +2649,18 @@
           await mountPage(data, { isFirstLoad: true });
           await waitForLayout();
 
-          if (isProjectsNS(ns)) {
-            await runVisibleWebflowPass({ withIX: true });
-          } else if (ns === "about") {
-            await runVisibleWebflowPass({ withIX: true });
-          } else if (!isHomeNS(ns)) {
-            refreshIXOnly();
-          }
+          if (!HOME_ISOLATION_MODE) {
+            if (isProjectsNS(ns)) {
+              await runVisibleWebflowPass({ withIX: true });
+            } else if (ns === "about") {
+              await runVisibleWebflowPass({ withIX: true });
+            } else if (!isHomeNS(ns)) {
+              refreshIXOnly();
+            }
 
-          if (!isHomeNS(ns)) {
-            playNavAndRevealIntro(data.next.container, { isFirstLoad: true });
+            if (!isHomeNS(ns)) {
+              playNavAndRevealIntro(data.next.container, { isFirstLoad: true });
+            }
           }
 
           if (isProjectDetailNS(ns)) {
@@ -2738,10 +2761,12 @@
 
           await waitForLayout();
 
-          if (isProjects || isAbout) {
-            await runVisibleWebflowPass({ withIX: true });
-          } else if (!isHome) {
-            refreshIXOnly();
+          if (!HOME_ISOLATION_MODE) {
+            if (isProjects || isAbout) {
+              await runVisibleWebflowPass({ withIX: true });
+            } else if (!isHome) {
+              refreshIXOnly();
+            }
           }
 
           if (isProjectDetail) {
@@ -2752,7 +2777,7 @@
           lenis?.resize?.();
           lenis?.start?.();
 
-          if (!isHome) {
+          if (!HOME_ISOLATION_MODE && !isHome) {
             playNavAndRevealIntro(data.next.container, { isFirstLoad: false });
           }
 
