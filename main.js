@@ -6,8 +6,20 @@
   if (window.__MBC_APP_ACTIVE) return;
   window.__MBC_APP_ACTIVE = true;
 
-  // Set module base path (adjust based on your Webflow asset structure)
-  window.MBC.loader.setBasePath('/js');
+  // Set module base path
+  // Auto-detect jsDelivr vs local hosting
+  var isJsDelivr = typeof document !== 'undefined' &&
+    document.currentScript &&
+    document.currentScript.src &&
+    document.currentScript.src.indexOf('jsdelivr.net') !== -1;
+
+  if (isJsDelivr) {
+    // jsDelivr serves files at repo root
+    window.MBC.loader.setBasePath('https://cdn.jsdelivr.net/gh/danwykesdev/mbc@main');
+  } else {
+    // Local/Webflow hosting - adjust as needed
+    window.MBC.loader.setBasePath('/js');
+  }
 
   var MBC = window.MBC;
 
