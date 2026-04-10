@@ -41,8 +41,13 @@
 
   // External scripts that may be loaded dynamically
   var EXTERNAL_SCRIPTS = {
-    'finsweet-attributes': 'https://cdn.jsdelivr.net/npm/@finsweet/attributes@2.0.11/dist/attributes.js'
+    'finsweet-attributes': 'https://cdn.jsdelivr.net/npm/@finsweet/attributes@2.0.11/dist/attributes.js',
+    'finsweet-modal': 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-modal@1/modal.js',
+    'vimeo-player': 'https://player.vimeo.com/api/player.js'
   };
+
+  // Track which external scripts are loaded
+  var loadedExternalScripts = {};
 
   /**
    * Set the base path for loading modules
@@ -94,15 +99,47 @@
   }
 
   /**
-   * Load external script (like Finsweet Attributes)
+   * Load external script (like Finsweet Attributes, Vimeo)
    */
   function loadExternalScript(name, url) {
-    if (loadedModules['external:' + name]) {
+    if (loadedExternalScripts[name]) {
       return Promise.resolve();
     }
 
-    return loadScript(url).then(function () {
-      loadedModules['external:' + name] = true;
+    if (loadingPromises['external:' + name]) {
+      return loadingPromises['external:' + name];
+    }
+
+    var promise = loadScript(url).then(function () {
+      loadedExternalScripts[name] = true;
+      delete loadingPromises['external:' + name];
+    });
+
+    loadingPromises['external:' + name] = promise;
+    return promise;
+  }
+
+  /**
+   * Wait for an external script to be available (window global)
+   */
+  function waitForExternalScript(name, windowGlobal, timeout) {
+    timeout = timeout || 5000;
+    var start = performance.now();
+
+    return new Promise(function (resolve) {
+      function check() {
+        if (window[windowGlobal]) {
+          resolve(true);
+          return;
+        }
+        if (performance.now() - start > timeout) {
+          console.warn('[MBC] Timeout waiting for:', name);
+          resolve(false);
+          return;
+        }
+        setTimeout(check, 50);
+      }
+      check();
     });
   }
 
@@ -214,20 +251,38 @@
     // 2. Get page module for namespace
     var pageModule = getPageModule(namespace);
 
-    // 3. Collect all modules to load
+    // 3. Detect external script needs
+    var needsFinsweetModal = hasDomFeature(container, '[fs-modal-element]');
+    var needsVimeo = hasDomFeature(container, '#videoLoad, #video, [data-vimeo-id], [data-modal-video]');
+    var needsFinsweetList = hasDomFeature(container, '[fs-list-element], [fs-slider-element], [fs-filter-element]');
+    var needsFinsweet = needsFinsweetModal || needsFinsweetList;
+
+    // 4. Collect all modules to load
     var modulesToLoad = ['core/state', 'core/utils', 'core/cleanup', 'core/registry', 'core/webflow', 'core/lifecycle'];
     modulesToLoad = modulesToLoad.concat(features);
     if (pageModule) {
       modulesToLoad.push(pageModule);
     }
 
-    // 4. Check for Finsweet features
-    var needsFinsweet = hasDomFeature(container, '[fs-list-element], [fs-modal-element], [fs-slider-element], [fs-filter-element]');
-
-    // 5. Load all modules
+    // 5. Load external scripts first (so they're available for modules)
     var promise = Promise.resolve();
-    var loaded = [];
 
+    // Load Vimeo player if needed
+    if (needsVimeo) {
+      promise = promise.then(function () {
+        return loadExternalScript('vimeo-player', EXTERNAL_SCRIPTS['vimeo-player']);
+      });
+    }
+
+    // Load Finsweet modal if needed (standalone modal script)
+    if (needsFinsweetModal) {
+      promise = promise.then(function () {
+        return loadExternalScript('finsweet-modal', EXTERNAL_SCRIPTS['finsweet-modal']);
+      });
+    }
+
+    // 6. Load all modules
+    var loaded = [];
     modulesToLoad.forEach(function (moduleId) {
       if (loaded.indexOf(moduleId) !== -1) return;
       loaded.push(moduleId);
@@ -237,7 +292,7 @@
       });
     });
 
-    // 6. Load Finsweet if needed
+    // 7. Load Finsweet Attributes if needed (list/filter/slider)
     if (needsFinsweet) {
       promise = promise.then(function () {
         return loadExternalScript('finsweet-attributes', EXTERNAL_SCRIPTS['finsweet-attributes']);
@@ -251,7 +306,9 @@
       return {
         features: features,
         pageModule: pageModule,
-        hasFinsweet: needsFinsweet
+        hasFinsweet: needsFinsweet,
+        hasFinsweetModal: needsFinsweetModal,
+        hasVimeo: needsVimeo
       };
     });
   }
@@ -272,12 +329,21 @@
     }));
   }
 
+  /**
+   * Check if external script is loaded
+   */
+  function isExternalScriptLoaded(name) {
+    return !!loadedExternalScripts[name];
+  }
+
   // Export loader API
   MBC.loader = {
     setBasePath: setBasePath,
     loadModule: loadModule,
     loadForPage: loadForPage,
     loadExternalScript: loadExternalScript,
+    waitForExternalScript: waitForExternalScript,
+    isExternalScriptLoaded: isExternalScriptLoaded,
     detectFeatures: detectFeatures,
     getPageModule: getPageModule,
     isLoaded: isLoaded,
