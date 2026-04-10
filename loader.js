@@ -33,6 +33,7 @@
     'pages/projects': { src: 'pages/projects.js', deps: ['features/lenis', 'features/nav', 'features/horizontal-scroll', 'features/finsweet'], namespace: 'projects' },
     'pages/project-detail': { src: 'pages/project-detail.js', deps: ['features/lenis', 'features/nav', 'features/videos', 'features/finsweet'], namespace: 'project-detail' },
     'pages/about': { src: 'pages/about.js', deps: ['features/lenis', 'features/nav', 'features/videos'], namespace: 'about' },
+    'pages/zine': { src: 'pages/zine.js', deps: ['features/lenis', 'features/nav'], namespace: 'zine' },
     'pages/default': { src: 'pages/default.js', deps: ['features/lenis', 'features/nav', 'features/videos'], namespace: 'default' }
   };
 

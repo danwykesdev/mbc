@@ -24,6 +24,7 @@ import './pages/home.js';
 import './pages/projects.js';
 import './pages/project-detail.js';
 import './pages/about.js';
+import './pages/zine.js';
 import './pages/default.js';
 
 import './main.js';
