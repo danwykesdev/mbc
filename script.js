@@ -962,104 +962,253 @@
   }
 
   function initTabHoverAnimation(container) {
-    const mm = gsap.matchMedia();
+    const root = container.querySelector(".project_component");
+    if (!root) {
+      dlog("home:tabs:root-missing");
+      return;
+    }
 
-    mm.add("(min-width: 992px)", () => {
-      const tabsWrapper = container.querySelector(".w-tabs");
-      const tabLinks = container.querySelectorAll(".project__link");
-      const tabPanes = container.querySelectorAll(".project__tab-pane");
-      const defaultPane = container.querySelector(".projects__default-pane");
+    if (typeof root.__mbcTabsCleanup === "function") {
+      root.__mbcTabsCleanup();
+      root.__mbcTabsCleanup = null;
+    }
 
-      if (!tabsWrapper || !tabLinks.length || !tabPanes.length) {
-        dlog("home:tabs-hover:missing", {
-          tabsWrapper: !!tabsWrapper,
-          tabLinks: tabLinks.length,
-          tabPanes: tabPanes.length
+    const tabs = Array.from(root.querySelectorAll(".project__link"));
+    const panes = Array.from(root.querySelectorAll(".project__tab-pane"));
+
+    if (!tabs.length || !panes.length) {
+      dlog("home:tabs:missing", { tabs: tabs.length, panes: panes.length });
+      return;
+    }
+
+    let activeName =
+      tabs.find((t) => t.classList.contains("w--current"))?.getAttribute("data-w-tab") ||
+      tabs[0]?.getAttribute("data-w-tab") ||
+      "event-production";
+
+    const cleanups = [];
+    let timers = [];
+
+    function addCleanup(fn) {
+      cleanups.push(fn);
+    }
+
+    function on(el, evt, fn, opts) {
+      el.addEventListener(evt, fn, opts);
+      addCleanup(() => el.removeEventListener(evt, fn, opts));
+    }
+
+    function clearTimers() {
+      timers.forEach(clearTimeout);
+      timers = [];
+    }
+
+    function later(fn, delay) {
+      const id = setTimeout(fn, delay);
+      timers.push(id);
+    }
+
+    function getPane(name) {
+      return panes.find((p) => p.getAttribute("data-w-tab") === name);
+    }
+
+    function getList(pane, name) {
+      if (!pane) return null;
+      return pane.querySelector(`.project_url-list[data-projects="${name}"]`);
+    }
+
+    function getTextItems(list) {
+      if (!list) return [];
+      return Array.from(
+        list.querySelectorAll(".service-item-mask > a, .service-item-mask > .w-inline-block")
+      );
+    }
+
+    function resetAll() {
+      tabs.forEach((tab) => {
+        tab.classList.remove("is-active", "w--current");
+        tab.setAttribute("aria-selected", "false");
+        tab.setAttribute("tabindex", "-1");
+      });
+
+      panes.forEach((pane) => {
+        pane.classList.remove("is-active", "w--tab-active");
+        pane.style.display = "none";
+        pane.style.opacity = "0";
+        pane.style.visibility = "hidden";
+
+        pane.querySelectorAll(".images_grid-item").forEach((el) => {
+          el.classList.remove("is-visible");
+          el.style.visibility = "";
+          el.style.opacity = "";
         });
-        return;
+
+        pane.querySelectorAll(".project_url-list").forEach((list) => {
+          list.classList.remove("is-active");
+          list.style.display = "none";
+          list.style.opacity = "";
+          list.style.visibility = "";
+
+          getTextItems(list).forEach((el) => {
+            el.classList.remove("is-visible", "is-hiding");
+            el.style.visibility = "";
+          });
+        });
+      });
+    }
+
+    function keepCurrentVisible() {
+      clearTimers();
+
+      const tab = tabs.find((t) => t.getAttribute("data-w-tab") === activeName);
+      const pane = getPane(activeName);
+      const list = getList(pane, activeName);
+
+      if (!tab || !pane) return;
+
+      tab.classList.add("is-active", "w--current");
+      tab.setAttribute("aria-selected", "true");
+      tab.removeAttribute("tabindex");
+
+      pane.classList.add("is-active", "w--tab-active");
+      pane.style.display = window.innerWidth <= 992 ? "flex" : "block";
+      pane.style.opacity = "1";
+      pane.style.visibility = "visible";
+
+      if (list) {
+        list.classList.add("is-active");
+        list.style.display = "flex";
+        list.style.opacity = "1";
+        list.style.visibility = "visible";
       }
 
-      let activeTl = null;
+      pane.querySelectorAll(".images_grid-item").forEach((el) => {
+        el.classList.add("is-visible");
+        el.style.visibility = "visible";
+        if (activeName === "event-production") el.style.opacity = "1";
+      });
 
-      function showDefaultPane() {
-        activeTl?.kill();
-
-        if (!defaultPane) return;
-
-        gsap.set(defaultPane, { display: "block", autoAlpha: 1 });
-
-        const imgs = defaultPane.querySelectorAll("img");
-        if (!imgs.length) return;
-
-        activeTl = gsap.fromTo(
-          imgs, { autoAlpha: 0, y: 12 },
-          {
-            autoAlpha: 1,
-            y: 0,
-            duration: 0.45,
-            stagger: 0.06
-          }
-        );
+      if (list) {
+        getTextItems(list).forEach((el) => {
+          el.classList.add("is-visible");
+          el.style.visibility = "visible";
+        });
       }
 
-      dlog("home:tabs-hover:bound", {
-        tabLinks: tabLinks.length,
-        tabPanes: tabPanes.length,
-        hasDefaultPane: !!defaultPane
+      dlog("home:tabs:keep-current", { activeName });
+    }
+
+    function animateTextItems(list) {
+      const textItems = getTextItems(list);
+      const textStart = 120;
+      const textDelays = [0, 35, 75, 125, 185];
+
+      textItems.forEach((item, index) => {
+        item.classList.remove("is-visible");
+        item.style.visibility = "visible";
+
+        later(() => {
+          item.classList.add("is-visible");
+        }, textStart + (textDelays[index] || index * 55));
+      });
+    }
+
+    function activate(name) {
+      if (!name || name === activeName) return;
+
+      clearTimers();
+      resetAll();
+
+      const tab = tabs.find((t) => t.getAttribute("data-w-tab") === name);
+      const pane = getPane(name);
+      const list = getList(pane, name);
+
+      if (!tab || !pane) return;
+
+      tab.classList.add("is-active", "w--current");
+      tab.setAttribute("aria-selected", "true");
+      tab.removeAttribute("tabindex");
+
+      pane.classList.add("is-active", "w--tab-active");
+      pane.style.display = window.innerWidth <= 992 ? "flex" : "block";
+      pane.style.opacity = "1";
+      pane.style.visibility = "visible";
+
+      if (list) {
+        list.classList.add("is-active");
+        list.style.display = "flex";
+        list.style.opacity = "1";
+        list.style.visibility = "visible";
+      }
+
+      const images = Array.from(pane.querySelectorAll(".images_grid-item"));
+      const imageDelays = [0, 45, 105];
+
+      images.forEach((img, index) => {
+        img.style.visibility = "visible";
+
+        if (name === "event-production") {
+          img.style.opacity = "1";
+        }
+
+        later(() => {
+          img.classList.add("is-visible");
+        }, imageDelays[index] || index * 60);
       });
 
-      tabLinks.forEach((link, index) => {
-        const handler = () => {
-          const pane = tabPanes[index];
-          if (!pane) return;
+      if (list) {
+        animateTextItems(list);
+      }
 
-          if (defaultPane) gsap.set(defaultPane, { display: "none", autoAlpha: 0 });
+      activeName = name;
+      dlog("home:tabs:activate", { activeName });
+    }
 
-          const images = pane.querySelectorAll("img");
-          const textLinks = pane.querySelectorAll(".is-link");
+    tabs.forEach((tab) => {
+      const name = tab.getAttribute("data-w-tab");
 
-          activeTl?.kill();
-          activeTl = gsap.timeline({ defaults: { ease: "power2.out" } });
+      const onEnter = () => {
+        if (window.innerWidth < 992) return;
+        activate(name);
+      };
 
-          if (images.length) {
-            activeTl.fromTo(
-              images, { autoAlpha: 0, y: 12 },
-              {
-                autoAlpha: 1,
-                y: 0,
-                duration: 0.45,
-                stagger: 0.06
-              },
-              0
-            );
-          }
+      const onClick = (e) => {
+        e.preventDefault();
+        activate(name);
+      };
 
-          if (textLinks.length) {
-            activeTl.fromTo(
-              textLinks, { autoAlpha: 0, y: 10 },
-              {
-                autoAlpha: 1,
-                y: 0,
-                duration: 0.35,
-                stagger: 0.04
-              },
-              0.05
-            );
-          }
-        };
-
-        link.addEventListener("mouseenter", handler);
-        registerCleanup(() => link.removeEventListener("mouseenter", handler));
-      });
-
-      const leaveHandler = () => showDefaultPane();
-      tabsWrapper.addEventListener("mouseleave", leaveHandler);
-      registerCleanup(() => tabsWrapper.removeEventListener("mouseleave", leaveHandler));
-
-      showDefaultPane();
+      on(tab, "mouseenter", onEnter);
+      on(tab, "click", onClick);
     });
 
-    registerCleanup(() => mm.revert());
+    const onLeave = () => {
+      if (window.innerWidth < 992) return;
+      keepCurrentVisible();
+    };
+
+    on(root, "mouseleave", onLeave);
+
+    resetAll();
+    activeName = "event-production";
+    keepCurrentVisible();
+
+    dlog("home:tabs:bound", { tabs: tabs.length, panes: panes.length, activeName });
+
+    root.__mbcTabsCleanup = () => {
+      clearTimers();
+      cleanups.forEach((fn) => {
+        try {
+          fn();
+        } catch (_) {}
+      });
+      root.__mbcTabsCleanup = null;
+    };
+
+    registerCleanup(() => {
+      if (typeof root.__mbcTabsCleanup === "function") {
+        root.__mbcTabsCleanup();
+      }
+    });
   }
 
   function initHorizontalScrolling(container) {
