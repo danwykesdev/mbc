@@ -79,17 +79,19 @@
       MBC.features.nav.setState({ theme: 'light', bg: 'none', blur: false });
     }
 
-    // Finsweet components
-    if (MBC.features.finsweet) {
-      await MBC.features.finsweet.init(container, { modules: ['modal'] });
-    }
-
-    // Videos
+    // Videos init BEFORE Finsweet — video init replaces #video element
+    // with a stableWrapper, so this must happen before Finsweet binds
+    // its modal open/close handlers to the DOM
     if (MBC.features.videos) {
       var videoCleanup = MBC.features.videos.initStandalone({ container: container });
       if (typeof videoCleanup === 'function') {
         cleanups.push(videoCleanup);
       }
+    }
+
+    // Finsweet modal AFTER video DOM is stable
+    if (MBC.features.finsweet) {
+      await MBC.features.finsweet.init(container, { modules: ['modal'] });
     }
 
     // Scroll-triggered animations
