@@ -277,6 +277,9 @@
       return;
     }
 
+    var initialOnceHandled = false;
+    var initialAfterEnterSkipped = false;
+
     barba.hooks.beforeEnter(function (data) {
       if (isHomeNamespace(data && data.next ? data.next.namespace : 'default')) {
         prepareHomeHeroState();
@@ -316,6 +319,12 @@
     });
 
     barba.hooks.afterEnter(function (data) {
+      if (initialOnceHandled && !initialAfterEnterSkipped) {
+        initialAfterEnterSkipped = true;
+        pendingPageLoad = null;
+        return Promise.resolve();
+      }
+
       var namespace = data.next.namespace || 'default';
       var container = data.next.container;
 
@@ -350,6 +359,8 @@
         once: function (data) {
           var namespace = data.next.namespace || 'default';
           var container = data.next.container;
+
+          initialOnceHandled = true;
 
           if (isHomeNamespace(namespace)) {
             prepareHomeHeroState();

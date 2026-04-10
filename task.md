@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-10 23:06 BST
+Last updated: 2026-04-10 23:12 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -18,6 +18,8 @@ Last updated: 2026-04-10 23:06 BST
   - deferred noncritical Home modules so the hero animation does not wait for videos, Finsweet, tabs, or horizontal-scroll on first paint
   - added a hard fallback release for the startup cover so Home never stays black while long network tasks continue
   - added a bundled production runtime path so Home no longer depends on a multi-request internal module waterfall in production
+  - fixed the runtime bundle flag so bundled production starts with bundled mode enabled before the loader runs
+  - skipped the duplicate first-load `afterEnter` path so Home no longer mounts twice on initial load
   - `features/hero.js` still owns the reveal animation timing
 - Verification needed:
   - initial page load on Home
@@ -67,3 +69,4 @@ Last updated: 2026-04-10 23:06 BST
 - 2026-04-10: added a timeout/DOMContentLoaded fallback so the Home startup cover releases even if full mount is still waiting on slower work
 - 2026-04-10: added a bundled production runtime build (`dist/mbc.runtime.js`) so the modular source can ship as a single production file
 - 2026-04-10: added `[MBC Trace]` console timings around key awaited loader, lifecycle, Home, and Finsweet operations for runtime diagnosis
+- 2026-04-10: fixed bundled-mode startup ordering and skipped duplicate initial `afterEnter` mounting based on trace output
