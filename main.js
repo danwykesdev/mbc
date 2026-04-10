@@ -11,20 +11,50 @@
   if (window.__MBC_APP_ACTIVE) return;
   window.__MBC_APP_ACTIVE = true;
 
+  function getEntryScriptSrc() {
+    var currentScript = document.currentScript;
+    var scripts;
+    var i;
+
+    if (currentScript && currentScript.src) {
+      return currentScript.src;
+    }
+
+    scripts = document.getElementsByTagName('script');
+    for (i = scripts.length - 1; i >= 0; i -= 1) {
+      if (scripts[i] && scripts[i].src && /(^|\/)main\.js(?:\?.*)?$/.test(scripts[i].src)) {
+        return scripts[i].src;
+      }
+    }
+
+    return '';
+  }
+
+  function resolveProductionBasePath(scriptSrc) {
+    var normalizedSrc = String(scriptSrc || '').split('?')[0];
+    var jsDelivrMatch = normalizedSrc.match(/^(https:\/\/cdn\.jsdelivr\.net\/gh\/[^@]+@[^/]+)/i);
+
+    if (jsDelivrMatch) {
+      return jsDelivrMatch[1];
+    }
+
+    return 'https://cdn.jsdelivr.net/gh/danwykesdev/mbc@main';
+  }
+
   // Environment detection
   var env = window.MBC_ENV || 'auto';
+  var entryScriptSrc = getEntryScriptSrc();
 
   if (env === 'auto') {
-    var scriptSrc = document.currentScript && document.currentScript.src || '';
-    env = scriptSrc.indexOf('jsdelivr.net') !== -1 ? 'production' :
-         (scriptSrc.indexOf('localhost') !== -1 ? 'local' : 'production');
+    env = entryScriptSrc.indexOf('jsdelivr.net') !== -1 ? 'production' :
+         (entryScriptSrc.indexOf('localhost') !== -1 ? 'local' : 'production');
   }
 
   var localBaseUrl = window.MBC_LOCAL_BASE_URL || '';
   var localPort = window.MBC_LOCAL_PORT || '5500';
   var resolvedBasePath = env === 'local'
     ? (localBaseUrl || ('http://localhost:' + localPort))
-    : 'https://cdn.jsdelivr.net/gh/danwykesdev/mbc@main';
+    : resolveProductionBasePath(entryScriptSrc);
 
   // Set module base path based on environment
   window.MBC.loader.setBasePath(resolvedBasePath);
@@ -60,18 +90,34 @@
     }
   }
 
+  function addPageCleanup(fn) {
+    var cleanupApi;
+    var addFn;
+
+    if (typeof fn !== 'function' || !MBC.core || !MBC.core.cleanup) {
+      return;
+    }
+
+    cleanupApi = MBC.core.cleanup;
+    addFn = typeof cleanupApi.addPage === 'function' ? cleanupApi.addPage : cleanupApi.add;
+
+    if (typeof addFn === 'function') {
+      addFn(fn);
+    }
+  }
+
   function bindSharedFeatures() {
     if (MBC.features.mobileNav) {
       var mobileCleanup = MBC.features.mobileNav.init();
       if (typeof mobileCleanup === 'function') {
-        MBC.core.cleanup.addPage(mobileCleanup);
+        addPageCleanup(mobileCleanup);
       }
     }
 
     if (MBC.features.scrollDirection) {
       var scrollCleanup = MBC.features.scrollDirection.init();
       if (typeof scrollCleanup === 'function') {
-        MBC.core.cleanup.addPage(scrollCleanup);
+        addPageCleanup(scrollCleanup);
       }
     }
   }
@@ -133,7 +179,7 @@
           forceScrollExcludeSelector: result.namespace === 'home' ? '.hero-animate, [data-hero]' : null
         });
         if (typeof loadAnimationCleanup === 'function') {
-          MBC.core.cleanup.addPage(loadAnimationCleanup);
+          addPageCleanup(loadAnimationCleanup);
         }
       }
 

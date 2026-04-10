@@ -61,7 +61,7 @@
     });
 
     if (typeof pageCleanup === "function") {
-      MBC.core.cleanup.add(pageCleanup);
+      addPageCleanup(pageCleanup);
     }
 
     state.currentPageModule = pageModule;
@@ -78,6 +78,23 @@
       webflowTier: tier,
       isFirstLoad: !!options.isFirstLoad
     };
+  }
+
+  function addPageCleanup(fn) {
+    var cleanupApi = MBC.core && MBC.core.cleanup;
+
+    if (typeof fn !== "function" || !cleanupApi) {
+      return;
+    }
+
+    if (typeof cleanupApi.addPage === "function") {
+      cleanupApi.addPage(fn);
+      return;
+    }
+
+    if (typeof cleanupApi.add === "function") {
+      cleanupApi.add(fn);
+    }
   }
 
   MBC.core.lifecycle = {
