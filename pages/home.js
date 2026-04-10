@@ -269,7 +269,7 @@
   }
 
   var moduleDef = {
-    webflowTier: 'full',
+    webflowTier: 'light',
     mount: mount,
     unmount: unmount
   };

@@ -403,7 +403,7 @@
 
       gsap.to(current, {
         autoAlpha: 0,
-        duration: 0.24,
+        duration: 0.12,
         ease: 'power2.out',
         onComplete: resolve
       });
@@ -432,7 +432,7 @@
         autoAlpha: 0
       }, {
         autoAlpha: 1,
-        duration: 0.28,
+        duration: 0.15,
         ease: 'power2.out',
         clearProps: 'opacity,visibility',
         onComplete: resolve
