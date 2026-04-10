@@ -292,8 +292,8 @@
     // 3. Detect external script needs
     var needsFinsweetModal = hasDomFeature(container, '[fs-modal-element]') || hasDomFeature(document, '[fs-modal-element]');
     var needsVimeo = hasDomFeature(container, '#videoLoad, #video, [data-video], [data-vimeo-id], [data-modal-video]') || hasDomFeature(document, '#videoLoad, #video, [data-video], [data-vimeo-id], [data-modal-video]');
-    var needsFinsweetList = hasDomFeature(container, '[fs-list-element], [fs-slider-element], [fs-filter-element]') || hasDomFeature(document, '[fs-list-element], [fs-slider-element], [fs-filter-element]');
-    var needsFinsweet = needsFinsweetModal || needsFinsweetList;
+    var needsFinsweetAttributes = hasDomFeature(container, '[fs-list-element], [fs-slider-element], [fs-filter-element]') || hasDomFeature(document, '[fs-list-element], [fs-slider-element], [fs-filter-element]');
+    var needsFinsweet = needsFinsweetModal || needsFinsweetAttributes;
 
     // 4. Collect all modules to load
     var modulesToLoad = ['core/state', 'core/utils', 'core/cleanup', 'core/registry', 'core/webflow', 'core/lifecycle'];
@@ -332,7 +332,7 @@
     });
 
     // 7. Load Finsweet Attributes if needed (list/filter/slider)
-    if (needsFinsweet) {
+    if (needsFinsweetAttributes) {
       promise = promise.then(function () {
         return loadExternalScript('finsweet-attributes', EXTERNAL_SCRIPTS['finsweet-attributes']);
       }).then(function () {
@@ -347,6 +347,7 @@
         pageModule: pageModule,
         hasFinsweet: needsFinsweet,
         hasFinsweetModal: needsFinsweetModal,
+        hasFinsweetAttributes: needsFinsweetAttributes,
         hasVimeo: needsVimeo
       };
     });

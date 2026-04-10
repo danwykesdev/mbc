@@ -29,28 +29,22 @@
     });
   }
 
-  function forceStopPlayer(player) {
-    if (!player) return;
+  function destroyPlayer(player, wrapper) {
+    if (!player) return Promise.resolve();
 
-    if (typeof player.pause === 'function') {
-      player.pause().catch(function () {});
+    if (typeof player.destroy === 'function') {
+      return player.destroy().catch(function () {
+        if (wrapper) {
+          wrapper.innerHTML = '';
+        }
+      });
     }
 
-    if (typeof player.setCurrentTime === 'function') {
-      player.setCurrentTime(0).catch(function () {});
+    if (wrapper) {
+      wrapper.innerHTML = '';
     }
 
-    if (typeof player.setVolume === 'function') {
-      player.setVolume(0).catch(function () {});
-    }
-
-    if (typeof player.setMuted === 'function') {
-      player.setMuted(true).catch(function () {});
-    }
-
-    if (typeof player.unload === 'function') {
-      player.unload().catch(function () {});
-    }
+    return Promise.resolve();
   }
 
   function isModalHidden(modal) {
@@ -138,7 +132,6 @@
     }
 
     setElementVisible(bgTarget || bgVideo);
-    setIframeVisible(bgTarget || bgVideo);
 
     if (player && typeof player.ready === 'function') {
       player.ready().then(function () {
@@ -150,6 +143,8 @@
           });
         }
       }).catch(function () {
+        setElementVisible(bgTarget || bgVideo);
+        setIframeVisible(bgTarget || bgVideo);
       });
     } else if (player && typeof player.play === 'function') {
       player.play().catch(function () {
@@ -180,6 +175,7 @@
     var modalPlayer = null;
     var modalElements = Array.from(container.querySelectorAll('[fs-modal-element="modal"]'));
     var modalObserver = null;
+    var closeToken = 0;
 
     if (!modalElements.length) {
       modalElements = Array.from(document.querySelectorAll('[fs-modal-element="modal"]'));
@@ -205,8 +201,21 @@
 
     if (!openers.length && !closers.length && !stableWrapper) return null;
 
-    function resetPlayerState() {
-      forceStopPlayer(modalPlayer);
+    function destroyModalPlayer() {
+      var currentPlayer = modalPlayer;
+      var currentToken;
+
+      if (!currentPlayer) return;
+
+      modalPlayer = null;
+      currentToken = closeToken + 1;
+      closeToken = currentToken;
+
+      destroyPlayer(currentPlayer, stableWrapper).then(function () {
+        if (stableWrapper && closeToken === currentToken) {
+          stableWrapper.innerHTML = '';
+        }
+      });
     }
 
     function onOpen(e) {
@@ -233,27 +242,27 @@
         }
       }
 
-      if (modalPlayer && typeof modalPlayer.setVolume === 'function') {
-        modalPlayer.setVolume(1).catch(function () {});
-      }
+      if (modalPlayer && typeof modalPlayer.ready === 'function') {
+        modalPlayer.ready().then(function () {
+          if (!modalPlayer) return;
 
-      if (modalPlayer && typeof modalPlayer.setMuted === 'function') {
-        modalPlayer.setMuted(false).catch(function () {});
-      }
+          if (typeof modalPlayer.setVolume === 'function') {
+            modalPlayer.setVolume(1).catch(function () {});
+          }
 
-      if (modalPlayer && typeof modalPlayer.play === 'function') {
-        modalPlayer.play().catch(function () {});
-      }
+          if (typeof modalPlayer.setMuted === 'function') {
+            modalPlayer.setMuted(false).catch(function () {});
+          }
 
-      setTimeout(function () {
-        if (modalPlayer && typeof modalPlayer.play === 'function') {
-          modalPlayer.play().catch(function () {});
-        }
-      }, 120);
+          if (typeof modalPlayer.play === 'function') {
+            modalPlayer.play().catch(function () {});
+          }
+        }).catch(function () {});
+      }
     }
 
     function onClose() {
-      resetPlayerState();
+      destroyModalPlayer();
     }
 
     function onDocumentClick(e) {
@@ -323,12 +332,7 @@
         modalObserver = null;
       }
 
-      resetPlayerState();
-
-      if (modalPlayer && typeof modalPlayer.destroy === 'function') {
-        modalPlayer.destroy().catch(function () {});
-        modalPlayer = null;
-      }
+      destroyModalPlayer();
     };
   }
 

@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-10 22:16 BST
+Last updated: 2026-04-10 22:41 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -24,8 +24,8 @@ Last updated: 2026-04-10 22:16 BST
 - Status: `Investigating`
 - Report: background video area appears hidden
 - Notes:
-  - added forced visibility for the background wrapper and iframe before and after Vimeo ready
-  - added a delayed second visibility pass to cover async iframe rendering
+  - restored the background player flow closer to the original standalone Vimeo setup
+  - kept wrapper and iframe visibility forcing so the player is visible once injected
 - Verification needed:
   - initial Home load
   - after page transitions
@@ -35,8 +35,8 @@ Last updated: 2026-04-10 22:16 BST
 - Status: `Investigating`
 - Report: modal close does not reliably stop audio/video playback
 - Notes:
-  - close handling now also listens for document-level close triggers, Escape, and modal attribute changes via `MutationObserver`
-  - reset now pauses, seeks, mutes, zeroes volume, and unloads the Vimeo player
+  - restored destroy-on-close behavior so the Vimeo iframe is removed entirely when the modal closes
+  - close handling still listens for close buttons, Escape, and modal visibility changes
 - Verification needed:
   - open/close with modal close button
   - open/close by overlay click
@@ -47,7 +47,8 @@ Last updated: 2026-04-10 22:16 BST
 - Report: IX3 interactions break after navigating Home -> Project -> Home
 - Notes:
   - `pages/home.js` now requests `webflowTier: 'full'` on route mount
-  - `core/webflow-manager.js` now runs a stronger two-pass ready/modules/IX refresh with synthetic events for transition returns
+  - removed the synthetic `load` and `readystatechange` dispatches because they were re-registering the same interactions repeatedly
+  - kept a simpler resize-driven Webflow refresh path after the full reset
 - Verification needed:
   - Home initial load
   - Home -> Project
@@ -58,3 +59,4 @@ Last updated: 2026-04-10 22:16 BST
 - 2026-04-10: created task log and recorded current known issues from runtime review
 - 2026-04-10: added nav pre-hide, stronger Vimeo modal/background handling, and stronger Webflow/IX refresh passes; all remain unverified until browser testing passes
 - 2026-04-10: added a Home-only startup cover to hide the first-load delay before the hero animation begins
+- 2026-04-10: restored modal destroy-on-close behavior, simplified Webflow refresh to reduce duplicate IX registrations, and stopped requesting unsupported Finsweet filter loads

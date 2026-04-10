@@ -23,7 +23,7 @@
 
     // Finsweet list component
     if (MBC.features.finsweet) {
-      await MBC.features.finsweet.init(container, { modules: ['list', 'filter'] });
+      await MBC.features.finsweet.init(container, { modules: ['list'] });
     }
 
     return function cleanup() {

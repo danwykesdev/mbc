@@ -79,15 +79,7 @@
     modules.forEach(moduleReady);
   }
 
-  function dispatchSyntheticEvents() {
-    try {
-      document.dispatchEvent(new Event("readystatechange"));
-    } catch (_) {}
-
-    try {
-      window.dispatchEvent(new Event("load"));
-    } catch (_) {}
-
+  function dispatchLayoutEvents() {
     try {
       window.dispatchEvent(new Event("resize"));
     } catch (_) {}
@@ -104,7 +96,7 @@
       initIX();
     }
 
-    dispatchSyntheticEvents();
+    dispatchLayoutEvents();
 
     if (typeof ScrollTrigger !== "undefined") {
       ScrollTrigger.refresh(true);
@@ -135,13 +127,11 @@
     }
 
     await runReadyPass(includeIX);
-    await runReadyPass(includeIX);
   }
 
   async function refreshUI() {
     if (!window.Webflow) return;
 
-    await runReadyPass(true);
     await runReadyPass(true);
   }
 
