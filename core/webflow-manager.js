@@ -126,7 +126,21 @@
       }
     }
 
+    // First pass
     await runReadyPass(includeIX);
+
+    // Second pass — IX3 often needs this to properly bind after DOM settlement
+    if (includeIX) {
+      if (typeof window.Webflow.ready === "function") {
+        window.Webflow.ready();
+      }
+      initIX();
+      dispatchLayoutEvents();
+
+      if (typeof ScrollTrigger !== "undefined") {
+        ScrollTrigger.refresh(true);
+      }
+    }
   }
 
   async function refreshUI() {
