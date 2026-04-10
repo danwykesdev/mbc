@@ -105,12 +105,6 @@
       requestAnimationFrame(() => requestAnimationFrame(resolve))
     );
 
-    if (document.fonts?.ready) {
-      try {
-        await Promise.race([document.fonts.ready, wait(700)]);
-      } catch (_) {}
-    }
-
     await wait(60);
   }
 
@@ -2149,6 +2143,14 @@
       dlog("home:mount:start", { isFirstLoad, token });
       inspectHome(container, "home:pre-ui");
 
+      await forceWebflowRestartSafe(token, "home-pre-hero", {
+        includeReadystatechange: true,
+        includeLoad: true,
+        includeResize: true,
+        secondPass: true
+      });
+      if (isStale(token)) return;
+
       await waitForLayout();
       if (isStale(token)) return;
 
@@ -2166,6 +2168,8 @@
         isFirstLoad ? "home:first-load-final" : "home:enter-final"
       );
       if (isStale(token)) return;
+
+      refreshIXOnly();
 
       requestAnimationFrame(() => {
         if (isStale(token)) return;
