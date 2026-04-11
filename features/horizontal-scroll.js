@@ -39,6 +39,8 @@
     var tween = null;
     var resizeRaf = null;
     var retryTimer = null;
+    var delayedReflowTimer = null;
+    var resizeObserver = null;
     var retryAttempts = 0;
     var maxRetries = 12;
     var cleanedUp = false;
@@ -135,6 +137,20 @@
       }
     }
 
+    function scheduleDelayedReflow(delay) {
+      if (cleanedUp) return;
+
+      if (delayedReflowTimer) {
+        clearTimeout(delayedReflowTimer);
+      }
+
+      delayedReflowTimer = setTimeout(function () {
+        delayedReflowTimer = null;
+        if (cleanedUp) return;
+        reflow();
+      }, delay);
+    }
+
     var onResize = function () {
       if (cleanedUp) return;
       if (resizeRaf) {
@@ -148,11 +164,33 @@
 
     var onWindowLoad = function () {
       reflow();
+      scheduleDelayedReflow(2000);
     };
 
     window.addEventListener('resize', onResize, { passive: true });
     window.addEventListener('load', onWindowLoad, { once: true });
+
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(function () {
+        if (cleanedUp) return;
+        if (resizeRaf) {
+          cancelAnimationFrame(resizeRaf);
+        }
+        resizeRaf = requestAnimationFrame(function () {
+          resizeRaf = null;
+          reflow();
+        });
+      });
+
+      resizeObserver.observe(wrap);
+      panels.forEach(function (panel) {
+        resizeObserver.observe(panel);
+      });
+    }
+
     reflow();
+    scheduleDelayedReflow(700);
+    scheduleDelayedReflow(2000);
 
     var api = {
       reflow: reflow,
@@ -169,9 +207,19 @@
         retryTimer = null;
       }
 
+      if (delayedReflowTimer) {
+        clearTimeout(delayedReflowTimer);
+        delayedReflowTimer = null;
+      }
+
       if (resizeRaf) {
         cancelAnimationFrame(resizeRaf);
         resizeRaf = null;
+      }
+
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+        resizeObserver = null;
       }
 
       window.removeEventListener('resize', onResize);
