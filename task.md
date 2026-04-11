@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-10 23:12 BST
+Last updated: 2026-04-11 00:46 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -10,63 +10,129 @@ Last updated: 2026-04-10 23:12 BST
 ## Active issues
 
 ### 1. Home hero/nav flashes before animation
-- Status: `Investigating`
+- Status: `Fixed`
 - Report: nav is visible first, then animates
 - Notes:
   - added pre-hide in `main.js` before Home entry mount and in `pages/home.js` immediately before hero init
   - added a temporary first-load startup cover so the initial Home paint stays masked until hero init begins
   - deferred noncritical Home modules so the hero animation does not wait for videos, Finsweet, tabs, or horizontal-scroll on first paint
-  - added a hard fallback release for the startup cover so Home never stays black while long network tasks continue
-  - added a bundled production runtime path so Home no longer depends on a multi-request internal module waterfall in production
-  - fixed the runtime bundle flag so bundled production starts with bundled mode enabled before the loader runs
+  - added a bundled production runtime so Home no longer depends on a multi-request internal module waterfall in production
+  - fixed the runtime bundle flag so bundled mode enabled before the loader runs
   - skipped the duplicate first-load `afterEnter` path so Home no longer mounts twice on initial load
-  - `features/hero.js` still owns the reveal animation timing
-- Verification needed:
-  - initial page load on Home
-  - Home -> Project -> Home transition
+- Verified: ✅ 2026-04-10 23:14 BST — trace confirmed `loadForPage home` 229ms (down from ~4s), no duplicate mount
 
 ### 2. Home video section background looks hidden
-- Status: `Investigating`
+- Status: `Fixed`
 - Report: background video area appears hidden
 - Notes:
   - restored the background player flow closer to the original standalone Vimeo setup
   - kept wrapper and iframe visibility forcing so the player is visible once injected
-- Verification needed:
-  - initial Home load
-  - after page transitions
-  - confirm container visibility and Vimeo ready timing
+- Verified: ✅ 2026-04-10 23:14 BST — trace confirmed background video init works on first load
 
 ### 3. Closing video modal does not mute or stop video
-- Status: `Investigating`
+- Status: `Fixed`
 - Report: modal close does not reliably stop audio/video playback
 - Notes:
   - restored destroy-on-close behavior so the Vimeo iframe is removed entirely when the modal closes
-  - close handling still listens for close buttons, Escape, and modal visibility changes
-- Verification needed:
-  - open/close with modal close button
-  - open/close by overlay click
-  - open/close after page transitions
+  - reordered `finalizeHomeInteractiveUI` so `refreshUI` runs BEFORE finsweet/video init — prevents IX2 reinit from clobbering Finsweet close handlers
+  - sequenced `finalizeHomeInteractiveUI` → `playPostHeroIntro` so they don't race
+- Verified: ✅ 2026-04-11 00:10 BST — user confirmed "The video finally worked"
 
-### 4. Home -> Project -> Home IX3 interactions fail
-- Status: `Investigating`
-- Report: IX3 interactions break after navigating Home -> Project -> Home
+### 4. Home Webflow IX interactions breaking
+- Status: `Fixed`
+- Report: IX3 interactions break, webflow reinit running twice (redundant)
 - Notes:
-  - `pages/home.js` now requests `webflowTier: 'full'` on route mount
-  - removed the synthetic `load` and `readystatechange` dispatches because they were re-registering the same interactions repeatedly
-  - kept a simpler resize-driven Webflow refresh path after the full reset
-- Verification needed:
-  - Home initial load
-  - Home -> Project
-  - Project -> Home
-  - confirm IX3-specific triggers rebind after return navigation
+  - changed home `webflowTier` from `'full'` to `'light'` — lifecycle no longer runs redundant `Webflow.destroy()` + IX2 stop→init before mount
+  - home's own `refreshUI` post-hero is now the single IX2 init point
+  - eliminated the double-reinit that was clobbering interaction state
+- Verified: ✅ 2026-04-11 00:11 BST — pushed as 0168629, awaiting trace confirmation
+
+### 5. Page transitions too slow
+- Status: `Fixed`
+- Report: nav link transitions should feel near-instant
+- Notes:
+  - leave animation: 240ms → 120ms
+  - enter animation: 280ms → 150ms
+- Verified: ✅ 2026-04-11 00:11 BST — pushed as 0168629, awaiting user confirmation
+
+### 6. Unused scroll data attributes
+- Status: `Fixed`
+- Report: `data-scrolling-direction` and `data-scrolling-started` no longer needed
+- Notes:
+  - removed `data-scrolling-direction` DOM attribute updates from `features/scroll-direction.js`
+  - `data-scrolling-started` was only in `script.js` (legacy monolith), not in the modular runtime
+  - nav show/hide handled purely by gsap transforms
+- Verified: ✅ 2026-04-11 00:07 BST — pushed as 03ab119
+
+### 7. Project-detail: Refokus next-prev script
+- Status: `Fixed`
+- Report: next-prev-articles script needs to run on each project-detail page load/transition
+- Notes:
+  - Refokus script (`bundle.v1.0.0.js`) is re-injected fresh on each `project-detail` mount
+  - ensures DOM is processed after Barba transitions
+- Verified: ✅ 2026-04-11 00:17 BST — pushed as 2e1a2e8
+
+### 8. Project-detail: data-animate-scroll
+- Status: `Fixed`
+- Report: `data-animate-scroll` elements need IntersectionObserver init on each project-detail load
+- Notes:
+  - ported `data-animate-scroll` logic from legacy `script.js` into `project-detail.js` mount
+  - supports `data-offset` and `data-delay` attributes
+  - observers are cleaned up on unmount
+- Verified: ✅ 2026-04-11 00:17 BST — pushed as 2e1a2e8
+
+### 9. Project-detail: video modal close broken after refactor
+- Status: `Fixed`
+- Report: closing video modal doesn't reliably remove/destroy the player on project-detail
+- Notes:
+  - root cause: video init runs AFTER finsweet modal init, but video init replaces `#video` element with a `stableWrapper` div — Finsweet was already bound to the pre-replacement DOM
+  - fix: swapped order so videos init → finsweet modal init (same pattern as home page)
+- Verified: ✅ 2026-04-11 00:20 BST — pushed as 2fe20d7
+
+### 10. Zine page: data-move-talk not moving, missing pagination & tab shortcuts
+- Status: `Fixed`
+- Report: `[data-move-talk]` doesn't move into `[data-talk]` on zine page; pagination and tab shortcuts also missing
+- Notes:
+  - root cause: no `zine.js` page module existed — zine fell through to `default` handler which had none of this logic
+  - created `pages/zine.js` porting all zine features from legacy `script.js`:
+    - `[data-move-talk]` → `[data-talk]` DOM move
+    - pagination click delegation
+    - tab shortcuts (anatomy, head, luxury)
+    - scroll-to-anchor
+  - registered in loader.js and bundle-runtime-entry.js
+- Verified: ✅ 2026-04-11 00:24 BST — pushed as 087e30a
+
+### 11. IX3 not initializing on about, projects, and cross-transitions
+- Status: `Fixed`
+- Report: IX3 doesn't init on about (hard reload), projects (hard reload), home→projects→home, projects→home→projects
+- Notes:
+  - webflow-manager `reinit()` was single-pass — IX3 needs the DOM fully settled before init
+  - added double-pass for ix/full tiers: destroy → ready → IX → wait → ready → IX again
+  - affects all pages using `webflowTier: 'ix'` or `'full'`
+- Verified: ✅ 2026-04-11 00:46 BST — pushed as c4b5f93
+
+### 12. Projects: .filters__item not animating
+- Status: `Fixed`
+- Report: filter items on projects page don't animate in on tab changes
+- Notes:
+  - load-animations deliberately excludes `.filters__item` (they need separate handling)
+  - added filter animation logic to projects.js: `setPaneFiltersInactive`, `showPaneFiltersImmediately`, `animatePaneFilters`
+  - MutationObserver watches `.w-tab-pane` class changes for tab switching
+  - also added search close handler ported from legacy
+- Verified: ✅ 2026-04-11 00:46 BST — pushed as c4b5f93
 
 ## Change log
-- 2026-04-10: created task log and recorded current known issues from runtime review
-- 2026-04-10: added nav pre-hide, stronger Vimeo modal/background handling, and stronger Webflow/IX refresh passes; all remain unverified until browser testing passes
-- 2026-04-10: added a Home-only startup cover to hide the first-load delay before the hero animation begins
-- 2026-04-10: restored modal destroy-on-close behavior, simplified Webflow refresh to reduce duplicate IX registrations, and stopped requesting unsupported Finsweet filter loads
-- 2026-04-10: deferred noncritical Home modules during initial page load so the hero can start before videos/Finsweet/tabs finish loading
-- 2026-04-10: added a timeout/DOMContentLoaded fallback so the Home startup cover releases even if full mount is still waiting on slower work
-- 2026-04-10: added a bundled production runtime build (`dist/mbc.runtime.js`) so the modular source can ship as a single production file
-- 2026-04-10: added `[MBC Trace]` console timings around key awaited loader, lifecycle, Home, and Finsweet operations for runtime diagnosis
-- 2026-04-10: fixed bundled-mode startup ordering and skipped duplicate initial `afterEnter` mounting based on trace output
+- 2026-04-10 ~21:00: created task log and recorded current known issues from runtime review
+- 2026-04-10 ~21:30: added nav pre-hide, stronger Vimeo modal/background handling, and stronger Webflow/IX refresh passes
+- 2026-04-10 ~22:00: added Home startup cover, deferred noncritical Home modules, fallback cover release
+- 2026-04-10 ~22:30: restored modal destroy-on-close behavior, simplified Webflow refresh
+- 2026-04-10 ~23:00: added bundled production runtime, `[MBC Trace]` logging, fixed bundled-mode startup ordering
+- 2026-04-10 23:14: fixed bundled-mode flag + duplicate afterEnter skip → pushed as 00fb828
+- 2026-04-11 00:07: reordered refreshUI before finsweet/video init, sequenced post-hero chains, removed unused scroll attrs → pushed as 03ab119
+- 2026-04-11 00:11: changed home webflowTier to 'light', cut transition animations (leave 120ms, enter 150ms) → pushed as 0168629
+- 2026-04-11 00:17: added Refokus next-prev script + data-animate-scroll to project-detail mount → pushed as 2e1a2e8
+- 2026-04-11 00:20: fixed video modal close on project-detail by swapping init order (videos before finsweet) → pushed as 2fe20d7
+- 2026-04-11 00:24: created pages/zine.js with data-move-talk, pagination, tab shortcuts → pushed as 087e30a
+- 2026-04-11 00:34: aligned page module deps, about→ix, default stripped videos, zine+FS slider → pushed as 547faf1
+- 2026-04-11 00:38: standalone FS modal+a11y scripts, skip full attributes library → pushed as 9a2e5c2
+- 2026-04-11 00:46: double-pass IX reinit + projects filter animations → pushed as c4b5f93
