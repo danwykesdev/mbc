@@ -41,9 +41,17 @@
   async function mount(ctx) {
     var container = ctx.container;
     var cleanups = [];
+    var traceAsync = MBC.core && MBC.core.utils && MBC.core.utils.traceAsync
+      ? MBC.core.utils.traceAsync
+      : function (label, promiseFactory) { return Promise.resolve().then(promiseFactory); };
+    var traceSync = MBC.core && MBC.core.utils && MBC.core.utils.traceSync
+      ? MBC.core.utils.traceSync
+      : function (_, fn) { return fn(); };
 
     // FS Slider MUST init before pagination so slider DOM is ready
-    await loadFsSlider();
+    await traceAsync('zine loadFsSlider', function () {
+      return loadFsSlider();
+    });
 
     // Scroll to list anchor
     function scrollToAnchor() {
@@ -127,17 +135,21 @@
       });
     }
 
-    bindTabShortcut('[data="anatomy"]', 'anatomy of an event');
-    bindTabShortcut('[data="head"]', 'head to head');
-    bindTabShortcut('[data="luxury"]', 'luxury in numbers');
+    traceSync('zine bindTabShortcuts', function () {
+      bindTabShortcut('[data="anatomy"]', 'anatomy of an event');
+      bindTabShortcut('[data="head"]', 'head to head');
+      bindTabShortcut('[data="luxury"]', 'luxury in numbers');
+    });
 
     // Move [data-move-talk] into [data-talk]
-    var talkSource = queryOne(container, '[data-move-talk]', true);
-    var talkDest = queryOne(container, '[data-talk]', true);
+    traceSync('zine moveTalkBlock', function () {
+      var talkSource = queryOne(container, '[data-move-talk]', true);
+      var talkDest = queryOne(container, '[data-talk]', true);
 
-    if (talkSource && talkDest && !talkDest.contains(talkSource)) {
-      talkDest.appendChild(talkSource);
-    }
+      if (talkSource && talkDest && !talkDest.contains(talkSource)) {
+        talkDest.appendChild(talkSource);
+      }
+    });
 
     return function cleanup() {
       cleanups.forEach(function (fn) {

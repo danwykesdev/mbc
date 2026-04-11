@@ -5,10 +5,16 @@
   MBC.pages = MBC.pages || {};
 
   async function mount(ctx) {
+    var traceSync = MBC.core && MBC.core.utils && MBC.core.utils.traceSync
+      ? MBC.core.utils.traceSync
+      : function (_, fn) { return fn(); };
+
     // Default/contact — minimal, no videos
-    if (MBC.features.nav) {
-      MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: false });
-    }
+    traceSync('default init', function () {
+      if (MBC.features.nav) {
+        MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: false });
+      }
+    });
 
     return function cleanup() {};
   }

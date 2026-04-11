@@ -9,19 +9,12 @@
     var container = ctx.container;
     var cleanups = [];
     var deferredHomeFeaturesPromise = null;
-
-    function traceAsync(label, promiseFactory) {
-      var start = performance.now();
-      console.log('[MBC Trace] start:', label);
-
-      return Promise.resolve().then(promiseFactory).then(function (result) {
-        console.log('[MBC Trace] done:', label, Math.round(performance.now() - start) + 'ms');
-        return result;
-      }).catch(function (err) {
-        console.log('[MBC Trace] fail:', label, Math.round(performance.now() - start) + 'ms');
-        throw err;
-      });
-    }
+    var traceAsync = MBC.core && MBC.core.utils && MBC.core.utils.traceAsync
+      ? MBC.core.utils.traceAsync
+      : function (label, promiseFactory) { return Promise.resolve().then(promiseFactory); };
+    var traceSync = MBC.core && MBC.core.utils && MBC.core.utils.traceSync
+      ? MBC.core.utils.traceSync
+      : function (_, fn) { return fn(); };
 
     function loadDeferredHomeFeatures() {
       if (deferredHomeFeaturesPromise) {
@@ -165,7 +158,9 @@
       });
 
       if (MBC.features.tabs) {
-        var tabsCleanup = MBC.features.tabs.init(container);
+        var tabsCleanup = traceSync('home tabs.init after hero', function () {
+          return MBC.features.tabs.init(container);
+        });
         if (typeof tabsCleanup === 'function') {
           cleanups.push(tabsCleanup);
         }
@@ -196,10 +191,12 @@
       if (!document.body.contains(container)) return;
 
       if (MBC.features.loadAnimations) {
-        MBC.features.loadAnimations.playIntro(container, {
-          isFirstLoad: !!ctx.isFirstLoad,
-          includeNav: false,
-          excludeSelector: '.hero-animate, [data-hero]'
+        traceSync('home loadAnimations.playIntro', function () {
+          MBC.features.loadAnimations.playIntro(container, {
+            isFirstLoad: !!ctx.isFirstLoad,
+            includeNav: false,
+            excludeSelector: '.hero-animate, [data-hero]'
+          });
         });
       }
 
@@ -227,7 +224,9 @@
       prepareHeroEntryState();
       releaseStartupCover();
 
-      var heroCleanup = MBC.features.hero.init(container);
+      var heroCleanup = traceSync('home hero.init', function () {
+        return MBC.features.hero.init(container);
+      });
       if (typeof heroCleanup === 'function') {
         cleanups.push(heroCleanup);
       }
@@ -237,7 +236,9 @@
 
     // Custom tabs
     if (MBC.features.tabs) {
-      var tabsCleanup = MBC.features.tabs.init(container);
+      var tabsCleanup = traceSync('home tabs.init initial', function () {
+        return MBC.features.tabs.init(container);
+      });
       if (typeof tabsCleanup === 'function') {
         cleanups.push(tabsCleanup);
       }
@@ -245,14 +246,18 @@
 
     // Horizontal scroll section (used on home too)
     if (MBC.features.horizontalScroll) {
-      var hsCleanup = MBC.features.horizontalScroll.init(container);
+      var hsCleanup = traceSync('home horizontalScroll.init', function () {
+        return MBC.features.horizontalScroll.init(container);
+      });
       if (typeof hsCleanup === 'function') {
         cleanups.push(hsCleanup);
       }
     }
 
     if (MBC.features.videos && typeof MBC.features.videos.initBackground === 'function') {
-      var backgroundVideoCleanup = MBC.features.videos.initBackground(container);
+      var backgroundVideoCleanup = traceSync('home videos.initBackground', function () {
+        return MBC.features.videos.initBackground(container);
+      });
       if (typeof backgroundVideoCleanup === 'function') {
         cleanups.push(backgroundVideoCleanup);
       }

@@ -40,8 +40,13 @@
 
   async function mount(ctx) {
     var container = ctx.container;
-    var isFirstLoad = ctx.isFirstLoad;
     var cleanups = [];
+    var traceAsync = MBC.core && MBC.core.utils && MBC.core.utils.traceAsync
+      ? MBC.core.utils.traceAsync
+      : function (label, promiseFactory) { return Promise.resolve().then(promiseFactory); };
+    var traceSync = MBC.core && MBC.core.utils && MBC.core.utils.traceSync
+      ? MBC.core.utils.traceSync
+      : function (_, fn) { return fn(); };
 
     // Set nav state
     if (MBC.features.nav) {
@@ -50,7 +55,9 @@
 
     // Horizontal scroll
     if (MBC.features.horizontalScroll) {
-      var hsCleanup = MBC.features.horizontalScroll.init(container);
+      var hsCleanup = traceSync('projects horizontalScroll.init', function () {
+        return MBC.features.horizontalScroll.init(container);
+      });
       if (typeof hsCleanup === 'function') {
         cleanups.push(hsCleanup);
       }
@@ -58,7 +65,9 @@
 
     // Finsweet list component
     if (MBC.features.finsweet) {
-      await MBC.features.finsweet.init(container, { modules: ['list'] });
+      await traceAsync('projects finsweet.list init', function () {
+        return MBC.features.finsweet.init(container, { modules: ['list'] });
+      });
     }
 
     // Set initial filter state immediately (before any observers)

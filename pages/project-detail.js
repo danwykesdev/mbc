@@ -73,6 +73,12 @@
   async function mount(ctx) {
     var container = ctx.container;
     var cleanups = [];
+    var traceAsync = MBC.core && MBC.core.utils && MBC.core.utils.traceAsync
+      ? MBC.core.utils.traceAsync
+      : function (label, promiseFactory) { return Promise.resolve().then(promiseFactory); };
+    var traceSync = MBC.core && MBC.core.utils && MBC.core.utils.traceSync
+      ? MBC.core.utils.traceSync
+      : function (_, fn) { return fn(); };
 
     // Set nav state
     if (MBC.features.nav) {
@@ -83,7 +89,9 @@
     // with a stableWrapper, so this must happen before Finsweet binds
     // its modal open/close handlers to the DOM
     if (MBC.features.videos) {
-      var videoCleanup = MBC.features.videos.initStandalone({ container: container });
+      var videoCleanup = traceSync('project-detail videos.initStandalone', function () {
+        return MBC.features.videos.initStandalone({ container: container });
+      });
       if (typeof videoCleanup === 'function') {
         cleanups.push(videoCleanup);
       }
@@ -91,25 +99,33 @@
 
     // Finsweet modal AFTER video DOM is stable
     if (MBC.features.finsweet) {
-      await MBC.features.finsweet.init(container, { modules: ['modal'] });
+      await traceAsync('project-detail finsweet.modal init', function () {
+        return MBC.features.finsweet.init(container, { modules: ['modal'] });
+      });
     }
 
     // Scroll-triggered animations
-    var scrollAnimCleanup = initAnimateScroll(container);
+    var scrollAnimCleanup = traceSync('project-detail initAnimateScroll', function () {
+      return initAnimateScroll(container);
+    });
     if (typeof scrollAnimCleanup === 'function') {
       cleanups.push(scrollAnimCleanup);
     }
 
     // Slide reveal animations
     if (MBC.features.loadAnimations && typeof MBC.features.loadAnimations.init === 'function') {
-      var loadAnimCleanup = MBC.features.loadAnimations.init(container);
+      var loadAnimCleanup = traceSync('project-detail loadAnimations.init', function () {
+        return MBC.features.loadAnimations.init(container);
+      });
       if (typeof loadAnimCleanup === 'function') {
         cleanups.push(loadAnimCleanup);
       }
     }
 
     // Refokus next-prev articles (re-inject each transition)
-    await loadNextPrevScript();
+    await traceAsync('project-detail loadNextPrevScript', function () {
+      return loadNextPrevScript();
+    });
 
     return function cleanup() {
       cleanups.forEach(function (fn) {

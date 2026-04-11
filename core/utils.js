@@ -69,6 +69,33 @@
     }
   }
 
+  function traceAsync(label, promiseFactory) {
+    var start = performance.now();
+    console.log('[MBC Trace] start:', label);
+
+    return Promise.resolve().then(promiseFactory).then(function (result) {
+      console.log('[MBC Trace] done:', label, Math.round(performance.now() - start) + 'ms');
+      return result;
+    }).catch(function (err) {
+      console.log('[MBC Trace] fail:', label, Math.round(performance.now() - start) + 'ms');
+      throw err;
+    });
+  }
+
+  function traceSync(label, fn) {
+    var start = performance.now();
+    console.log('[MBC Trace] start:', label);
+
+    try {
+      var result = fn();
+      console.log('[MBC Trace] done:', label, Math.round(performance.now() - start) + 'ms');
+      return result;
+    } catch (err) {
+      console.log('[MBC Trace] fail:', label, Math.round(performance.now() - start) + 'ms');
+      throw err;
+    }
+  }
+
   MBC.core.utils = {
     wait: wait,
     raf2: raf2,
@@ -76,6 +103,8 @@
     debounce: debounce,
     normalizeNamespace: normalizeNamespace,
     isHome: isHome,
-    safeCall: safeCall
+    safeCall: safeCall,
+    traceAsync: traceAsync,
+    traceSync: traceSync
   };
 })();
