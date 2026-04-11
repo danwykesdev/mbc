@@ -182,6 +182,10 @@
       if (MBC.features.loadAnimations && typeof MBC.features.loadAnimations.resetHoverStates === 'function') {
         MBC.features.loadAnimations.resetHoverStates(container);
       }
+
+      if (MBC.features.horizontalScroll && typeof MBC.features.horizontalScroll.reflow === 'function') {
+        MBC.features.horizontalScroll.reflow();
+      }
     }
 
     async function playPostHeroIntro() {
@@ -197,6 +201,10 @@
           includeNav: false,
           excludeSelector: '.hero-animate, [data-hero]'
         });
+      }
+
+      if (MBC.features.horizontalScroll && typeof MBC.features.horizontalScroll.reflow === 'function') {
+        MBC.features.horizontalScroll.reflow();
       }
     }
 

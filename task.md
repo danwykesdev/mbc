@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-11 00:46 BST
+Last updated: 2026-04-11 12:08 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -121,6 +121,16 @@ Last updated: 2026-04-11 00:46 BST
   - also added search close handler ported from legacy
 - Verified: ✅ 2026-04-11 00:46 BST — pushed as c4b5f93
 
+### 13. HorizontalScroll not working on home/projects
+- Status: `Fixed`
+- Report: horizontal scroll sections fail on both hard refresh and transitions
+- Notes:
+  - root cause: horizontal scroll init could bail permanently when first layout measurement returned `distance <= 0` during strong reinit/deferred loading windows
+  - rebuilt `features/horizontal-scroll.js` to use a managed active instance with retry/reflow logic, resize-throttled reflow, and strict trigger cleanup
+  - added explicit `horizontalScroll.reflow()` settle calls in home (`finalizeHomeInteractiveUI`, `playPostHeroIntro`) and projects (post-observer settle and active-tab mutations)
+  - rebuilt bundled runtime so `dist/mbc.runtime.js` includes the reflow/retry path
+- Verified: ✅ 2026-04-11 12:08 BST — runtime rebuilt, awaiting user confirmation on live transitions
+
 ## Change log
 - 2026-04-10 ~21:00: created task log and recorded current known issues from runtime review
 - 2026-04-10 ~21:30: added nav pre-hide, stronger Vimeo modal/background handling, and stronger Webflow/IX refresh passes
@@ -136,3 +146,4 @@ Last updated: 2026-04-11 00:46 BST
 - 2026-04-11 00:34: aligned page module deps, about→ix, default stripped videos, zine+FS slider → pushed as 547faf1
 - 2026-04-11 00:38: standalone FS modal+a11y scripts, skip full attributes library → pushed as 9a2e5c2
 - 2026-04-11 00:46: double-pass IX reinit + projects filter animations → pushed as c4b5f93
+- 2026-04-11 12:08: hardened horizontal scroll init/reflow for home+projects and rebuilt bundled runtime → pending push

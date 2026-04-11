@@ -92,6 +92,9 @@
             setTimeout(function () {
               animatePaneFilters(pane);
               if (MBC.core.webflow) MBC.core.webflow.refreshIX();
+              if (MBC.features.horizontalScroll && typeof MBC.features.horizontalScroll.reflow === 'function') {
+                MBC.features.horizontalScroll.reflow();
+              }
               if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
             }, 20);
           } else {
@@ -104,6 +107,12 @@
         observer.observe(pane, { attributes: true, attributeFilter: ['class'] });
       });
     }, 400); // wait for strong reinit + settleAfterMount to finish
+
+    var reflowTimeout = setTimeout(function () {
+      if (MBC.features.horizontalScroll && typeof MBC.features.horizontalScroll.reflow === 'function') {
+        MBC.features.horizontalScroll.reflow();
+      }
+    }, 520);
 
     // Search close button
     var searchClose = container.querySelector('#searchClose') || document.querySelector('#searchClose');
@@ -121,6 +130,7 @@
 
     cleanups.push(function () {
       clearTimeout(observerTimeout);
+      clearTimeout(reflowTimeout);
       if (observer) observer.disconnect();
       if (onSearchClear && searchClose) {
         searchClose.removeEventListener('click', onSearchClear);
