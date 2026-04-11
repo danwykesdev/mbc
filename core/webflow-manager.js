@@ -106,31 +106,61 @@
   }
 
   /**
-   * Reinitialize Webflow - simplified osmo.md approach
+   * Reinitialize Webflow
    * 
    * Tier options:
-   * - "full": destroy -> ready -> modules -> IX (for full page transitions)
-   * - "ix": just IX reinit (for partial updates)
+   * - "strong": nuclear reset — destroy → ready → IX stop/init → readystatechange
+   *             Use for pages where IX3 must bind reliably (home, projects, about)
+   * - "full": destroy → ready → modules → IX (for full page transitions)
+   * - "ix": destroy + IX reinit (for partial updates)
    * - "light": just modules (for minimal updates)
    */
   async function reinit(tier) {
     if (!window.Webflow) return;
 
     var mode = tier || "light";
-    var includeIX = mode === "ix" || mode === "full";
+    var isStrong = mode === "strong";
+    var includeIX = isStrong || mode === "ix" || mode === "full";
 
-    // Full reset for page transitions
-    if (mode === "full" || mode === "ix") {
+    // Destroy for strong, full, or ix tiers
+    if (includeIX) {
       if (typeof window.Webflow.destroy === "function") {
         window.Webflow.destroy();
       }
     }
 
-    // First pass
+    // First pass: ready → modules → IX
     await runReadyPass(includeIX);
 
-    // Second pass — IX3 often needs this to properly bind after DOM settlement
-    if (includeIX) {
+    if (isStrong) {
+      // The "nuclear" IX3 reset — from the proven Swup pattern
+      // readystatechange is what IX3's GSAP engine listens for to calculate bounding boxes
+      try {
+        document.dispatchEvent(new Event("readystatechange"));
+      } catch (_) {}
+
+      // Force resize so ScrollTrigger recalculates
+      dispatchLayoutEvents();
+
+      await MBC.core.utils.wait(60);
+
+      // Second pass — IX3 needs this after readystatechange settles
+      if (typeof window.Webflow.ready === "function") {
+        window.Webflow.ready();
+      }
+      initIX();
+
+      try {
+        document.dispatchEvent(new Event("readystatechange"));
+      } catch (_) {}
+
+      dispatchLayoutEvents();
+
+      if (typeof ScrollTrigger !== "undefined") {
+        ScrollTrigger.refresh(true);
+      }
+    } else if (includeIX) {
+      // Standard double-pass for ix/full tiers
       if (typeof window.Webflow.ready === "function") {
         window.Webflow.ready();
       }

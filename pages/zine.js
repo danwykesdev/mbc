@@ -10,14 +10,40 @@
     return el;
   }
 
+  /**
+   * Load the standalone FS Slider script
+   * Re-injects each time so it processes new DOM after Barba transitions
+   */
+  function loadFsSlider() {
+    // Remove any previous slider script so it re-executes on fresh DOM
+    document.querySelectorAll('script').forEach(function (s) {
+      if (s.src && s.src.indexOf('attributes-slider') !== -1) {
+        s.parentNode.removeChild(s);
+      }
+    });
+
+    return new Promise(function (resolve) {
+      var script = document.createElement('script');
+      script.type = 'module';
+      script.src = 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-slider@1/slider.js';
+      script.onload = function () {
+        // Give the module time to initialize
+        setTimeout(resolve, 80);
+      };
+      script.onerror = function () {
+        console.warn('[MBC] FS Slider script failed to load');
+        resolve();
+      };
+      document.head.appendChild(script);
+    });
+  }
+
   async function mount(ctx) {
     var container = ctx.container;
     var cleanups = [];
 
     // FS Slider MUST init before pagination so slider DOM is ready
-    if (MBC.features.finsweet) {
-      await MBC.features.finsweet.init(container, { modules: ['slider', 'pagination'] });
-    }
+    await loadFsSlider();
 
     // Scroll to list anchor
     function scrollToAnchor() {

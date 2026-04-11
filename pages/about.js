@@ -16,7 +16,7 @@
   function unmount() {}
 
   var moduleDef = {
-    webflowTier: 'ix',
+    webflowTier: 'strong',
     mount: mount,
     unmount: unmount
   };

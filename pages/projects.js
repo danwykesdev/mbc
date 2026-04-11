@@ -61,14 +61,28 @@
       await MBC.features.finsweet.init(container, { modules: ['list'] });
     }
 
-    // Filter item animations on tab changes
+    // Set initial filter state immediately (before any observers)
     var tabPanes = container.querySelectorAll('.w-tab-pane');
     if (!tabPanes.length) {
       tabPanes = document.querySelectorAll('.w-tab-pane');
     }
 
+    // Set initial filter visibility — do this sync, no observer yet
+    tabPanes.forEach(function (pane) {
+      if (pane.classList.contains('w--tab-active')) {
+        showPaneFiltersImmediately(pane);
+      } else {
+        setPaneFiltersInactive(pane);
+      }
+    });
+
+    // Defer MutationObserver setup — Webflow reinit (strong tier) fires
+    // readystatechange which can toggle tab classes, causing the observer
+    // to animate filters out then back in. We wait for settleAfterMount to complete.
     var observer = null;
-    if (tabPanes.length) {
+    var observerTimeout = setTimeout(function () {
+      if (!tabPanes.length) return;
+
       observer = new MutationObserver(function (mutations) {
         mutations.forEach(function (mutation) {
           var pane = mutation.target;
@@ -88,18 +102,8 @@
 
       tabPanes.forEach(function (pane) {
         observer.observe(pane, { attributes: true, attributeFilter: ['class'] });
-
-        if (pane.classList.contains('w--tab-active')) {
-          if (isFirstLoad) {
-            showPaneFiltersImmediately(pane);
-          } else {
-            animatePaneFilters(pane);
-          }
-        } else {
-          setPaneFiltersInactive(pane);
-        }
       });
-    }
+    }, 400); // wait for strong reinit + settleAfterMount to finish
 
     // Search close button
     var searchClose = container.querySelector('#searchClose') || document.querySelector('#searchClose');
@@ -115,27 +119,8 @@
       searchClose.addEventListener('click', onSearchClear);
     }
 
-    // Initial tab state
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
-        var activePane = container.querySelector('.w-tab-pane.w--tab-active') ||
-                         document.querySelector('.w-tab-pane.w--tab-active');
-        if (activePane) {
-          if (isFirstLoad) {
-            showPaneFiltersImmediately(activePane);
-          } else {
-            animatePaneFilters(activePane);
-          }
-        }
-
-        setTimeout(function () {
-          if (MBC.core.webflow) MBC.core.webflow.refreshIX();
-          if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
-        }, 80);
-      });
-    });
-
     cleanups.push(function () {
+      clearTimeout(observerTimeout);
       if (observer) observer.disconnect();
       if (onSearchClear && searchClose) {
         searchClose.removeEventListener('click', onSearchClear);
@@ -154,7 +139,7 @@
   function unmount() {}
 
   var moduleDef = {
-    webflowTier: 'full',
+    webflowTier: 'strong',
     mount: mount,
     unmount: unmount
   };
