@@ -41,6 +41,7 @@
   async function mount(ctx) {
     var container = ctx.container;
     var cleanups = [];
+    var horizontalScrollCleanup = null;
     var traceAsync = MBC.core && MBC.core.utils && MBC.core.utils.traceAsync
       ? MBC.core.utils.traceAsync
       : function (label, promiseFactory) { return Promise.resolve().then(promiseFactory); };
@@ -48,19 +49,28 @@
       ? MBC.core.utils.traceSync
       : function (_, fn) { return fn(); };
 
+    function bindHorizontalScroll(label) {
+      if (!MBC.features.horizontalScroll || typeof MBC.features.horizontalScroll.init !== 'function') {
+        return;
+      }
+
+      if (typeof horizontalScrollCleanup === 'function') {
+        try { horizontalScrollCleanup(); } catch (_) {}
+        horizontalScrollCleanup = null;
+      }
+
+      var nextCleanup = traceSync(label || 'projects horizontalScroll.init', function () {
+        return MBC.features.horizontalScroll.init(container);
+      });
+
+      if (typeof nextCleanup === 'function') {
+        horizontalScrollCleanup = nextCleanup;
+      }
+    }
+
     // Set nav state
     if (MBC.features.nav) {
       MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: true });
-    }
-
-    // Horizontal scroll
-    if (MBC.features.horizontalScroll) {
-      var hsCleanup = traceSync('projects horizontalScroll.init', function () {
-        return MBC.features.horizontalScroll.init(container);
-      });
-      if (typeof hsCleanup === 'function') {
-        cleanups.push(hsCleanup);
-      }
     }
 
     // Finsweet list component
@@ -69,6 +79,8 @@
         return MBC.features.finsweet.init(container, { modules: ['list'] });
       });
     }
+
+    bindHorizontalScroll('projects horizontalScroll.init final');
 
     // Set initial filter state immediately (before any observers)
     var tabPanes = container.querySelectorAll('.w-tab-pane');
@@ -101,9 +113,7 @@
             setTimeout(function () {
               animatePaneFilters(pane);
               if (MBC.core.webflow) MBC.core.webflow.refreshIX();
-              if (MBC.features.horizontalScroll && typeof MBC.features.horizontalScroll.reflow === 'function') {
-                MBC.features.horizontalScroll.reflow();
-              }
+              bindHorizontalScroll('projects horizontalScroll.init tab change');
               if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
             }, 20);
           } else {
@@ -118,9 +128,7 @@
     }, 400); // wait for strong reinit + settleAfterMount to finish
 
     var reflowTimeout = setTimeout(function () {
-      if (MBC.features.horizontalScroll && typeof MBC.features.horizontalScroll.reflow === 'function') {
-        MBC.features.horizontalScroll.reflow();
-      }
+      bindHorizontalScroll('projects horizontalScroll.init delayed');
     }, 520);
 
     // Search close button
@@ -147,6 +155,11 @@
     });
 
     return function cleanup() {
+      if (typeof horizontalScrollCleanup === 'function') {
+        try { horizontalScrollCleanup(); } catch (_) {}
+        horizontalScrollCleanup = null;
+      }
+
       cleanups.forEach(function (fn) {
         if (typeof fn === 'function') {
           try { fn(); } catch (_) {}

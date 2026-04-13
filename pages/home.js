@@ -8,6 +8,7 @@
   async function mount(ctx) {
     var container = ctx.container;
     var cleanups = [];
+    var horizontalScrollCleanup = null;
     var deferredHomeFeaturesPromise = null;
     var traceAsync = MBC.core && MBC.core.utils && MBC.core.utils.traceAsync
       ? MBC.core.utils.traceAsync
@@ -15,6 +16,25 @@
     var traceSync = MBC.core && MBC.core.utils && MBC.core.utils.traceSync
       ? MBC.core.utils.traceSync
       : function (_, fn) { return fn(); };
+
+    function bindHorizontalScroll(label) {
+      if (!MBC.features.horizontalScroll || typeof MBC.features.horizontalScroll.init !== 'function') {
+        return;
+      }
+
+      if (typeof horizontalScrollCleanup === 'function') {
+        try { horizontalScrollCleanup(); } catch (_) {}
+        horizontalScrollCleanup = null;
+      }
+
+      var nextCleanup = traceSync(label || 'home horizontalScroll.init', function () {
+        return MBC.features.horizontalScroll.init(container);
+      });
+
+      if (typeof nextCleanup === 'function') {
+        horizontalScrollCleanup = nextCleanup;
+      }
+    }
 
     function loadDeferredHomeFeatures() {
       if (deferredHomeFeaturesPromise) {
@@ -178,9 +198,7 @@
         MBC.features.loadAnimations.resetHoverStates(container);
       }
 
-      if (MBC.features.horizontalScroll && typeof MBC.features.horizontalScroll.reflow === 'function') {
-        MBC.features.horizontalScroll.reflow();
-      }
+      bindHorizontalScroll('home horizontalScroll.init final');
     }
 
     async function playPostHeroIntro() {
@@ -245,15 +263,6 @@
     }
 
     // Horizontal scroll section (used on home too)
-    if (MBC.features.horizontalScroll) {
-      var hsCleanup = traceSync('home horizontalScroll.init', function () {
-        return MBC.features.horizontalScroll.init(container);
-      });
-      if (typeof hsCleanup === 'function') {
-        cleanups.push(hsCleanup);
-      }
-    }
-
     if (MBC.features.videos && typeof MBC.features.videos.initBackground === 'function') {
       var backgroundVideoCleanup = traceSync('home videos.initBackground', function () {
         return MBC.features.videos.initBackground(container);
@@ -269,6 +278,11 @@
     });
 
     return function cleanup() {
+      if (typeof horizontalScrollCleanup === 'function') {
+        try { horizontalScrollCleanup(); } catch (_) {}
+        horizontalScrollCleanup = null;
+      }
+
       cleanups.forEach(function (fn) {
         if (typeof fn === 'function') {
           try { fn(); } catch (_) {}
