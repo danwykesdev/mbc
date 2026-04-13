@@ -52,29 +52,82 @@
     };
   }
 
-  /**
-   * Load the Refokus next-prev-articles script
-   * Re-injects each time so it processes the new DOM after a Barba transition
-   */
-  function loadNextPrevScript() {
-    return new Promise(function (resolve) {
-      document.querySelectorAll('script').forEach(function (existingScript) {
-        if (existingScript.src && existingScript.src.indexOf('next-prev-articles') !== -1) {
-          existingScript.parentNode.removeChild(existingScript);
+  function initPrevNextProjects(container) {
+    var sourceRoot = document.querySelector('[r-prevnext-source], [np-articles-source]');
+    var currentEl;
+    var links;
+    var currentLink;
+    var currentIndex;
+    var prevLink;
+    var nextLink;
+
+    if (!sourceRoot) return;
+
+    currentEl = sourceRoot.querySelector('.w--current');
+    if (!currentEl) return;
+
+    links = Array.from(sourceRoot.querySelectorAll('a[href]'));
+    if (!links.length) return;
+
+    currentLink =
+      (currentEl.matches && currentEl.matches('a') ? currentEl : null) ||
+      (currentEl.closest ? currentEl.closest('a') : null) ||
+      (currentEl.querySelector ? currentEl.querySelector('a') : null);
+
+    if (!currentLink) return;
+
+    currentIndex = links.indexOf(currentLink);
+    if (currentIndex < 0) return;
+
+    prevLink = links[(currentIndex - 1 + links.length) % links.length];
+    nextLink = links[(currentIndex + 1) % links.length];
+
+    function getData(link) {
+      return {
+        href: link ? link.getAttribute('href') || '' : '',
+        title: link && link.innerText ? link.innerText.trim() : '',
+        imgSrc: link && link.querySelector ? ((link.querySelector('img') && link.querySelector('img').getAttribute('src')) || '') : ''
+      };
+    }
+
+    function applyMapping(selector, attr, value) {
+      if (!value) return;
+
+      Array.from(document.querySelectorAll(selector)).forEach(function (el) {
+        if (!el) return;
+        if (attr === 'text') {
+          el.innerText = value;
+        } else {
+          el.setAttribute(attr, value);
         }
       });
+    }
 
-      var script = document.createElement('script');
-      script.src = 'https://tools.refokus.com/next-prev-articles/bundle.v1.0.0.js?ts=' + Date.now();
-      script.async = true;
-      script.onload = function () {
-        setTimeout(resolve, 80);
-      };
-      script.onerror = function () {
-        console.warn('[MBC] Refokus next-prev script failed to load');
-        resolve();
-      };
-      document.head.appendChild(script);
+    var prev = getData(prevLink);
+    var next = getData(nextLink);
+
+    applyMapping('[r-prevnext-next-btn], [np-articles-next-btn]', 'href', next.href);
+    applyMapping('[r-prevnext-next-text], [np-articles-next-text]', 'text', next.title);
+    applyMapping('[r-prevnext-prev-btn], [np-articles-prev-btn]', 'href', prev.href);
+    applyMapping('[r-prevnext-prev-text], [np-articles-prev-text]', 'text', prev.title);
+    applyMapping('[r-prevnext-prev-img], [np-articles-prev-img]', 'src', prev.imgSrc);
+    applyMapping('[r-prevnext-next-img], [np-articles-next-img]', 'src', next.imgSrc);
+  }
+
+  function resetProjectDetailVideoDom(container) {
+    if (!container) return;
+
+    Array.from(container.querySelectorAll('#video iframe, #videoLoad iframe, [data-modal-video] iframe, [data-bg-video] iframe')).forEach(function (iframe) {
+      if (iframe && iframe.parentNode) {
+        iframe.parentNode.removeChild(iframe);
+      }
+    });
+
+    Array.from(container.querySelectorAll('#video, #videoLoad, [data-modal-video], [data-bg-video]')).forEach(function (el) {
+      if (!el || !el.style) return;
+      el.style.opacity = '';
+      el.style.visibility = '';
+      el.style.display = '';
     });
   }
 
@@ -241,6 +294,7 @@
       : function (_, fn) { return fn(); };
 
     applyInitialProjectDetailNavState();
+    resetProjectDetailVideoDom(container);
 
     // Videos init BEFORE Finsweet — video init replaces #video element
     // with a stableWrapper, so this must happen before Finsweet binds
@@ -265,6 +319,8 @@
       if (typeof videoCleanup === 'function') {
         try { videoCleanup(); } catch (_) {}
       }
+
+      resetProjectDetailVideoDom(container);
 
       videoCleanup = traceSync('project-detail videos.initStandalone refresh', function () {
         return MBC.features.videos.initStandalone({ container: container });
@@ -301,9 +357,10 @@
       }
     }
 
-    // Refokus next-prev articles (re-inject each transition)
-    await traceAsync('project-detail loadNextPrevScript', function () {
-      return loadNextPrevScript();
+    await traceAsync('project-detail initPrevNextProjects', function () {
+      return Promise.resolve().then(function () {
+        initPrevNextProjects(container);
+      });
     });
 
     requestAnimationFrame(function () {
