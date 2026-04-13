@@ -48,10 +48,9 @@
       ? MBC.core.utils.traceSync
       : function (_, fn) { return fn(); };
 
-    // FS Slider MUST init before pagination so slider DOM is ready
-    await traceAsync('zine loadFsSlider', function () {
+    traceAsync('zine loadFsSlider', function () {
       return loadFsSlider();
-    });
+    }).catch(function () {});
 
     // Scroll to list anchor
     function scrollToAnchor() {

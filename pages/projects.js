@@ -113,9 +113,14 @@
 
     // Finsweet list component
     if (MBC.features.finsweet) {
-      await traceAsync('projects finsweet.list init', function () {
+      traceAsync('projects finsweet.list init', function () {
         return MBC.features.finsweet.init(container, { modules: ['list'] });
-      });
+      }).then(function () {
+        applyProjectsCardBottomInset(container);
+        bindHorizontalScroll('projects horizontalScroll.init after finsweet');
+        bindStaggerHover('projects staggerHover.init after finsweet');
+        if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
+      }).catch(function () {});
     }
 
     applyProjectsCardBottomInset(container);

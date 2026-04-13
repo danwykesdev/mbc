@@ -86,6 +86,7 @@
   syncMobileMenuBars();
 
   MBC.features.nav = {
-    setState: setNavState
+    setState: setNavState,
+    refreshMobileStyles: syncMobileMenuBars
   };
 })();
