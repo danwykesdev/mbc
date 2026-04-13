@@ -14,6 +14,7 @@ import './features/nav.js';
 import './features/mobile-nav.js';
 import './features/scroll-direction.js';
 import './features/load-animations.js';
+import './features/stagger-hover.js';
 import './features/tabs.js';
 import './features/hero.js';
 import './features/videos.js';
