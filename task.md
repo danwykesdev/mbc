@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-11 12:08 BST
+Last updated: 2026-04-11 12:34 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -126,10 +126,19 @@ Last updated: 2026-04-11 12:08 BST
 - Report: horizontal scroll sections fail on both hard refresh and transitions
 - Notes:
   - root cause: horizontal scroll init could bail permanently when first layout measurement returned `distance <= 0` during strong reinit/deferred loading windows
-  - rebuilt `features/horizontal-scroll.js` to use a managed active instance with retry/reflow logic, resize-throttled reflow, and strict trigger cleanup
+  - rebuilt `features/horizontal-scroll.js` to use a managed active instance with retry/reflow logic, resize-throttled reflow, strict trigger cleanup, and delayed/observed reflows for late layout changes
   - added explicit `horizontalScroll.reflow()` settle calls in home (`finalizeHomeInteractiveUI`, `playPostHeroIntro`) and projects (post-observer settle and active-tab mutations)
   - rebuilt bundled runtime so `dist/mbc.runtime.js` includes the reflow/retry path
-- Verified: ✅ 2026-04-11 12:08 BST — runtime rebuilt, awaiting user confirmation on live transitions
+- Verified: ✅ 2026-04-11 12:21 BST — pushed follow-up late-layout reflow fix as `57a2f90`, awaiting user confirmation on live transitions
+
+### 14. Per-page runtime tracing for debugging
+- Status: `Fixed`
+- Report: need runtime timings for page-level functions so slow or failing page init work can be traced quickly
+- Notes:
+  - added shared `traceAsync()` and `traceSync()` helpers in `core/utils.js`
+  - instrumented page-level mount/init work across home, projects, project-detail, zine, about, and default
+  - rebuilt bundled runtime so `[MBC Trace]` logs include per-page function runtimes in bundled mode
+- Verified: ✅ 2026-04-11 12:34 BST — pushed as `2d6a171`
 
 ## Change log
 - 2026-04-10 ~21:00: created task log and recorded current known issues from runtime review
@@ -146,4 +155,6 @@ Last updated: 2026-04-11 12:08 BST
 - 2026-04-11 00:34: aligned page module deps, about→ix, default stripped videos, zine+FS slider → pushed as 547faf1
 - 2026-04-11 00:38: standalone FS modal+a11y scripts, skip full attributes library → pushed as 9a2e5c2
 - 2026-04-11 00:46: double-pass IX reinit + projects filter animations → pushed as c4b5f93
-- 2026-04-11 12:08: hardened horizontal scroll init/reflow for home+projects and rebuilt bundled runtime → pending push
+- 2026-04-11 12:08: hardened horizontal scroll init/reflow for home+projects and rebuilt bundled runtime → pushed as 3ae8338
+- 2026-04-11 12:21: added delayed/observed horizontal-scroll reflow for late layout changes → pushed as 57a2f90
+- 2026-04-11 12:34: added shared per-page runtime tracing in bundled runtime → pushed as 2d6a171
