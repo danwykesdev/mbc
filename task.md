@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-11 12:34 BST
+Last updated: 2026-04-11 16:20 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -119,17 +119,17 @@ Last updated: 2026-04-11 12:34 BST
   - added filter animation logic to projects.js: `setPaneFiltersInactive`, `showPaneFiltersImmediately`, `animatePaneFilters`
   - MutationObserver watches `.w-tab-pane` class changes for tab switching
   - also added search close handler ported from legacy
-- Verified: ✅ 2026-04-11 00:46 BST — pushed as c4b5f93
+- Verified: 2026-04-11 00:46 BST — pushed as c4b5f93
 
 ### 13. HorizontalScroll not working on home/projects
 - Status: `Fixed`
 - Report: horizontal scroll sections fail on both hard refresh and transitions
 - Notes:
-  - root cause: horizontal scroll init could bail permanently when first layout measurement returned `distance <= 0` during strong reinit/deferred loading windows
-  - rebuilt `features/horizontal-scroll.js` to use a managed active instance with retry/reflow logic, resize-throttled reflow, strict trigger cleanup, and delayed/observed reflows for late layout changes
-  - added explicit `horizontalScroll.reflow()` settle calls in home (`finalizeHomeInteractiveUI`, `playPostHeroIntro`) and projects (post-observer settle and active-tab mutations)
-  - rebuilt bundled runtime so `dist/mbc.runtime.js` includes the reflow/retry path
-- Verified: ✅ 2026-04-11 12:21 BST — pushed follow-up late-layout reflow fix as `57a2f90`, awaiting user confirmation on live transitions
+  - root cause: `horizontalScroll.init` captured `wrap` and `panels` DOM refs once at init time. When `webflow.refreshUI` ran later, Webflow's tabs module could replace tab pane DOM nodes, detaching the original panel refs. Subsequent `reflow()` calls used stale detached refs where `p.offsetWidth = 0`, causing `distance = 0` and silent failure
+  - fix: moved `wrap` and `panels` queries inside `createOrRefreshTrigger()` so every reflow attempt reads fresh live DOM nodes
+  - also changed ResizeObserver to observe `container` instead of stale wrap/panels refs
+  - added debug logging to trace: `panels.length`, `panel[0].offsetWidth`, `total`, `vw`, `distance`
+- Verified: 2026-04-11 16:20 BST — pushed as `726422a`, awaiting user confirmation on live transitions
 
 ### 14. Per-page runtime tracing for debugging
 - Status: `Fixed`
@@ -158,3 +158,4 @@ Last updated: 2026-04-11 12:34 BST
 - 2026-04-11 12:08: hardened horizontal scroll init/reflow for home+projects and rebuilt bundled runtime → pushed as 3ae8338
 - 2026-04-11 12:21: added delayed/observed horizontal-scroll reflow for late layout changes → pushed as 57a2f90
 - 2026-04-11 12:34: added shared per-page runtime tracing in bundled runtime → pushed as 2d6a171
+- 2026-04-11 16:20: re-query DOM in horizontal-scroll on each reflow to fix stale refs → pushed as 726422a
