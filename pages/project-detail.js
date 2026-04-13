@@ -175,6 +175,51 @@
     });
   }
 
+  function initProjectDetailDataSync(container) {
+    var MutationObserverCtor = window.MutationObserver;
+    var observerTarget = container.querySelector('.cms .w-dyn-items') || container;
+    var observer = null;
+    var rafId = null;
+
+    function refresh() {
+      rafId = null;
+      processProjectDetailPageData(container);
+    }
+
+    function scheduleRefresh() {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
+      rafId = requestAnimationFrame(refresh);
+    }
+
+    scheduleRefresh();
+    requestAnimationFrame(scheduleRefresh);
+
+    if (MutationObserverCtor && observerTarget) {
+      observer = new MutationObserverCtor(function () {
+        scheduleRefresh();
+      });
+
+      observer.observe(observerTarget, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'style', 'hidden', 'aria-hidden']
+      });
+    }
+
+    return function cleanup() {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      if (observer) {
+        observer.disconnect();
+      }
+    };
+  }
+
   function resetProjectDetailVideoDom(container) {
     if (!container) return;
 
@@ -362,6 +407,12 @@
     traceSync('project-detail processPageData', function () {
       processProjectDetailPageData(container);
     });
+    var dataSyncCleanup = traceSync('project-detail initDataSync', function () {
+      return initProjectDetailDataSync(container);
+    });
+    if (typeof dataSyncCleanup === 'function') {
+      cleanups.push(dataSyncCleanup);
+    }
 
     // Videos init BEFORE Finsweet — video init replaces #video element
     // with a stableWrapper, so this must happen before Finsweet binds
@@ -428,6 +479,10 @@
       return Promise.resolve().then(function () {
         initPrevNextProjects(container);
       });
+    });
+
+    traceSync('project-detail processPageData final', function () {
+      processProjectDetailPageData(container);
     });
 
     var fitTitle = function () {
