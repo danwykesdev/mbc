@@ -62,7 +62,7 @@
         return false;
       }
 
-      var panels = gsap.utils.toArray(container.querySelectorAll('[data-horizontal-scroll-panel]'));
+      var panels = gsap.utils.toArray('[data-horizontal-scroll-panel]', wrap);
       if (panels.length < 2) {
         console.log('[MBC HorizontalScroll] panels:', panels.length, 'distance: 0');
         return false;
@@ -84,6 +84,8 @@
       var last = panels[panels.length - 1];
       last.style.marginRight = vw < 768 ? '1rem' : vw < 992 ? '1.5rem' : '2rem';
 
+      var track = first && first.parentElement ? first.parentElement : null;
+
       var total = 0;
       panels.forEach(function (p, i) {
         total += i < panels.length - 1 ? p.offsetWidth + gap : p.offsetWidth;
@@ -92,8 +94,12 @@
       total += parseFloat(getComputedStyle(last).marginRight) || 0;
       total += parseFloat(getComputedStyle(wrap).paddingRight) || 0;
 
+      var liveTrackWidth = track ? track.scrollWidth : 0;
+      var liveWrapWidth = wrap.scrollWidth;
+      total = Math.max(total, liveTrackWidth, liveWrapWidth);
+
       var distance = Math.max(0, total - vw);
-      console.log('[MBC HorizontalScroll] panels:', panels.length, 'panel[0] width:', panels[0].offsetWidth, 'total:', total, 'vw:', vw, 'distance:', distance);
+      console.log('[MBC HorizontalScroll] panels:', panels.length, 'panel[0] width:', panels[0].offsetWidth, 'trackWidth:', liveTrackWidth, 'wrapWidth:', liveWrapWidth, 'total:', total, 'vw:', vw, 'distance:', distance);
 
       if (distance <= 0) return false;
 
