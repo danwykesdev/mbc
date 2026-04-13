@@ -301,15 +301,23 @@
     var theme = state.theme;
     var bg = state.bg;
     var blur = state.blur;
-    var targets = [document.documentElement, document.body, document.querySelector('.nav')];
+    var nav = document.querySelector('.nav');
+    var mirroredTargets = [document.documentElement, document.body];
 
-    targets.forEach(function (target) {
+    mirroredTargets.forEach(function (target) {
       if (!target) return;
-      target.setAttribute('data-theme-nav', theme);
-      target.setAttribute('data-nav-theme', theme);
-      target.setAttribute('data-bg-nav', bg);
-      target.setAttribute('data-nav-blur', blur ? 'true' : 'false');
+      target.removeAttribute('data-theme-nav');
+      target.removeAttribute('data-nav-theme');
+      target.removeAttribute('data-bg-nav');
+      target.removeAttribute('data-nav-blur');
     });
+
+    if (nav) {
+      nav.setAttribute('data-theme-nav', theme);
+      nav.setAttribute('data-nav-theme', theme);
+      nav.setAttribute('data-bg-nav', bg);
+      nav.setAttribute('data-nav-blur', blur ? 'true' : 'false');
+    }
 
     if (MBC.features.nav && typeof MBC.features.nav.setState === 'function') {
       MBC.features.nav.setState({ theme: theme, bg: bg, blur: blur });
