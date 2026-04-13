@@ -70,6 +70,22 @@
     });
   }
 
+  function applyInitialProjectDetailNavState() {
+    var targets = [document.documentElement, document.body, document.querySelector('.nav')];
+
+    targets.forEach(function (target) {
+      if (!target) return;
+      target.setAttribute('data-theme-nav', 'light');
+      target.setAttribute('data-nav-theme', 'light');
+      target.setAttribute('data-bg-nav', 'none');
+      target.setAttribute('data-nav-blur', 'false');
+    });
+
+    if (MBC.features.nav) {
+      MBC.features.nav.setState({ theme: 'light', bg: 'none', blur: false });
+    }
+  }
+
   async function mount(ctx) {
     var container = ctx.container;
     var cleanups = [];
@@ -80,10 +96,7 @@
       ? MBC.core.utils.traceSync
       : function (_, fn) { return fn(); };
 
-    // Set nav state
-    if (MBC.features.nav) {
-      MBC.features.nav.setState({ theme: 'light', bg: 'none', blur: false });
-    }
+    applyInitialProjectDetailNavState();
 
     // Videos init BEFORE Finsweet — video init replaces #video element
     // with a stableWrapper, so this must happen before Finsweet binds
@@ -103,6 +116,8 @@
         return MBC.features.finsweet.init(container, { modules: ['modal'] });
       });
     }
+
+    applyInitialProjectDetailNavState();
 
     // Scroll-triggered animations
     var scrollAnimCleanup = traceSync('project-detail initAnimateScroll', function () {
@@ -125,6 +140,10 @@
     // Refokus next-prev articles (re-inject each transition)
     await traceAsync('project-detail loadNextPrevScript', function () {
       return loadNextPrevScript();
+    });
+
+    requestAnimationFrame(function () {
+      applyInitialProjectDetailNavState();
     });
 
     return function cleanup() {
