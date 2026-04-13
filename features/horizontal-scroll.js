@@ -22,8 +22,7 @@
   }
 
   function initHorizontalScroll(container) {
-    var wrap = container.querySelector('[data-horizontal-scroll-wrap]');
-    if (!wrap || typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
+    if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
       return null;
     }
 
@@ -32,9 +31,6 @@
     }
 
     killTriggerById('horizontal-pin');
-
-    var panels = gsap.utils.toArray(container.querySelectorAll('[data-horizontal-scroll-panel]'));
-    if (panels.length < 2) return null;
 
     var tween = null;
     var resizeRaf = null;
@@ -59,6 +55,18 @@
       if (cleanedUp) return false;
 
       clearTween();
+
+      var wrap = container.querySelector('[data-horizontal-scroll-wrap]');
+      if (!wrap) {
+        console.log('[MBC HorizontalScroll] no wrap found');
+        return false;
+      }
+
+      var panels = gsap.utils.toArray(container.querySelectorAll('[data-horizontal-scroll-panel]'));
+      if (panels.length < 2) {
+        console.log('[MBC HorizontalScroll] panels:', panels.length, 'distance: 0');
+        return false;
+      }
 
       var vw = window.innerWidth;
       wrap.style.paddingRight = vw < 768 ? '20px' : vw < 992 ? '40px' : '80px';
@@ -85,6 +93,8 @@
       total += parseFloat(getComputedStyle(wrap).paddingRight) || 0;
 
       var distance = Math.max(0, total - vw);
+      console.log('[MBC HorizontalScroll] panels:', panels.length, 'panel[0] width:', panels[0].offsetWidth, 'total:', total, 'vw:', vw, 'distance:', distance);
+
       if (distance <= 0) return false;
 
       tween = gsap.to(panels, {
@@ -182,10 +192,7 @@
         });
       });
 
-      resizeObserver.observe(wrap);
-      panels.forEach(function (panel) {
-        resizeObserver.observe(panel);
-      });
+      resizeObserver.observe(container);
     }
 
     reflow();
