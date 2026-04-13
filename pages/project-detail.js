@@ -115,7 +115,7 @@
   }
 
   function processProjectDetailPageData(container) {
-    var removeElements = container.querySelectorAll('.row.w-condition-invisible');
+    var removeElements = container.querySelectorAll('.w-condition-invisible');
     var orderElements = container.querySelectorAll('[data-set="order"]');
 
     removeElements.forEach(function (el) {
