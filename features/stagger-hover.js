@@ -27,7 +27,7 @@
         gsap.to(entry.items, {
           autoAlpha: 1,
           y: 0,
-          duration: 0.2,
+          duration: 0.5,
           ease: 'power2.out',
           stagger: {
             total: 0.1,
@@ -41,8 +41,8 @@
         gsap.killTweensOf(entry.image);
         gsap.to(entry.image, {
           scale: 1.05,
-          duration: 0.5,
-          ease: 'power2.out',
+          duration: 0.2,
+          ease: 'power1.out',
           force3D: true,
           overwrite: 'auto'
         });
