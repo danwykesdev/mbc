@@ -223,11 +223,84 @@
     return normalized === 'project-detail';
   }
 
-  function applyTransitionNavState(config) {
+  function parseNavBlur(value) {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    if (value === false || value === 'false' || value === '0' || value === 'none' || value === 'no-blur') {
+      return false;
+    }
+
+    return true;
+  }
+
+  function normalizeTransitionNavState(config) {
     var state = config || {};
     var theme = state.theme || 'dark';
-    var bg = state.bg || 'solid';
-    var blur = !!state.blur;
+    var blur = parseNavBlur(state.blur);
+    var bg = state.bg;
+
+    if (blur === null) {
+      blur = theme === 'dark';
+    }
+
+    if (blur === false) {
+      bg = 'none';
+    } else if (bg === null || bg === undefined || bg === '') {
+      bg = 'solid';
+    }
+
+    return {
+      theme: theme,
+      bg: bg,
+      blur: blur
+    };
+  }
+
+  function getSectionTransitionNavState(section) {
+    if (!section) {
+      return normalizeTransitionNavState({ theme: 'dark', bg: 'solid', blur: true });
+    }
+
+    return normalizeTransitionNavState({
+      theme: section.getAttribute('data-theme-section') || section.getAttribute('data-nav-theme') || 'dark',
+      bg: section.getAttribute('data-bg-section') || section.getAttribute('data-bg-nav') || null,
+      blur: section.getAttribute('data-nav-blur')
+    });
+  }
+
+  function getTransitionNavState(namespace, container) {
+    if (isProjectDetailNamespace(namespace)) {
+      return normalizeTransitionNavState({ theme: 'light', bg: 'none', blur: false });
+    }
+
+    var explicit = container && container.querySelector
+      ? container.querySelector('[data-page-nav-theme], [data-page-nav-blur], [data-page-bg-nav]')
+      : null;
+
+    if (explicit) {
+      return normalizeTransitionNavState({
+        theme: explicit.getAttribute('data-page-nav-theme') || explicit.getAttribute('data-nav-theme') || explicit.getAttribute('data-theme-section') || 'dark',
+        bg: explicit.getAttribute('data-page-bg-nav') || explicit.getAttribute('data-bg-nav') || explicit.getAttribute('data-bg-section') || null,
+        blur: explicit.getAttribute('data-page-nav-blur') !== null
+          ? explicit.getAttribute('data-page-nav-blur')
+          : explicit.getAttribute('data-nav-blur')
+      });
+    }
+
+    var section = container && container.querySelector
+      ? container.querySelector('[data-theme-section], [data-bg-section], [data-nav-blur], [data-nav-theme], [data-bg-nav], header, section')
+      : null;
+
+    return getSectionTransitionNavState(section);
+  }
+
+  function applyTransitionNavState(config) {
+    var state = normalizeTransitionNavState(config);
+    var theme = state.theme;
+    var bg = state.bg;
+    var blur = state.blur;
     var targets = [document.documentElement, document.body, document.querySelector('.nav')];
 
     targets.forEach(function (target) {
@@ -314,10 +387,8 @@
 
       if (isHomeNamespace(data && data.next ? data.next.namespace : 'default')) {
         prepareHomeHeroState();
-      }
-
-      if (isProjectDetailNamespace(nextNamespace)) {
-        applyTransitionNavState({ theme: 'light', bg: 'none', blur: false });
+      } else {
+        applyTransitionNavState(getTransitionNavState(nextNamespace, data && data.next ? data.next.container : null));
       }
 
       if (typeof gsap !== 'undefined') {
@@ -423,7 +494,7 @@
           var nextNamespace = data && data.next ? data.next.namespace : 'default';
 
           if (isProjectDetailNamespace(currentNamespace) && !isProjectDetailNamespace(nextNamespace)) {
-            applyTransitionNavState({ theme: 'dark', bg: 'solid', blur: false });
+            applyTransitionNavState(getTransitionNavState(nextNamespace, data && data.next ? data.next.container : null));
           }
 
           return pageLeaveAnimation(data.current.container);
