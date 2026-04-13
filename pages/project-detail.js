@@ -114,6 +114,67 @@
     applyMapping('[r-prevnext-next-img], [np-articles-next-img]', 'src', next.imgSrc);
   }
 
+  function processProjectDetailPageData(container) {
+    var removeElements = container.querySelectorAll('.row.w-condition-invisible');
+    var orderElements = container.querySelectorAll('[data-set="order"]');
+
+    removeElements.forEach(function (el) {
+      el.remove();
+    });
+
+    orderElements.forEach(function (el, index) {
+      var orderNumber = String(index + 1).padStart(2, '0');
+      el.textContent = '[' + orderNumber + ']';
+    });
+  }
+
+  function fitProjectTitleToContainer(container) {
+    var containerEl = container.querySelector('.container.is-inline');
+    var textEl = container.querySelector('.h1_display-project');
+    var containerWidth;
+    var originalFontSize;
+    var measurer;
+    var fontSize;
+
+    if (typeof gsap === 'undefined') return;
+    if (!containerEl || !textEl) return;
+
+    containerWidth = containerEl.offsetWidth;
+    if (!containerWidth) return;
+
+    if (!textEl.dataset.originalFontSize) {
+      textEl.dataset.originalFontSize = String(parseFloat(window.getComputedStyle(textEl).fontSize));
+    }
+
+    originalFontSize = parseFloat(textEl.dataset.originalFontSize || '16');
+    measurer = textEl.cloneNode(true);
+    measurer.style.position = 'absolute';
+    measurer.style.visibility = 'hidden';
+    measurer.style.pointerEvents = 'none';
+    measurer.style.whiteSpace = 'nowrap';
+    measurer.style.width = 'auto';
+    measurer.style.left = '-9999px';
+    measurer.style.top = '-9999px';
+    measurer.style.fontSize = originalFontSize + 'px';
+
+    document.body.appendChild(measurer);
+
+    fontSize = originalFontSize;
+    while (measurer.offsetWidth > containerWidth && fontSize > 8) {
+      fontSize -= 1;
+      measurer.style.fontSize = fontSize + 'px';
+    }
+
+    document.body.removeChild(measurer);
+
+    gsap.to(textEl, {
+      fontSize: fontSize + 'px',
+      duration: 0.4,
+      ease: 'power2.out',
+      overwrite: 'auto'
+    });
+  }
+
   function resetProjectDetailVideoDom(container) {
     if (!container) return;
 
@@ -286,6 +347,9 @@
     var container = ctx.container;
     var cleanups = [];
     var videoCleanup = null;
+    var debounce = MBC.core && MBC.core.utils && MBC.core.utils.debounce
+      ? MBC.core.utils.debounce
+      : function (fn) { return fn; };
     var traceAsync = MBC.core && MBC.core.utils && MBC.core.utils.traceAsync
       ? MBC.core.utils.traceAsync
       : function (label, promiseFactory) { return Promise.resolve().then(promiseFactory); };
@@ -295,6 +359,9 @@
 
     applyInitialProjectDetailNavState();
     resetProjectDetailVideoDom(container);
+    traceSync('project-detail processPageData', function () {
+      processProjectDetailPageData(container);
+    });
 
     // Videos init BEFORE Finsweet — video init replaces #video element
     // with a stableWrapper, so this must happen before Finsweet binds
@@ -362,6 +429,31 @@
         initPrevNextProjects(container);
       });
     });
+
+    var fitTitle = function () {
+      fitProjectTitleToContainer(container);
+    };
+    var onResize = debounce(function () {
+      fitTitle();
+    }, 120);
+
+    window.addEventListener('resize', onResize);
+    cleanups.push(function () {
+      window.removeEventListener('resize', onResize);
+    });
+
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        fitTitle();
+      });
+    });
+
+    if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') {
+      document.fonts.ready.then(function () {
+        if (!document.body.contains(container)) return;
+        fitTitle();
+      });
+    }
 
     requestAnimationFrame(function () {
       applyInitialProjectDetailNavState();
