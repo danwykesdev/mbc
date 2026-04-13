@@ -78,12 +78,72 @@
     }
   }
 
-  function initProjectDetailBodyThemeScroll(container) {
+  function parseProjectDetailBlur(value) {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    if (value === false || value === 'false' || value === '0' || value === 'none' || value === 'no-blur') {
+      return false;
+    }
+
+    return true;
+  }
+
+  function resolveProjectDetailNavState(section) {
+    if (!section) {
+      return {
+        theme: 'light',
+        bg: 'none',
+        blur: false
+      };
+    }
+
+    var theme = section.getAttribute('data-theme-section') || section.getAttribute('data-nav-theme') || 'light';
+    var blur = parseProjectDetailBlur(section.getAttribute('data-nav-blur'));
+    var bg = section.getAttribute('data-bg-section') || section.getAttribute('data-bg-nav') || null;
+
+    if (blur === null) {
+      blur = theme === 'dark';
+    }
+
+    if (blur === false) {
+      bg = 'none';
+    } else if (!bg) {
+      bg = 'solid';
+    }
+
+    return {
+      theme: theme === 'dark' ? 'dark' : 'light',
+      bg: bg,
+      blur: blur
+    };
+  }
+
+  function applyProjectDetailNavState(state) {
+    var nextState = state || { theme: 'light', bg: 'none', blur: false };
+    var nav = document.querySelector('.nav');
+
+    if (nav) {
+      nav.setAttribute('data-theme-nav', nextState.theme);
+      nav.setAttribute('data-nav-theme', nextState.theme);
+      nav.setAttribute('data-bg-nav', nextState.bg);
+      nav.setAttribute('data-nav-bg', nextState.bg);
+      nav.setAttribute('data-nav-blur', nextState.blur ? 'true' : 'false');
+    }
+
+    if (MBC.features.nav) {
+      MBC.features.nav.setState(nextState);
+    }
+  }
+
+  function initProjectDetailThemeScroll(container) {
     if (!container) return null;
 
     var sections = Array.from(container.querySelectorAll('[data-theme-section]'));
     if (!sections.length) {
       setProjectDetailBodyTheme('light');
+      applyProjectDetailNavState({ theme: 'light', bg: 'none', blur: false });
       return null;
     }
 
@@ -91,28 +151,35 @@
     var offset = navBarHeightEl ? navBarHeightEl.offsetHeight / 2 : 0;
     var rafId = null;
 
-    function updateBodyTheme() {
+    function updateTheme() {
       rafId = null;
-      var activeTheme = 'light';
+      var activeSection = null;
 
       sections.forEach(function (section) {
         var rect = section.getBoundingClientRect();
         if (rect.top <= offset && rect.bottom >= offset) {
-          activeTheme = section.getAttribute('data-theme-section') || 'light';
+          activeSection = section;
         }
       });
 
-      setProjectDetailBodyTheme(activeTheme);
+      if (!activeSection) {
+        setProjectDetailBodyTheme('light');
+        applyProjectDetailNavState({ theme: 'light', bg: 'none', blur: false });
+        return;
+      }
+
+      setProjectDetailBodyTheme(activeSection.getAttribute('data-theme-section') || 'light');
+      applyProjectDetailNavState(resolveProjectDetailNavState(activeSection));
     }
 
     function onScroll() {
       if (rafId) {
         cancelAnimationFrame(rafId);
       }
-      rafId = requestAnimationFrame(updateBodyTheme);
+      rafId = requestAnimationFrame(updateTheme);
     }
 
-    updateBodyTheme();
+    updateTheme();
     document.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll, { passive: true });
 
@@ -130,8 +197,6 @@
   }
 
   function applyInitialProjectDetailNavState() {
-    var nav = document.querySelector('.nav');
-
     if (document.documentElement) {
       document.documentElement.removeAttribute('data-theme-nav');
       document.documentElement.removeAttribute('data-nav-theme');
@@ -146,17 +211,7 @@
       document.body.removeAttribute('data-nav-blur');
     }
 
-    if (nav) {
-      nav.setAttribute('data-theme-nav', 'light');
-      nav.setAttribute('data-nav-theme', 'light');
-      nav.setAttribute('data-bg-nav', 'none');
-      nav.setAttribute('data-nav-blur', 'false');
-    }
-
-    if (MBC.features.nav) {
-      MBC.features.nav.setState({ theme: 'light', bg: 'none', blur: false });
-    }
-
+    applyProjectDetailNavState({ theme: 'light', bg: 'none', blur: false });
     setProjectDetailBodyTheme('light');
   }
 
@@ -201,8 +256,8 @@
       cleanups.push(scrollAnimCleanup);
     }
 
-    var bodyThemeCleanup = traceSync('project-detail initBodyThemeScroll', function () {
-      return initProjectDetailBodyThemeScroll(container);
+    var bodyThemeCleanup = traceSync('project-detail initThemeScroll', function () {
+      return initProjectDetailThemeScroll(container);
     });
     if (typeof bodyThemeCleanup === 'function') {
       cleanups.push(bodyThemeCleanup);
