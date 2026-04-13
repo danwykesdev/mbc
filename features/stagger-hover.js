@@ -20,7 +20,7 @@
 
     triggers.forEach(function (trigger) {
       var items = Array.from(trigger.querySelectorAll('[data-stagger="item"]'));
-      var image = trigger.querySelector('.img-component');
+      var image = trigger.querySelector('.img-component .u-img-cover, .img-component img, .img-component video');
 
       if (!items.length && !image) {
         return;
@@ -41,7 +41,7 @@
       }
 
       if (image) {
-        gsap.set(image, { scale: 1, transformOrigin: '50% 50%' });
+        gsap.set(image, { scale: 1, transformOrigin: '50% 50%', force3D: true });
       }
 
       var onEnter = function () {
@@ -66,6 +66,7 @@
             scale: 1.05,
             duration: 0.5,
             ease: 'power2.out',
+            force3D: true,
             overwrite: 'auto'
           });
         }
@@ -93,6 +94,7 @@
             scale: 1,
             duration: 0.35,
             ease: 'power2.out',
+            force3D: true,
             overwrite: 'auto'
           });
         }
