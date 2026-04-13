@@ -58,10 +58,18 @@
    */
   function loadNextPrevScript() {
     return new Promise(function (resolve) {
+      document.querySelectorAll('script').forEach(function (existingScript) {
+        if (existingScript.src && existingScript.src.indexOf('next-prev-articles') !== -1) {
+          existingScript.parentNode.removeChild(existingScript);
+        }
+      });
+
       var script = document.createElement('script');
-      script.src = 'https://tools.refokus.com/next-prev-articles/bundle.v1.0.0.js';
+      script.src = 'https://tools.refokus.com/next-prev-articles/bundle.v1.0.0.js?ts=' + Date.now();
       script.async = true;
-      script.onload = resolve;
+      script.onload = function () {
+        setTimeout(resolve, 80);
+      };
       script.onerror = function () {
         console.warn('[MBC] Refokus next-prev script failed to load');
         resolve();
@@ -155,6 +163,12 @@
       rafId = null;
       var activeSection = null;
 
+      if ((window.scrollY || window.pageYOffset || 0) <= 8) {
+        setProjectDetailBodyTheme('light');
+        applyProjectDetailNavState({ theme: 'light', bg: 'none', blur: false });
+        return;
+      }
+
       sections.forEach(function (section) {
         var rect = section.getBoundingClientRect();
         if (rect.top <= offset && rect.bottom >= offset) {
@@ -218,6 +232,7 @@
   async function mount(ctx) {
     var container = ctx.container;
     var cleanups = [];
+    var videoCleanup = null;
     var traceAsync = MBC.core && MBC.core.utils && MBC.core.utils.traceAsync
       ? MBC.core.utils.traceAsync
       : function (label, promiseFactory) { return Promise.resolve().then(promiseFactory); };
@@ -231,7 +246,7 @@
     // with a stableWrapper, so this must happen before Finsweet binds
     // its modal open/close handlers to the DOM
     if (MBC.features.videos) {
-      var videoCleanup = traceSync('project-detail videos.initStandalone', function () {
+      videoCleanup = traceSync('project-detail videos.initStandalone', function () {
         return MBC.features.videos.initStandalone({ container: container });
       });
       if (typeof videoCleanup === 'function') {
@@ -244,6 +259,19 @@
       await traceAsync('project-detail finsweet.modal init', function () {
         return MBC.features.finsweet.init(container, { modules: ['modal'] });
       });
+    }
+
+    if (MBC.features.videos) {
+      if (typeof videoCleanup === 'function') {
+        try { videoCleanup(); } catch (_) {}
+      }
+
+      videoCleanup = traceSync('project-detail videos.initStandalone refresh', function () {
+        return MBC.features.videos.initStandalone({ container: container });
+      });
+      if (typeof videoCleanup === 'function') {
+        cleanups.push(videoCleanup);
+      }
     }
 
     applyInitialProjectDetailNavState();
