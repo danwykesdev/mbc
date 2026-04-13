@@ -27,7 +27,7 @@
         gsap.to(entry.items, {
           autoAlpha: 1,
           y: 0,
-          duration: 0.5,
+          duration: 0.2,
           ease: 'power2.out',
           stagger: {
             total: 0.1,
