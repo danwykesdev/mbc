@@ -214,6 +214,35 @@
     return normalized === 'home';
   }
 
+  function isProjectDetailNamespace(namespace) {
+    var utils = MBC.core && MBC.core.utils;
+    var normalized = utils && typeof utils.normalizeNamespace === 'function'
+      ? utils.normalizeNamespace(namespace)
+      : String(namespace || 'default').toLowerCase();
+
+    return normalized === 'project-detail';
+  }
+
+  function applyTransitionNavState(config) {
+    var state = config || {};
+    var theme = state.theme || 'dark';
+    var bg = state.bg || 'solid';
+    var blur = !!state.blur;
+    var targets = [document.documentElement, document.body, document.querySelector('.nav')];
+
+    targets.forEach(function (target) {
+      if (!target) return;
+      target.setAttribute('data-theme-nav', theme);
+      target.setAttribute('data-nav-theme', theme);
+      target.setAttribute('data-bg-nav', bg);
+      target.setAttribute('data-nav-blur', blur ? 'true' : 'false');
+    });
+
+    if (MBC.features.nav && typeof MBC.features.nav.setState === 'function') {
+      MBC.features.nav.setState({ theme: theme, bg: bg, blur: blur });
+    }
+  }
+
   function loadModulesForRoute(data) {
     if (!data || !data.next || !data.next.container) {
       return Promise.resolve();
@@ -281,12 +310,17 @@
     var initialAfterEnterSkipped = false;
 
     barba.hooks.beforeEnter(function (data) {
+      var nextNamespace = data && data.next ? data.next.namespace : 'default';
+
       if (isHomeNamespace(data && data.next ? data.next.namespace : 'default')) {
         prepareHomeHeroState();
       }
 
+      if (isProjectDetailNamespace(nextNamespace)) {
+        applyTransitionNavState({ theme: 'light', bg: 'none', blur: false });
+      }
+
       if (typeof gsap !== 'undefined') {
-        var nextNamespace = data && data.next ? data.next.namespace : 'default';
         var nextState = {
           position: 'fixed',
           top: 0,
@@ -385,6 +419,13 @@
         },
 
         leave: function (data) {
+          var currentNamespace = data && data.current ? data.current.namespace : 'default';
+          var nextNamespace = data && data.next ? data.next.namespace : 'default';
+
+          if (isProjectDetailNamespace(currentNamespace) && !isProjectDetailNamespace(nextNamespace)) {
+            applyTransitionNavState({ theme: 'dark', bg: 'solid', blur: false });
+          }
+
           return pageLeaveAnimation(data.current.container);
         }
       }]
