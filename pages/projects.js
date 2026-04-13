@@ -133,8 +133,8 @@
           if (pane.classList.contains('w--tab-active')) {
             setTimeout(function () {
               animatePaneFilters(pane);
-              if (MBC.core.webflow) MBC.core.webflow.refreshIX();
               bindHorizontalScroll('projects horizontalScroll.init tab change');
+              bindStaggerHover('projects staggerHover.init tab change');
               if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
             }, 20);
           } else {

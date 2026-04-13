@@ -176,16 +176,6 @@
 
       if (!document.body.contains(container)) return;
 
-      // refreshUI MUST run before finsweet/video init so IX2 is stable
-      // before Finsweet binds its event listeners
-      if (MBC.core.webflow && typeof MBC.core.webflow.refreshUI === 'function') {
-        await traceAsync('home webflow.refreshUI final', function () {
-          return MBC.core.webflow.refreshUI();
-        });
-      } else if (MBC.core.webflow && typeof MBC.core.webflow.refreshIX === 'function') {
-        MBC.core.webflow.refreshIX();
-      }
-
       await traceAsync('home settle wait 50ms', function () {
         return wait(50);
       });
@@ -257,6 +247,9 @@
     if (MBC.core.state.lenis && typeof MBC.core.state.lenis.scrollTo === 'function') {
       MBC.core.state.lenis.scrollTo(0, { immediate: true });
     }
+
+    bindHorizontalScroll('home horizontalScroll.init early');
+    bindStaggerHover('home staggerHover.init early');
 
     // Hero animation
     if (MBC.features.hero) {
