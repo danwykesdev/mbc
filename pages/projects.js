@@ -38,6 +38,24 @@
     });
   }
 
+  function applyProjectsCardBottomInset(container) {
+    var wrap = container.querySelector('[data-horizontal-scroll-wrap]');
+    if (!wrap) return;
+
+    var track = container.querySelector('[data-horizontal-track]');
+    var panels = gsap.utils.toArray('[data-horizontal-scroll-panel]', wrap);
+
+    wrap.style.paddingBottom = '40px';
+
+    if (track) {
+      track.style.alignItems = 'flex-end';
+    }
+
+    panels.forEach(function (panel) {
+      panel.style.alignSelf = 'flex-end';
+    });
+  }
+
   async function mount(ctx) {
     var container = ctx.container;
     var cleanups = [];
@@ -100,6 +118,8 @@
       });
     }
 
+    applyProjectsCardBottomInset(container);
+
     bindHorizontalScroll('projects horizontalScroll.init final');
     bindStaggerHover('projects staggerHover.init final');
 
@@ -133,6 +153,7 @@
           if (pane.classList.contains('w--tab-active')) {
             setTimeout(function () {
               animatePaneFilters(pane);
+              applyProjectsCardBottomInset(container);
               bindHorizontalScroll('projects horizontalScroll.init tab change');
               bindStaggerHover('projects staggerHover.init tab change');
               if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
@@ -149,6 +170,7 @@
     }, 400); // wait for strong reinit + settleAfterMount to finish
 
     var reflowTimeout = setTimeout(function () {
+      applyProjectsCardBottomInset(container);
       bindHorizontalScroll('projects horizontalScroll.init delayed');
     }, 520);
 
