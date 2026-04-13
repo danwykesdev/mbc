@@ -9,6 +9,7 @@
     var container = ctx.container;
     var cleanups = [];
     var horizontalScrollCleanup = null;
+    var staggerHoverCleanup = null;
     var deferredHomeFeaturesPromise = null;
     var traceAsync = MBC.core && MBC.core.utils && MBC.core.utils.traceAsync
       ? MBC.core.utils.traceAsync
@@ -33,6 +34,25 @@
 
       if (typeof nextCleanup === 'function') {
         horizontalScrollCleanup = nextCleanup;
+      }
+    }
+
+    function bindStaggerHover(label) {
+      if (!MBC.features.staggerHover || typeof MBC.features.staggerHover.init !== 'function') {
+        return;
+      }
+
+      if (typeof staggerHoverCleanup === 'function') {
+        try { staggerHoverCleanup(); } catch (_) {}
+        staggerHoverCleanup = null;
+      }
+
+      var nextCleanup = traceSync(label || 'home staggerHover.init', function () {
+        return MBC.features.staggerHover.init(container);
+      });
+
+      if (typeof nextCleanup === 'function') {
+        staggerHoverCleanup = nextCleanup;
       }
     }
 
@@ -199,6 +219,7 @@
       }
 
       bindHorizontalScroll('home horizontalScroll.init final');
+      bindStaggerHover('home staggerHover.init final');
     }
 
     async function playPostHeroIntro() {
@@ -281,6 +302,11 @@
       if (typeof horizontalScrollCleanup === 'function') {
         try { horizontalScrollCleanup(); } catch (_) {}
         horizontalScrollCleanup = null;
+      }
+
+      if (typeof staggerHoverCleanup === 'function') {
+        try { staggerHoverCleanup(); } catch (_) {}
+        staggerHoverCleanup = null;
       }
 
       cleanups.forEach(function (fn) {

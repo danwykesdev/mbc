@@ -42,6 +42,7 @@
     var container = ctx.container;
     var cleanups = [];
     var horizontalScrollCleanup = null;
+    var staggerHoverCleanup = null;
     var traceAsync = MBC.core && MBC.core.utils && MBC.core.utils.traceAsync
       ? MBC.core.utils.traceAsync
       : function (label, promiseFactory) { return Promise.resolve().then(promiseFactory); };
@@ -68,6 +69,25 @@
       }
     }
 
+    function bindStaggerHover(label) {
+      if (!MBC.features.staggerHover || typeof MBC.features.staggerHover.init !== 'function') {
+        return;
+      }
+
+      if (typeof staggerHoverCleanup === 'function') {
+        try { staggerHoverCleanup(); } catch (_) {}
+        staggerHoverCleanup = null;
+      }
+
+      var nextCleanup = traceSync(label || 'projects staggerHover.init', function () {
+        return MBC.features.staggerHover.init(container);
+      });
+
+      if (typeof nextCleanup === 'function') {
+        staggerHoverCleanup = nextCleanup;
+      }
+    }
+
     // Set nav state
     if (MBC.features.nav) {
       MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: true });
@@ -81,6 +101,7 @@
     }
 
     bindHorizontalScroll('projects horizontalScroll.init final');
+    bindStaggerHover('projects staggerHover.init final');
 
     // Set initial filter state immediately (before any observers)
     var tabPanes = container.querySelectorAll('.w-tab-pane');
@@ -158,6 +179,11 @@
       if (typeof horizontalScrollCleanup === 'function') {
         try { horizontalScrollCleanup(); } catch (_) {}
         horizontalScrollCleanup = null;
+      }
+
+      if (typeof staggerHoverCleanup === 'function') {
+        try { staggerHoverCleanup(); } catch (_) {}
+        staggerHoverCleanup = null;
       }
 
       cleanups.forEach(function (fn) {
