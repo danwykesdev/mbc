@@ -41,13 +41,27 @@
     var maxRetries = 12;
     var cleanedUp = false;
 
+    function clearPanelTransforms(wrap) {
+      if (!wrap) return;
+
+      var livePanels = gsap.utils.toArray('[data-horizontal-scroll-panel]', wrap);
+      if (!livePanels.length) return;
+
+      gsap.killTweensOf(livePanels);
+      gsap.set(livePanels, { clearProps: 'transform,x,y,translate,rotate,scale' });
+    }
+
     function clearTween() {
+      var liveWrap = container.querySelector('[data-horizontal-scroll-wrap]');
+
       killTriggerById('horizontal-pin');
       if (tween) {
         try {
           tween.kill();
         } catch (_) {}
       }
+
+      clearPanelTransforms(liveWrap);
       tween = null;
     }
 
@@ -61,6 +75,8 @@
         console.log('[MBC HorizontalScroll] no wrap found');
         return false;
       }
+
+      clearPanelTransforms(wrap);
 
       var panels = gsap.utils.toArray('[data-horizontal-scroll-panel]', wrap);
       if (panels.length < 2) {
