@@ -128,10 +128,14 @@
     if (!tabPanes.length) {
       tabPanes = document.querySelectorAll('.w-tab-pane');
     }
+    var paneActiveState = new WeakMap();
 
     // Set initial filter visibility — do this sync, no observer yet
     tabPanes.forEach(function (pane) {
-      if (pane.classList.contains('w--tab-active')) {
+      var isActive = pane.classList.contains('w--tab-active');
+      paneActiveState.set(pane, isActive);
+
+      if (isActive) {
         showPaneFiltersImmediately(pane);
       } else {
         setPaneFiltersInactive(pane);
@@ -150,7 +154,16 @@
           var pane = mutation.target;
           if (!(pane instanceof HTMLElement)) return;
 
-          if (pane.classList.contains('w--tab-active')) {
+          var isActive = pane.classList.contains('w--tab-active');
+          var wasActive = paneActiveState.has(pane) ? paneActiveState.get(pane) : null;
+
+          if (wasActive === isActive) {
+            return;
+          }
+
+          paneActiveState.set(pane, isActive);
+
+          if (isActive) {
             setTimeout(function () {
               animatePaneFilters(pane);
               applyProjectsCardBottomInset(container);
