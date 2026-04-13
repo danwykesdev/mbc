@@ -15,10 +15,8 @@
       if (!bar || !bar.style) return;
 
       if (isMobile) {
-        bar.style.backgroundColor = '#111111';
         bar.style.borderColor = '#111111';
       } else {
-        bar.style.backgroundColor = '';
         bar.style.borderColor = '';
       }
     });
