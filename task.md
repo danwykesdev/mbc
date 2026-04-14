@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-11 16:20 BST
+Last updated: 2026-04-14 14:40 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -140,6 +140,37 @@ Last updated: 2026-04-11 16:20 BST
   - rebuilt bundled runtime so `[MBC Trace]` logs include per-page function runtimes in bundled mode
 - Verified: ✅ 2026-04-11 12:34 BST — pushed as `2d6a171`
 
+### 15. Nav theme, blur, and mobile nav consistency across pages
+- Status: `Fixed`
+- Report: nav blur/theme behavior was inconsistent across pages, especially `project-detail`, and mobile nav stagger/link-close behavior was missing
+- Notes:
+  - normalized transition nav state in `main.js` so `data-nav-blur="false"` resolves to transparent/no blur and dark sections can still drive dark nav state
+  - limited transition nav attributes to the `.nav` element so body theme can be managed independently on `project-detail`
+  - updated `pages/project-detail.js` to keep nav transparent at the top, follow active section theme on scroll, and keep body theme synced
+  - updated `features/nav.js` so mobile/tablet burger bar borders stay dark and mobile open state forces logo/button styling black
+  - restored GSAP-driven mobile nav open/close behavior with staggered `.nav-link` reveal and close-before-navigation on internal mobile nav links
+- Verified: ✅ 2026-04-14 14:10 BST — pushed across `1560686`, `f9c3c82`
+
+### 16. Projects/Zine route transitions felt delayed
+- Status: `Fixed`
+- Report: transitions into `projects` and `zine` felt slower than necessary even without changing the visual transition timing
+- Notes:
+  - made `projects` Finsweet list init non-blocking during mount, then rebound horizontal scroll / stagger hover after it settled
+  - made `zine` FS slider load asynchronous so route visibility is not blocked waiting for the script
+  - preserved the existing visual transition animation timings
+- Verified: ✅ 2026-04-14 14:10 BST — pushed as `1560686`
+
+### 17. Project-detail revisit reliability: prev/next, video modal, title, and ordering
+- Status: `Fixed`
+- Report: detail-to-detail transitions could break video modal behavior and prev/next project UI; project title sizing and order numbering from legacy behavior were also missing or incorrect on load
+- Notes:
+  - replaced fragile external Refokus dependency with local prev/next project mapping in `pages/project-detail.js`
+  - added stronger project-detail video DOM reset and reinit flow around Finsweet modal setup so revisiting detail pages behaves like a fresh load
+  - restored legacy `.h1_display-project` fit-to-container behavior with debounced resize + `document.fonts.ready` reflow
+  - restored legacy `[data-set="order"]` numbering and removal of `.w-condition-invisible` items before numbering
+  - added mutation-driven resync so late CMS/Webflow changes re-run invisible-item cleanup and order numbering after mount
+- Verified: ✅ 2026-04-14 14:40 BST — pushed across `d5d63d6`, `3d38bcf`, `0f17149`, `8ca9994`
+
 ## Change log
 - 2026-04-10 ~21:00: created task log and recorded current known issues from runtime review
 - 2026-04-10 ~21:30: added nav pre-hide, stronger Vimeo modal/background handling, and stronger Webflow/IX refresh passes
@@ -159,3 +190,9 @@ Last updated: 2026-04-11 16:20 BST
 - 2026-04-11 12:21: added delayed/observed horizontal-scroll reflow for late layout changes → pushed as 57a2f90
 - 2026-04-11 12:34: added shared per-page runtime tracing in bundled runtime → pushed as 2d6a171
 - 2026-04-11 16:20: re-query DOM in horizontal-scroll on each reflow to fix stale refs → pushed as 726422a
+- 2026-04-14 14:10: normalized nav blur/theme behavior, restored GSAP mobile nav stagger, and reduced blocking mount work for projects/zine → pushed as 1560686
+- 2026-04-14 14:18: forced project-detail top nav transparent and refreshed Refokus/video reinit path → pushed as f9c3c82
+- 2026-04-14 14:24: replaced project-detail prev/next script dependency with local builder and hardened video DOM reset → pushed as d5d63d6
+- 2026-04-14 14:31: restored project-detail title fit and order numbering logic from legacy behavior → pushed as 3d38bcf
+- 2026-04-14 14:34: broadened invisible-item removal before project-detail ordering → pushed as 0f17149
+- 2026-04-14 14:40: added mutation-driven project-detail order resync for late CMS/Webflow DOM updates → pushed as 8ca9994
