@@ -38,13 +38,43 @@
     });
   }
 
-  function isNativeInteractiveElement(el) {
-    return !!(el && (el.closest && el.closest('input, select, textarea, button, label, a')));
+  function isNativeFormControl(el) {
+    return !!(el && (el.closest && el.closest('input, select, textarea, button')));
   }
 
   function findProjectsFilterInput(scope) {
     if (!scope || !scope.querySelector) return null;
     return scope.querySelector('input[fs-list-field], input[fs-list-value], select[fs-list-field], textarea[fs-list-field]');
+  }
+
+  function triggerProjectsFilterInput(input) {
+    if (!input || input.disabled) return;
+
+    var tagName = input.tagName;
+    var type = (input.type || '').toLowerCase();
+
+    if (tagName === 'INPUT' && type === 'checkbox') {
+      input.checked = !input.checked;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      return;
+    }
+
+    if (tagName === 'INPUT' && type === 'radio') {
+      if (input.checked) return;
+      input.checked = true;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      return;
+    }
+
+    if (typeof input.click === 'function') {
+      input.click();
+      return;
+    }
+
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
   function applyProjectsCardBottomInset(container) {
@@ -123,19 +153,18 @@
 
       var item = target.closest('.filters__item');
       if (!item || !container.contains(item)) return;
-      if (isNativeInteractiveElement(target)) return;
+      if (isNativeFormControl(target)) return;
 
       var input = findProjectsFilterInput(item);
-      if (!input || input.disabled) return;
-      if (input.type === 'radio' && input.checked) return;
+      if (!input) return;
 
-      if (typeof input.click === 'function') {
-        input.click();
-        return;
+      triggerProjectsFilterInput(input);
+
+      if (MBC.features.finsweet && typeof MBC.features.finsweet.restart === 'function') {
+        setTimeout(function () {
+          MBC.features.finsweet.restart(container, { modules: ['list'] }).catch(function () {});
+        }, 20);
       }
-
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.dispatchEvent(new Event('change', { bubbles: true }));
     };
 
     container.addEventListener('click', onFilterItemClick);
@@ -157,8 +186,15 @@
         : ['list', 'filter'];
 
       if (finsweetModules.length) {
-        traceAsync('projects finsweet init', function () {
-          return MBC.features.finsweet.init(container, { modules: finsweetModules, label: 'projects' });
+        traceAsync('projects finsweet reset', function () {
+          if (!MBC.features.finsweet || typeof MBC.features.finsweet.destroy !== 'function') {
+            return Promise.resolve();
+          }
+          return MBC.features.finsweet.destroy({ modules: ['list'], timeout: 300 });
+        }).then(function () {
+          return traceAsync('projects finsweet init', function () {
+            return MBC.features.finsweet.init(container, { modules: finsweetModules, label: 'projects' });
+          });
         }).then(function () {
           if (MBC.features.finsweet && typeof MBC.features.finsweet.inspect === 'function') {
             traceSync('projects finsweet inspect after init', function () {
@@ -224,6 +260,9 @@
           if (isActive) {
             setTimeout(function () {
               animatePaneFilters(pane);
+              if (MBC.features.finsweet && typeof MBC.features.finsweet.restart === 'function') {
+                MBC.features.finsweet.restart(container, { modules: ['list'] }).catch(function () {});
+              }
               applyProjectsCardBottomInset(container);
               bindHorizontalScroll('projects horizontalScroll.init tab change');
               bindStaggerHover('projects staggerHover.init tab change');
@@ -292,6 +331,10 @@
           try { fn(); } catch (_) {}
         }
       });
+
+      if (MBC.features.finsweet && typeof MBC.features.finsweet.destroy === 'function') {
+        MBC.features.finsweet.destroy({ modules: ['list'], timeout: 300 }).catch(function () {});
+      }
     };
   }
  

@@ -156,6 +156,20 @@
     }
   }
 
+  async function destroyModule(fs, moduleName) {
+    if (!fs || !fs.modules || !fs.modules[moduleName]) {
+      return;
+    }
+
+    if (typeof fs.modules[moduleName].destroy === 'function') {
+      try {
+        await Promise.resolve(fs.modules[moduleName].destroy());
+      } catch (e) {
+        console.warn('[MBC] FS ' + moduleName + ' destroy failed:', e);
+      }
+    }
+  }
+
   /**
    * Re-inject standalone modal scripts for SPA transitions
    * The standalone FS modal/a11y scripts self-initialize on load,
@@ -276,6 +290,46 @@
     }
   }
 
+  async function restartFinsweet(container, options) {
+    options = options || {};
+
+    var neededModules = resolveModules(container || document, options.modules);
+    if (!neededModules.length) return;
+
+    var fs = await waitForFinsweet(3000);
+    if (!fs) return;
+    if (!fs.modules) fs.modules = {};
+
+    for (var i = 0; i < neededModules.length; i++) {
+      var moduleName = neededModules[i];
+      if (moduleName === 'modal') continue;
+      await restartModule(fs, moduleName, 2000);
+    }
+  }
+
+  async function destroyFinsweet(options) {
+    options = options || {};
+
+    var fs = await waitForFinsweet(options.timeout || 800);
+    if (!fs || !fs.modules) return;
+
+    var requestedModules = options.modules && options.modules.length ? options.modules.slice() : Object.keys(fs.modules);
+    var modulesToDestroy = [];
+
+    requestedModules.forEach(function (moduleName) {
+      if (moduleName === 'filter' || moduleName === 'slider') {
+        moduleName = 'list';
+      }
+      if (modulesToDestroy.indexOf(moduleName) === -1) {
+        modulesToDestroy.push(moduleName);
+      }
+    });
+
+    for (var i = 0; i < modulesToDestroy.length; i++) {
+      await destroyModule(fs, modulesToDestroy[i]);
+    }
+  }
+
   /**
    * Preload Finsweet script (call early to start loading)
    */
@@ -286,10 +340,12 @@
   }
 
   MBC.features.finsweet = {
+    destroy: destroyFinsweet,
     init: initFinsweet,
     detectModules: detectModules,
     inspect: inspect,
     preload: preload,
+    restart: restartFinsweet,
     waitForFinsweet: waitForFinsweet
   };
 })();
