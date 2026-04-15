@@ -38,6 +38,15 @@
     });
   }
 
+  function isNativeInteractiveElement(el) {
+    return !!(el && (el.closest && el.closest('input, select, textarea, button, label, a')));
+  }
+
+  function findProjectsFilterInput(scope) {
+    if (!scope || !scope.querySelector) return null;
+    return scope.querySelector('input[fs-list-field], input[fs-list-value], select[fs-list-field], textarea[fs-list-field]');
+  }
+
   function applyProjectsCardBottomInset(container) {
     var wrap = container.querySelector('[data-horizontal-scroll-wrap]');
     if (!wrap) return;
@@ -107,6 +116,32 @@
     if (MBC.features.nav) {
       MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: true });
     }
+
+    var onFilterItemClick = function (event) {
+      var target = event.target;
+      if (!(target instanceof Element)) return;
+
+      var item = target.closest('.filters__item');
+      if (!item || !container.contains(item)) return;
+      if (isNativeInteractiveElement(target)) return;
+
+      var input = findProjectsFilterInput(item);
+      if (!input || input.disabled) return;
+      if (input.type === 'radio' && input.checked) return;
+
+      if (typeof input.click === 'function') {
+        input.click();
+        return;
+      }
+
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    container.addEventListener('click', onFilterItemClick);
+    cleanups.push(function () {
+      container.removeEventListener('click', onFilterItemClick);
+    });
 
     if (MBC.features.finsweet && typeof MBC.features.finsweet.inspect === 'function') {
       traceSync('projects finsweet inspect before init', function () {
