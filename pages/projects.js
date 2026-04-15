@@ -108,6 +108,12 @@
       MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: true });
     }
 
+    if (MBC.features.finsweet && typeof MBC.features.finsweet.inspect === 'function') {
+      traceSync('projects finsweet inspect before init', function () {
+        MBC.features.finsweet.inspect(container, 'projects before init');
+      });
+    }
+
     if (MBC.features.finsweet && typeof MBC.features.finsweet.init === 'function') {
       var finsweetModules = typeof MBC.features.finsweet.detectModules === 'function'
         ? MBC.features.finsweet.detectModules(container).filter(function (moduleName) {
@@ -117,8 +123,13 @@
 
       if (finsweetModules.length) {
         traceAsync('projects finsweet init', function () {
-          return MBC.features.finsweet.init(container, { modules: finsweetModules });
+          return MBC.features.finsweet.init(container, { modules: finsweetModules, label: 'projects' });
         }).then(function () {
+          if (MBC.features.finsweet && typeof MBC.features.finsweet.inspect === 'function') {
+            traceSync('projects finsweet inspect after init', function () {
+              MBC.features.finsweet.inspect(container, 'projects after init');
+            });
+          }
           applyProjectsCardBottomInset(container);
           bindHorizontalScroll('projects horizontalScroll.init after finsweet');
           bindStaggerHover('projects staggerHover.init after finsweet');

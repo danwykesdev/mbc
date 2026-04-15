@@ -53,7 +53,7 @@
   // External scripts that may be loaded dynamically
   // type: 'module' means it's an ES module that needs type="module"
   var EXTERNAL_SCRIPTS = {
-    'finsweet-attributes': { url: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes@2/attributes.js', type: 'module' },
+    'finsweet-attributes': { url: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes@2/attributes.js', type: 'module', attrs: { 'fs-list': '' } },
     'finsweet-modal': { url: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-modal@1/modal.js', type: 'module' },
     'finsweet-a11y': { url: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-a11y@1/a11y.js', type: 'module' },
     'vimeo-player': { url: 'https://player.vimeo.com/api/player.js', type: 'classic' }
@@ -119,7 +119,7 @@
   /**
    * Load a single script and return a promise
    */
-  function loadScript(src, scriptType) {
+  function loadScript(src, scriptType, scriptAttributes) {
     var cacheKey = src + (scriptType || '');
 
     if (loadingPromises[cacheKey]) {
@@ -133,6 +133,14 @@
 
       if (scriptType === 'module') {
         script.type = 'module';
+      }
+
+      if (scriptAttributes && typeof scriptAttributes === 'object') {
+        Object.keys(scriptAttributes).forEach(function (attrName) {
+          var attrValue = scriptAttributes[attrName];
+          if (attrValue === false || attrValue == null) return;
+          script.setAttribute(attrName, attrValue === true ? '' : String(attrValue));
+        });
       }
 
       script.onload = function () {
@@ -163,17 +171,23 @@
     }
 
     // Support both string URL and config object
-    var url, scriptType;
+    var url, scriptType, scriptAttributes;
     if (typeof urlOrConfig === 'string') {
       url = urlOrConfig;
       scriptType = 'classic';
+      scriptAttributes = null;
     } else {
       url = urlOrConfig.url;
       scriptType = urlOrConfig.type || 'classic';
+      scriptAttributes = urlOrConfig.attrs || null;
+    }
+
+    if (name === 'finsweet-attributes') {
+      window.FinsweetAttributes = window.FinsweetAttributes || [];
     }
 
     var promise = traceAsync('external ' + name, function () {
-      return loadScript(url, scriptType);
+      return loadScript(url, scriptType, scriptAttributes);
     }).then(function () {
       loadedExternalScripts[name] = true;
       delete loadingPromises['external:' + name];

@@ -10,34 +10,6 @@
     return el;
   }
 
-  /**
-   * Load the standalone FS Slider script
-   * Re-injects each time so it processes new DOM after Barba transitions
-   */
-  function loadFsSlider() {
-    // Remove any previous slider script so it re-executes on fresh DOM
-    document.querySelectorAll('script').forEach(function (s) {
-      if (s.src && s.src.indexOf('attributes-slider') !== -1) {
-        s.parentNode.removeChild(s);
-      }
-    });
-
-    return new Promise(function (resolve) {
-      var script = document.createElement('script');
-      script.type = 'module';
-      script.src = 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-slider@1/slider.js';
-      script.onload = function () {
-        // Give the module time to initialize
-        setTimeout(resolve, 80);
-      };
-      script.onerror = function () {
-        console.warn('[MBC] FS Slider script failed to load');
-        resolve();
-      };
-      document.head.appendChild(script);
-    });
-  }
-
   async function mount(ctx) {
     var container = ctx.container;
     var cleanups = [];
@@ -48,23 +20,30 @@
       ? MBC.core.utils.traceSync
       : function (_, fn) { return fn(); };
 
-    // FS Slider MUST init before pagination so slider DOM is ready
-    await traceAsync('zine loadFsSlider', function () {
-      return loadFsSlider();
-    });
+    if (MBC.features.finsweet && typeof MBC.features.finsweet.inspect === 'function') {
+      traceSync('zine finsweet inspect before init', function () {
+        MBC.features.finsweet.inspect(container, 'zine before init');
+      });
+    }
 
     if (MBC.features.finsweet && typeof MBC.features.finsweet.init === 'function') {
       var finsweetModules = typeof MBC.features.finsweet.detectModules === 'function'
         ? MBC.features.finsweet.detectModules(container).filter(function (moduleName) {
-            return moduleName !== 'slider' && moduleName !== 'modal';
+            return moduleName !== 'modal';
           })
-        : ['list', 'filter'];
+        : ['list'];
 
       if (finsweetModules.length) {
         await traceAsync('zine finsweet init', function () {
-          return MBC.features.finsweet.init(container, { modules: finsweetModules });
+          return MBC.features.finsweet.init(container, { modules: finsweetModules, label: 'zine' });
         });
       }
+    }
+
+    if (MBC.features.finsweet && typeof MBC.features.finsweet.inspect === 'function') {
+      traceSync('zine finsweet inspect after init', function () {
+        MBC.features.finsweet.inspect(container, 'zine after init');
+      });
     }
 
     // Scroll to list anchor

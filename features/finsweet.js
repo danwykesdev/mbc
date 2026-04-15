@@ -70,6 +70,53 @@
     return modules;
   }
 
+  function pushUnique(modules, moduleName) {
+    if (modules.indexOf(moduleName) === -1) {
+      modules.push(moduleName);
+    }
+  }
+
+  function resolveModules(container, requestedModules) {
+    var source = requestedModules && requestedModules.length ? requestedModules.slice() : detectModules(container);
+    var resolved = [];
+
+    source.forEach(function (moduleName) {
+      if (moduleName === 'modal') {
+        pushUnique(resolved, 'modal');
+        return;
+      }
+
+      if (moduleName === 'list' || moduleName === 'filter' || moduleName === 'slider') {
+        pushUnique(resolved, 'list');
+      }
+    });
+
+    return resolved;
+  }
+
+  function countMatches(container, selector) {
+    try {
+      return container.querySelectorAll(selector).length;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function inspect(container, label) {
+    var summary = {
+      listElements: countMatches(container, '[fs-list-element]'),
+      filterElements: countMatches(container, '[fs-filter-element]'),
+      sliderElements: countMatches(container, '[fs-slider-element]'),
+      modalElements: countMatches(container, '[fs-modal-element]'),
+      paginationNext: countMatches(container, '[data-pagination-next], [fs-list-element="pagination-next"]'),
+      paginationPrev: countMatches(container, '[data-pagination-prev], [fs-list-element="pagination-previous"]'),
+      activeModules: detectModules(container)
+    };
+
+    console.log('[MBC] Finsweet inspect ' + (label || ''), summary);
+    return summary;
+  }
+
   /**
    * Restart a specific FS module
    */
@@ -158,8 +205,10 @@
   async function initFinsweet(container, options) {
     options = options || {};
 
-    var neededModules = options.modules || detectModules(container);
+    var neededModules = resolveModules(container, options.modules);
     if (!neededModules.length) return;
+
+    inspect(container, options.label || 'init');
 
     // Modal-only: use standalone scripts (not the full FS library)
     var isModalOnly = neededModules.length === 1 && neededModules[0] === 'modal';
@@ -211,6 +260,15 @@
         return wait(100);
       });
 
+      if (fs.modules && fs.modules.list) {
+        console.log('[MBC] Finsweet list controls ready', {
+          hasRestart: typeof fs.modules.list.restart === 'function',
+          hasDestroy: typeof fs.modules.list.destroy === 'function',
+          version: fs.modules.list.version || null,
+          processSize: fs.process && typeof fs.process.size === 'number' ? fs.process.size : null
+        });
+      }
+
     } catch (e) {
       console.error('[MBC] Finsweet init failed:', e);
     } finally {
@@ -230,6 +288,7 @@
   MBC.features.finsweet = {
     init: initFinsweet,
     detectModules: detectModules,
+    inspect: inspect,
     preload: preload,
     waitForFinsweet: waitForFinsweet
   };
