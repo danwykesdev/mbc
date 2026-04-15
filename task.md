@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-14 14:40 BST
+Last updated: 2026-04-15 18:35 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -171,6 +171,34 @@ Last updated: 2026-04-14 14:40 BST
   - added mutation-driven resync so late CMS/Webflow changes re-run invisible-item cleanup and order numbering after mount
 - Verified: ✅ 2026-04-14 14:40 BST — pushed across `d5d63d6`, `3d38bcf`, `0f17149`, `8ca9994`
 
+### 18. Projects/Zine Finsweet Attributes v2 integration and Projects regressions
+- Status: `Investigating`
+- Report: projects and zine needed the shared Finsweet Attributes v2 path restored, but projects filters still do not work reliably and SPA return to projects has been fragile
+- Notes:
+  - loader now injects `https://cdn.jsdelivr.net/npm/@finsweet/attributes@2/attributes.js` with the required `fs-list` marker and primes `window.FinsweetAttributes`
+  - `features/finsweet.js` now logs page-level inspection output and exposes safe `restart()` / `destroy()` helpers for the list module
+  - `pages/zine.js` no longer uses the broken standalone slider package path; it now relies on the shared Attributes v2 path
+  - `pages/projects.js` now includes a custom filter-item bridge for hidden inputs plus list reset/restart handling on mount, tab activation, and page cleanup
+  - latest live testing showed partial improvement:
+    - hard reload on projects: pagination improved, filters still broken
+    - `Projects > Home > Projects`: pagination and filters both broke before the latest reset/re-entry patch
+  - latest projects re-entry fix has been pushed but still needs end-to-end retesting on live pages
+- Verified: ⚠️ 2026-04-15 — pushed across `3468602`, `1f3f946`, `13c54aa`, `c37ebd2`; final verification still pending
+
+### 19. Legacy runtime/archive cleanup
+- Status: `Fixed`
+- Report: the repo still contains older non-active runtime entry files and build artifacts that are no longer part of the live modular runtime, which makes future maintenance harder
+- Notes:
+  - active runtime remains `main.js` + `loader.js` + `core/*` + `features/*` + `pages/*` + `bundle-runtime-entry.js` + `dist/mbc.runtime.js`
+  - moved the following legacy files out of the active repo path into `legacy/`:
+    - `script.js`
+    - `app.js`
+    - `bundle-entry.js`
+    - `transitions/barba-transition.js`
+    - `dist/mbc.bundle.js`
+  - `package.json` build entry has been updated to point to the active runtime bundle path only
+- Verified: ✅ 2026-04-15 — legacy runtime/archive moved into `legacy/`; active runtime paths unchanged
+
 ## Change log
 - 2026-04-10 ~21:00: created task log and recorded current known issues from runtime review
 - 2026-04-10 ~21:30: added nav pre-hide, stronger Vimeo modal/background handling, and stronger Webflow/IX refresh passes
@@ -196,3 +224,7 @@ Last updated: 2026-04-14 14:40 BST
 - 2026-04-14 14:31: restored project-detail title fit and order numbering logic from legacy behavior → pushed as 3d38bcf
 - 2026-04-14 14:34: broadened invisible-item removal before project-detail ordering → pushed as 0f17149
 - 2026-04-14 14:40: added mutation-driven project-detail order resync for late CMS/Webflow DOM updates → pushed as 8ca9994
+- 2026-04-15 17:20: fixed loader injection for shared Finsweet Attributes v2 script, restored shared zine/projects Finsweet path, and rebuilt runtime → pushed as 3468602, 1f3f946
+- 2026-04-15 18:00: added projects custom filter-item bridge to hidden Finsweet inputs → pushed as 13c54aa
+- 2026-04-15 18:30: added projects list destroy/restart handling for SPA re-entry and shared Finsweet restart/destroy helpers → pushed as c37ebd2
+- 2026-04-15 18:35: updated task log for open projects Finsweet issues and prepared legacy runtime archive cleanup

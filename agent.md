@@ -91,11 +91,15 @@ Key files include:
 - `features/hero.js`
 - `features/scroll-direction.js`
 
-### Legacy file
+### Legacy archive
 
-- `script.js`
+- `legacy/script.js`
+- `legacy/app.js`
+- `legacy/bundle-entry.js`
+- `legacy/transitions/barba-transition.js`
+- `legacy/dist/mbc.bundle.js`
 
-Treat `script.js` as a **legacy reference**, not the first place to implement new logic.
+Treat these as **legacy reference files**, not the first place to implement new logic.
 
 Use it when:
 
@@ -103,7 +107,7 @@ Use it when:
 - checking how a behavior originally worked
 - comparing old selectors or data attributes
 
-Do **not** assume logic in `script.js` is active in the current runtime.
+Do **not** assume logic in the `legacy/` folder is active in the current runtime.
 
 ## Folder guide
 
@@ -157,12 +161,12 @@ The `mount(ctx)` function should:
 
 ### `transitions/`
 
-Contains alternate Barba transition code.
+This folder is no longer part of the active runtime path.
 
 Important note:
 
 - the repo currently uses the transition setup in `main.js`
-- `transitions/barba-transition.js` is useful as reference, but `main.js` is the active source of truth unless you confirm otherwise
+- older alternate transition code is archived under `legacy/transitions/barba-transition.js`
 
 ### `dist/`
 
@@ -171,6 +175,8 @@ Built runtime assets.
 Important:
 
 - if runtime code changes, rebuild bundled output so `dist/mbc.runtime.js` stays in sync
+- `dist/mbc.runtime.js` is the active built site file
+- the old `mbc.bundle.js` file is archived under `legacy/dist/mbc.bundle.js`
 
 ### `task.md`
 
@@ -325,14 +331,14 @@ Key idea:
 
 Responsible for:
 
-- standalone FS slider reinjection
+- shared Finsweet Attributes v2 list/slider init path
 - pagination shortcut behavior
 - tab shortcut behavior
 - `[data-move-talk]` DOM move
 
 Key idea:
 
-- zine may rely on standalone script reinjection after transitions
+- zine now uses the shared Finsweet Attributes runtime rather than a standalone slider script
 
 ### `pages/about.js`
 
@@ -391,7 +397,9 @@ Owns repo-specific Finsweet integration behavior.
 
 Use it when changing:
 
+- loader-facing list/filter/slider reset behavior
 - list restart behavior
+- list destroy / SPA re-entry cleanup behavior
 - modal reinjection flow
 - module detection/restart logic
 
@@ -453,7 +461,7 @@ Prefer this order when investigating behavior:
 - relevant `pages/*`
 - relevant `features/*`
 - `task.md`
-- `script.js` only as legacy reference
+- `legacy/script.js` only as legacy reference
 
 ## 2. Check whether behavior is page-specific or shared
 
@@ -536,7 +544,7 @@ Before pushing:
 
 ## Common pitfalls
 
-- editing `script.js` and expecting live runtime behavior to change
+- editing `legacy/script.js` and expecting live runtime behavior to change
 - forgetting to add a module to `bundle-runtime-entry.js`
 - using stale DOM refs across Webflow reinit
 - binding global listeners without cleanup
@@ -601,7 +609,7 @@ Future AI agents should:
 - understand the page lifecycle before editing
 - prefer page modules for namespace logic
 - prefer feature modules for shared logic
-- treat `script.js` as reference only
+- treat `legacy/script.js` as reference only
 - rebuild the bundled runtime after JS changes
 - update `task.md` after meaningful work
 - be extra careful with `project-detail`, navigation, Webflow reinit, and any late-mutating CMS/Finsweet behavior
