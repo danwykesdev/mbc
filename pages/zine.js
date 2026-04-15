@@ -48,9 +48,24 @@
       ? MBC.core.utils.traceSync
       : function (_, fn) { return fn(); };
 
-    traceAsync('zine loadFsSlider', function () {
+    // FS Slider MUST init before pagination so slider DOM is ready
+    await traceAsync('zine loadFsSlider', function () {
       return loadFsSlider();
-    }).catch(function () {});
+    });
+
+    if (MBC.features.finsweet && typeof MBC.features.finsweet.init === 'function') {
+      var finsweetModules = typeof MBC.features.finsweet.detectModules === 'function'
+        ? MBC.features.finsweet.detectModules(container).filter(function (moduleName) {
+            return moduleName !== 'slider' && moduleName !== 'modal';
+          })
+        : ['list', 'filter'];
+
+      if (finsweetModules.length) {
+        await traceAsync('zine finsweet init', function () {
+          return MBC.features.finsweet.init(container, { modules: finsweetModules });
+        });
+      }
+    }
 
     // Scroll to list anchor
     function scrollToAnchor() {

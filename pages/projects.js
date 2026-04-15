@@ -41,7 +41,6 @@
   function applyProjectsCardBottomInset(container) {
     var wrap = container.querySelector('[data-horizontal-scroll-wrap]');
     if (!wrap) return;
-
     var track = container.querySelector('[data-horizontal-track]');
     var panels = gsap.utils.toArray('[data-horizontal-scroll-panel]', wrap);
 
@@ -50,7 +49,6 @@
     if (track) {
       track.style.alignItems = 'flex-end';
     }
-
     panels.forEach(function (panel) {
       panel.style.alignSelf = 'flex-end';
     });
@@ -106,36 +104,48 @@
       }
     }
 
-    // Set nav state
     if (MBC.features.nav) {
       MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: true });
     }
 
-    // Finsweet list component
-    if (MBC.features.finsweet) {
-      traceAsync('projects finsweet.list init', function () {
-        return MBC.features.finsweet.init(container, { modules: ['list'] });
-      }).then(function () {
-        applyProjectsCardBottomInset(container);
-        bindHorizontalScroll('projects horizontalScroll.init after finsweet');
-        bindStaggerHover('projects staggerHover.init after finsweet');
-        if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
-      }).catch(function () {});
+    if (MBC.features.finsweet && typeof MBC.features.finsweet.init === 'function') {
+      var finsweetModules = typeof MBC.features.finsweet.detectModules === 'function'
+        ? MBC.features.finsweet.detectModules(container).filter(function (moduleName) {
+            return moduleName !== 'slider';
+          })
+        : ['list', 'filter'];
+
+      if (finsweetModules.length) {
+        traceAsync('projects finsweet init', function () {
+          return MBC.features.finsweet.init(container, { modules: finsweetModules });
+        }).then(function () {
+          applyProjectsCardBottomInset(container);
+          bindHorizontalScroll('projects horizontalScroll.init after finsweet');
+          bindStaggerHover('projects staggerHover.init after finsweet');
+          if (MBC.core && MBC.core.webflow) {
+            MBC.core.webflow.refreshIX();
+          }
+          if (typeof ScrollTrigger !== 'undefined') {
+            ScrollTrigger.refresh(true);
+          }
+        }).catch(function () {});
+      }
     }
 
     applyProjectsCardBottomInset(container);
-
     bindHorizontalScroll('projects horizontalScroll.init final');
     bindStaggerHover('projects staggerHover.init final');
 
-    // Set initial filter state immediately (before any observers)
+    if (typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.refresh(true);
+    }
+
     var tabPanes = container.querySelectorAll('.w-tab-pane');
     if (!tabPanes.length) {
       tabPanes = document.querySelectorAll('.w-tab-pane');
     }
     var paneActiveState = new WeakMap();
 
-    // Set initial filter visibility — do this sync, no observer yet
     tabPanes.forEach(function (pane) {
       var isActive = pane.classList.contains('w--tab-active');
       paneActiveState.set(pane, isActive);
@@ -147,9 +157,6 @@
       }
     });
 
-    // Defer MutationObserver setup — Webflow reinit (strong tier) fires
-    // readystatechange which can toggle tab classes, causing the observer
-    // to animate filters out then back in. We wait for settleAfterMount to complete.
     var observer = null;
     var observerTimeout = setTimeout(function () {
       if (!tabPanes.length) return;
@@ -174,7 +181,12 @@
               applyProjectsCardBottomInset(container);
               bindHorizontalScroll('projects horizontalScroll.init tab change');
               bindStaggerHover('projects staggerHover.init tab change');
-              if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
+              if (MBC.core && MBC.core.webflow) {
+                MBC.core.webflow.refreshIX();
+              }
+              if (typeof ScrollTrigger !== 'undefined') {
+                ScrollTrigger.refresh(true);
+              }
             }, 20);
           } else {
             setPaneFiltersInactive(pane);
@@ -185,14 +197,17 @@
       tabPanes.forEach(function (pane) {
         observer.observe(pane, { attributes: true, attributeFilter: ['class'] });
       });
-    }, 400); // wait for strong reinit + settleAfterMount to finish
+    }, 400);
 
     var reflowTimeout = setTimeout(function () {
       applyProjectsCardBottomInset(container);
       bindHorizontalScroll('projects horizontalScroll.init delayed');
+      bindStaggerHover('projects staggerHover.init delayed');
+      if (MBC.features.horizontalScroll && typeof MBC.features.horizontalScroll.reflow === 'function') {
+        MBC.features.horizontalScroll.reflow();
+      }
     }, 520);
 
-    // Search close button
     var searchClose = container.querySelector('#searchClose') || document.querySelector('#searchClose');
     var searchInput = container.querySelector('#Search') || document.querySelector('#Search');
     var onSearchClear = null;
@@ -233,9 +248,9 @@
       });
     };
   }
-
+ 
   function unmount() {}
-
+ 
   var moduleDef = {
     webflowTier: 'light',
     mount: mount,
