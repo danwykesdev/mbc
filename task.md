@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 21:14 BST
+Last updated: 2026-04-16 21:55 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,14 @@ Last updated: 2026-04-16 21:14 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### 1b37ab6 - gate horizontal scroll debug logs
+- Date: 2026-04-16 20:55:51Z
+- Branch: main
+- Changes:
+  - Wrapped horizontal-scroll console traces in `window.MBC_DEBUG`
+  - Kept the measurement and trigger lifecycle instrumentation available for targeted debugging only
+- Related to: Home horizontal scroll issue needing quieter production output
 
 ### investigating - normalize touch scroll for ScrollTrigger
 - Date: 2026-04-16 21:14:00Z
