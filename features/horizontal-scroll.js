@@ -9,11 +9,19 @@
 
   MBC.features = MBC.features || {};
   var activeInstance = null;
-  var debugEnabled = window.MBC_HORIZONTAL_SCROLL_DEBUG !== false;
   var DEBUG_PREFIX = '[MBC HorizontalScroll Debug]';
 
+  function isDebugEnabled() {
+    return window.MBC_HORIZONTAL_SCROLL_DEBUG !== false;
+  }
+
   function debugLog() {
-    if (!debugEnabled || typeof console === 'undefined' || typeof console.log !== 'function') {
+    if (!isDebugEnabled() || typeof console === 'undefined') {
+      return;
+    }
+
+    var logger = typeof console.warn === 'function' ? console.warn : console.log;
+    if (typeof logger !== 'function') {
       return;
     }
 
@@ -25,7 +33,22 @@
       args[0] = DEBUG_PREFIX + ' ' + args[0];
     }
 
-    console.log.apply(console, args);
+    logger.apply(console, args);
+  }
+
+  function getPinSpacerMetrics(wrap) {
+    var spacer = wrap && wrap.parentNode && wrap.parentNode.classList && wrap.parentNode.classList.contains('pin-spacer')
+      ? wrap.parentNode
+      : null;
+
+    return {
+      spacerClassName: spacer ? spacer.className : null,
+      spacerHeight: spacer ? spacer.style.height || null : null,
+      spacerPaddingBottom: spacer ? spacer.style.paddingBottom || null : null,
+      wrapHeight: wrap ? wrap.style.height || null : null,
+      wrapMaxHeight: wrap ? wrap.style.maxHeight || null : null,
+      wrapTransform: wrap ? wrap.style.transform || null : null
+    };
   }
 
   function killTriggerById(id) {
@@ -41,6 +64,10 @@
 
   function initHorizontalScroll(container) {
     if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
+      debugLog('init aborted', {
+        hasGsap: typeof gsap !== 'undefined',
+        hasScrollTrigger: typeof ScrollTrigger !== 'undefined'
+      });
       return null;
     }
 
@@ -157,7 +184,8 @@
         wrapRectHeight: wrapRect.height,
         windowInnerWidth: window.innerWidth,
         windowInnerHeight: window.innerHeight,
-        scrollTriggerActive: !!ScrollTrigger.getById('horizontal-pin')
+        scrollTriggerActive: !!ScrollTrigger.getById('horizontal-pin'),
+        pinSpacer: getPinSpacerMetrics(wrap)
       });
 
       clearPanelTransforms(wrap);
@@ -233,7 +261,8 @@
               start: this.start,
               end: this.end,
               pinType: this.pinType,
-              trigger: this.trigger && this.trigger.tagName
+              trigger: this.trigger && this.trigger.tagName,
+              pinSpacer: getPinSpacerMetrics(wrap)
             });
           }
         }
@@ -242,7 +271,8 @@
       debugLog('[MBC HorizontalScroll] ScrollTrigger created', {
         totalDistance: distance,
         trigger: wrap.tagName,
-        panelCount: panels.length
+        panelCount: panels.length,
+        pinSpacer: getPinSpacerMetrics(wrap)
       });
 
       ScrollTrigger.refresh(true);

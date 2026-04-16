@@ -24,6 +24,7 @@ This module creates staggered hover effects for project cards on the projects pa
 
 ### Responsive
 - Checks for hover capability using `matchMedia('(hover: hover) and (pointer: fine)')`
+- Disables hover animation behavior entirely at `<= 991px`
 - On touch devices, shows all content immediately without hover animations
 - Falls back gracefully for devices without hover
 
@@ -69,7 +70,7 @@ Initializes stagger hover effects. Scans for triggers, sets up animations, and b
 ```
 
 ### Touch Device Handling
-On touch devices (no hover capability), the module:
+On touch devices or tablet/mobile widths at `<= 991px`, the module:
 - Shows all items immediately (opacity 1, y 0)
 - Shows images at scale 1
 - Shows overlays immediately

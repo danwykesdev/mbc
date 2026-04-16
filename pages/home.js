@@ -11,12 +11,6 @@
     var horizontalScrollCleanup = null;
     var staggerHoverCleanup = null;
     var deferredHomeFeaturesPromise = null;
-    var traceAsync = MBC.core && MBC.core.utils && MBC.core.utils.traceAsync
-      ? MBC.core.utils.traceAsync
-      : function (label, promiseFactory) { return Promise.resolve().then(promiseFactory); };
-    var traceSync = MBC.core && MBC.core.utils && MBC.core.utils.traceSync
-      ? MBC.core.utils.traceSync
-      : function (_, fn) { return fn(); };
 
     function bindHorizontalScroll(label) {
       if (!MBC.features.horizontalScroll || typeof MBC.features.horizontalScroll.init !== 'function') {
@@ -28,9 +22,7 @@
         horizontalScrollCleanup = null;
       }
 
-      var nextCleanup = traceSync(label || 'home horizontalScroll.init', function () {
-        return MBC.features.horizontalScroll.init(container);
-      });
+      var nextCleanup = MBC.features.horizontalScroll.init(container);
 
       if (typeof nextCleanup === 'function') {
         horizontalScrollCleanup = nextCleanup;
@@ -47,9 +39,7 @@
         staggerHoverCleanup = null;
       }
 
-      var nextCleanup = traceSync(label || 'home staggerHover.init', function () {
-        return MBC.features.staggerHover.init(container);
-      });
+      var nextCleanup = MBC.features.staggerHover.init(container);
 
       if (typeof nextCleanup === 'function') {
         staggerHoverCleanup = nextCleanup;
@@ -94,9 +84,7 @@
         );
       }
 
-      deferredHomeFeaturesPromise = traceAsync('home deferred feature batch', function () {
-        return Promise.all(jobs);
-      }).catch(function (err) {
+      deferredHomeFeaturesPromise = Promise.all(jobs).catch(function (err) {
         console.warn('[MBC] Home deferred features failed to load', err);
       });
 
@@ -166,42 +154,30 @@
     }
 
     async function finalizeHomeInteractiveUI() {
-      await traceAsync('home waitForHeroToSettle', function () {
-        return waitForHeroToSettle();
-      });
+      await waitForHeroToSettle();
 
       if (!document.body.contains(container)) return;
 
-      await traceAsync('home finalize deferred load', function () {
-        return loadDeferredHomeFeatures();
-      });
+      await loadDeferredHomeFeatures();
 
       if (!document.body.contains(container)) return;
 
-      await traceAsync('home settle wait 50ms', function () {
-        return wait(50);
-      });
+      await wait(50);
 
       if (!document.body.contains(container)) return;
 
       // Videos and Finsweet init AFTER refreshUI so listeners aren't clobbered
-      await traceAsync('home initVideosAfterHero', function () {
-        return initVideosAfterHero();
-      });
+      await initVideosAfterHero();
 
       if (MBC.features.tabs) {
-        var tabsCleanup = traceSync('home tabs.init after hero', function () {
-          return MBC.features.tabs.init(container);
-        });
+        var tabsCleanup = MBC.features.tabs.init(container);
         if (typeof tabsCleanup === 'function') {
           cleanups.push(tabsCleanup);
         }
       }
 
       if (MBC.features.finsweet) {
-        await traceAsync('home finsweet modal init', function () {
-          return MBC.features.finsweet.init(container, { modules: ['modal'] });
-        });
+        await MBC.features.finsweet.init(container, { modules: ['modal'] });
       }
 
       if (!document.body.contains(container)) return;
@@ -215,19 +191,15 @@
     }
 
     async function playPostHeroIntro() {
-      await traceAsync('home waitForHeroToSettle for intro', function () {
-        return waitForHeroToSettle();
-      });
+      await waitForHeroToSettle();
 
       if (!document.body.contains(container)) return;
 
       if (MBC.features.loadAnimations) {
-        traceSync('home loadAnimations.playIntro', function () {
-          MBC.features.loadAnimations.playIntro(container, {
-            isFirstLoad: !!ctx.isFirstLoad,
-            includeNav: false,
-            excludeSelector: '.hero-animate, [data-hero]'
-          });
+        MBC.features.loadAnimations.playIntro(container, {
+          isFirstLoad: !!ctx.isFirstLoad,
+          includeNav: false,
+          excludeSelector: '.hero-animate, [data-hero]'
         });
       }
 
@@ -258,9 +230,7 @@
       prepareHeroEntryState();
       releaseStartupCover();
 
-      var heroCleanup = traceSync('home hero.init', function () {
-        return MBC.features.hero.init(container);
-      });
+      var heroCleanup = MBC.features.hero.init(container);
       if (typeof heroCleanup === 'function') {
         cleanups.push(heroCleanup);
       }
@@ -270,9 +240,7 @@
 
     // Custom tabs
     if (MBC.features.tabs) {
-      var tabsCleanup = traceSync('home tabs.init initial', function () {
-        return MBC.features.tabs.init(container);
-      });
+      var tabsCleanup = MBC.features.tabs.init(container);
       if (typeof tabsCleanup === 'function') {
         cleanups.push(tabsCleanup);
       }
@@ -280,9 +248,7 @@
 
     // Horizontal scroll section (used on home too)
     if (MBC.features.videos && typeof MBC.features.videos.initBackground === 'function') {
-      var backgroundVideoCleanup = traceSync('home videos.initBackground', function () {
-        return MBC.features.videos.initBackground(container);
-      });
+      var backgroundVideoCleanup = MBC.features.videos.initBackground(container);
       if (typeof backgroundVideoCleanup === 'function') {
         cleanups.push(backgroundVideoCleanup);
       }

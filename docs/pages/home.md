@@ -27,7 +27,7 @@ This is the page module for the Home page. It handles the complex initialization
 - Initializes tabs
 - Initializes Finsweet modal
 - Resets hover states
-- Rebinds horizontal scroll and stagger hover
+- Rebinds horizontal scroll and stagger hover without wrapping the Home flow in trace logging
 
 ### Post-Hero Intro Animation
 - Plays load animations intro after hero completes
@@ -99,6 +99,9 @@ Interactive features wait for the hero animation to complete. This prevents conf
 ### Video Timing
 Videos are initialized after refreshUI to ensure Finsweet doesn't clobber the video DOM listeners.
 
+### Targeted Diagnostics Only
+Home avoids page-level trace wrappers for the horizontal-scroll investigation. Console output on this route should come from targeted feature diagnostics like `[MBC HorizontalScroll Debug]`, not generic `[MBC Trace]` timing logs.
+
 ## Dependencies
 - MBC.features.hero (for hero animation)
 - MBC.features.horizontalScroll (for horizontal scroll sections)
@@ -109,7 +112,6 @@ Videos are initialized after refreshUI to ensure Finsweet doesn't clobber the vi
 - MBC.features.loadAnimations (for intro animations)
 - MBC.features.nav (for navigation state)
 - MBC.loader (for deferred module loading)
-- MBC.core.utils (for traceAsync, traceSync)
 - MBC.core.state (for heroAnimating flag)
 
 ## Namespace

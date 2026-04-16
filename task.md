@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 22:24 BST
+Last updated: 2026-04-16 22:40 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,15 @@ Last updated: 2026-04-16 22:24 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### investigating - remove home trace noise and disable stagger hover on tablet
+- Date: 2026-04-16 22:40:00Z
+- Branch: main
+- Changes:
+  - Removed Home page trace wrappers so the route no longer emits generic `[MBC Trace]` logs during the horizontal-scroll investigation
+  - Upgraded horizontal-scroll diagnostics to warning-level logs with explicit abort reasons and pin-spacer measurements
+  - Disabled stagger-hover behavior at `<= 991px` while keeping cards visible without hover listeners
+- Related to: Home tablet hero/pin-spacing issue and request to turn off staggerHover at tablet widths
 
 ### 4aff2e4 - silence shared trace logs during horizontal-scroll debugging
 - Date: 2026-04-16 22:20:00Z

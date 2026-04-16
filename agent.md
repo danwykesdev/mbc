@@ -290,6 +290,7 @@ Responsible for:
 - deferred feature loading for first paint speed
 - tabs/video/finsweet sequencing after hero settles
 - horizontal scroll + stagger hover binding
+- targeted horizontal-scroll debugging without page-level trace noise
 
 Key idea:
 
@@ -419,6 +420,15 @@ Important:
 - width-only resize guards matter on iOS, because browser chrome height changes can otherwise reflow the pinned section and create large white gaps
 - horizontal-scroll diagnostics currently default to on; disable them only with `window.MBC_HORIZONTAL_SCROLL_DEBUG = false`
 - horizontal-scroll logs are prefixed with `[MBC HorizontalScroll Debug]` so they stay visible without enabling broader trace output
+- horizontal-scroll diagnostics should log abort reasons and pin-spacer metrics while this iPad issue is under investigation
+
+### `features/stagger-hover.js`
+
+Owns project-card hover animation behavior.
+
+Important:
+
+- treat `<= 991px` as non-hover and keep stagger hover effectively off on tablet/mobile
 
 ### `features/load-animations.js`
 

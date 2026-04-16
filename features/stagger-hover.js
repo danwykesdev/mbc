@@ -15,7 +15,10 @@
       return null;
     }
 
-    var canHover = typeof window.matchMedia !== 'function' || window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    var canHover = window.innerWidth > 991 && (
+      typeof window.matchMedia !== 'function' ||
+      window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    );
     var triggerMap = new Map();
     var activeTrigger = null;
 
