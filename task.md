@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 13:08 BST
+Last updated: 2026-04-16 13:23 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,16 @@ Last updated: 2026-04-16 13:08 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### 0c12ed0 - fix: change navBottom animation from 100% to 100vw for full viewport width
+- Date: 2026-04-16 13:23:00Z
+- Branch: main
+- Changes:
+  - Change original timeline animation from width: '100%' to width: '100vw'
+  - Change recreated timeline animation from width: '100%' to width: '100vw'
+  - This ensures navBottom spans full viewport width regardless of parent container constraints
+  - Fixes issue where navBottom appeared narrow (5%) despite being set to 100%
+- Related to: Nav__bottom width display issue on mobile
 
 ### 11f6e4a - fix: correct navBottom timeline animation to animate to 100% when nav opens
 - Date: 2026-04-16 13:08:00Z
