@@ -336,7 +336,6 @@ Responsible for:
 - list-tabs prep and hydration wait
 - pagination shortcut behavior
 - tab shortcut behavior
-- `[data-move-talk]` DOM move
 
 Key idea:
 

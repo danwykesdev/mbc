@@ -1,7 +1,7 @@
 # zine.md
 
 ## Purpose
-This is the page module for the Zine page. It handles Finsweet list integration, custom pagination, tab shortcuts, and DOM manipulation for the zine layout.
+This is the page module for the Zine page. It handles Finsweet list integration, custom pagination, and tab shortcuts for the zine layout.
 
 ## What It Does
 
@@ -22,11 +22,6 @@ This is the page module for the Zine page. It handles Finsweet list integration,
 - Clicking a trigger activates a tab
 - Scrolls to list anchor after tab activation
 - Used for "anatomy", "head", and "luxury" sections
-
-### DOM Manipulation
-- Moves `[data-move-talk]` element into `[data-talk]` destination
-- This repositions content for the zine layout
-- Happens during mount before user interaction
 
 ### Scroll to Anchor
 - Scrolls to `[fs-list-element='scroll-anchor']` on load
@@ -65,7 +60,7 @@ Main mount function with Finsweet, pagination, and tab handling.
 5. **Scroll to Anchor**: Scroll to list anchor
 6. **Pagination Handler**: Set up pagination click handler
 7. **Tab Shortcuts**: Bind custom tab triggers
-8. **DOM Move**: Move talk block into destination
+8. **Cleanup**: Return lifecycle cleanup handlers
 
 ## Important Notes
 
@@ -79,9 +74,6 @@ The zine uses custom pagination buttons that trigger hidden Finsweet pagination 
 Custom buttons (marked with `data="anatomy"`, `data="head"`, `data="luxury"`) activate specific Webflow tabs or Finsweet list-tabs tabs. This provides a custom UI for tab switching.
 
 List-tabs tabs should use `fs-list-element="tabs"`, `fs-list-element="tab-link"`, and `fs-list-resetix="true"` on the Tabs component so generated tabs keep Webflow IX behavior.
-
-### DOM Move
-The talk block is moved during mount to achieve the desired zine layout. This is a one-time DOM manipulation that happens on page load.
 
 ### Lenis Scroll
 The page uses Lenis smooth scrolling if available, falling back to native scrolling otherwise.

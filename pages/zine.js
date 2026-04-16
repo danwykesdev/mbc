@@ -189,16 +189,6 @@
       bindTabShortcut('[data="luxury"]', 'luxury in numbers');
     });
 
-    // Move [data-move-talk] into [data-talk]
-    traceSync('zine moveTalkBlock', function () {
-      var talkSource = queryOne(container, '[data-move-talk]', true);
-      var talkDest = queryOne(container, '[data-talk]', true);
-
-      if (talkSource && talkDest && !talkDest.contains(talkSource)) {
-        talkDest.appendChild(talkSource);
-      }
-    });
-
     return function cleanup() {
       cleanups.forEach(function (fn) {
         if (typeof fn === 'function') {
