@@ -600,6 +600,57 @@ This page has had repeated regressions around:
 - title fitting and order numbering
 - late CMS/Webflow DOM updates
 
+## Documentation
+
+The `docs/` directory contains detailed documentation for each module in the codebase. This is the best starting point for understanding individual files.
+
+### Documentation structure
+
+- `docs/entry/` - Entry point documentation
+  - `main.md` - Main runtime entry and Barba.js setup
+  - `loader.md` - Dynamic module loading and dependency resolution
+  - `bundle-runtime-entry.md` - Build entry for production bundling
+
+- `docs/core/` - Core infrastructure documentation
+  - `cleanup.md` - Cleanup stack management
+  - `lifecycle.md` - Page mount/unmount orchestration
+  - `page-registry.md` - Page module registration and resolution
+  - `state.md` - Global runtime state
+  - `utils.md` - Utility functions (timing, namespace, tracing)
+  - `webflow-manager.md` - Webflow IX2/IX3 reinitialization
+
+- `docs/features/` - Feature module documentation
+  - `finsweet.md` - Finsweet Attributes integration
+  - `hero.md` - Home hero animation
+  - `horizontal-scroll.md` - Horizontal scroll sections
+  - `lenis.md` - Lenis smooth scrolling
+  - `load-animations.md` - Page load and reveal animations
+  - `mobile-nav.md` - Mobile navigation menu
+  - `nav.md` - Navigation state management
+  - `scroll-direction.md` - Scroll-based nav hide/show
+  - `stagger-hover.md` - Project card hover effects
+  - `tabs.md` - Custom tab system
+  - `videos.md` - Vimeo video integration
+
+- `docs/pages/` - Page module documentation
+  - `about.md` - About page module
+  - `default.md` - Default/fallback page module
+  - `home.md` - Home page module
+  - `project-detail.md` - Project detail page module
+  - `projects.md` - Projects page module
+  - `zine.md` - Zine page module
+
+### Using the documentation
+
+When investigating or modifying a module:
+1. Read the corresponding markdown file in `docs/`
+2. Understand the module's purpose, key functions, and integration points
+3. Check the "Important Notes" section for critical details
+4. Review the "Dependencies" section for required external libraries
+5. Use the "Usage Pattern" examples as a reference
+
+The documentation is written in plain language optimized for AI understanding, avoiding jargon where possible and explaining complex concepts clearly.
+
 ## Summary
 
 The current source of truth is the modular runtime, not the legacy monolith.
@@ -613,3 +664,4 @@ Future AI agents should:
 - rebuild the bundled runtime after JS changes
 - update `task.md` after meaningful work
 - be extra careful with `project-detail`, navigation, Webflow reinit, and any late-mutating CMS/Finsweet behavior
+- consult the `docs/` directory for detailed module documentation before making changes

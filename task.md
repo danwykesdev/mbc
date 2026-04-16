@@ -1,230 +1,360 @@
 # Task Log
 
-Last updated: 2026-04-15 18:35 BST
+Last updated: 2026-04-16 10:56 BST
 
 ## Status rules
 - `Open` = reported, not fixed
 - `Investigating` = code exists or partial fix exists, but not verified complete
 - `Fixed` = implemented and verified working end-to-end
 
-## Active issues
+## Commit History
 
-### 1. Home hero/nav flashes before animation
-- Status: `Fixed`
-- Report: nav is visible first, then animates
-- Notes:
-  - added pre-hide in `main.js` before Home entry mount and in `pages/home.js` immediately before hero init
-  - added a temporary first-load startup cover so the initial Home paint stays masked until hero init begins
-  - deferred noncritical Home modules so the hero animation does not wait for videos, Finsweet, tabs, or horizontal-scroll on first paint
-  - added a bundled production runtime so Home no longer depends on a multi-request internal module waterfall in production
-  - fixed the runtime bundle flag so bundled mode enabled before the loader runs
-  - skipped the duplicate first-load `afterEnter` path so Home no longer mounts twice on initial load
-- Verified: ✅ 2026-04-10 23:14 BST — trace confirmed `loadForPage home` 229ms (down from ~4s), no duplicate mount
+### c04b5a6 - Force fresh Finsweet modal reload on SPA return
+- Date: 2026-04-16 09:41:03Z
+- Changes: Force Finsweet modal to reload when returning to pages via SPA navigation
+- Related to: Projects/Zine Finsweet modal reliability
 
-### 2. Home video section background looks hidden
-- Status: `Fixed`
-- Report: background video area appears hidden
-- Notes:
-  - restored the background player flow closer to the original standalone Vimeo setup
-  - kept wrapper and iframe visibility forcing so the player is visible once injected
-- Verified: ✅ 2026-04-10 23:14 BST — trace confirmed background video init works on first load
+### e4eeed5 - Remove unused modular README
+- Date: 2026-04-15 18:14:43Z
+- Changes: Removed README-MODULAR.md as documentation is now in agent.md and docs/
 
-### 3. Closing video modal does not mute or stop video
-- Status: `Fixed`
-- Report: modal close does not reliably stop audio/video playback
-- Notes:
-  - restored destroy-on-close behavior so the Vimeo iframe is removed entirely when the modal closes
-  - reordered `finalizeHomeInteractiveUI` so `refreshUI` runs BEFORE finsweet/video init — prevents IX2 reinit from clobbering Finsweet close handlers
-  - sequenced `finalizeHomeInteractiveUI` → `playPostHeroIntro` so they don't race
-- Verified: ✅ 2026-04-11 00:10 BST — user confirmed "The video finally worked"
+### 2aba9cb - Archive legacy runtime files and update docs
+- Date: 2026-04-15 17:40:45Z
+- Changes:
+  - Moved legacy runtime files to legacy/ directory
+  - Updated agent.md to reference legacy/ folder
+  - Updated package.json build entry
+- Files moved: script.js, app.js, bundle-entry.js, transitions/barba-transition.js, dist/mbc.bundle.js
+- Related to: Issue #19 (Legacy runtime/archive cleanup)
 
-### 4. Home Webflow IX interactions breaking
-- Status: `Fixed`
-- Report: IX3 interactions break, webflow reinit running twice (redundant)
-- Notes:
-  - changed home `webflowTier` from `'full'` to `'light'` — lifecycle no longer runs redundant `Webflow.destroy()` + IX2 stop→init before mount
-  - home's own `refreshUI` post-hero is now the single IX2 init point
-  - eliminated the double-reinit that was clobbering interaction state
-- Verified: ✅ 2026-04-11 00:11 BST — pushed as 0168629, awaiting trace confirmation
+### c37ebd2 - Reset projects Finsweet list on SPA re-entry
+- Date: 2026-04-15 17:29:14Z
+- Changes:
+  - Added list destroy/restart handling in projects.js on mount, tab activation, and cleanup
+  - Added shared Finsweet restart/destroy helpers in features/finsweet.js
+- Related to: Issue #18 (Projects/Zine Finsweet Attributes v2 integration)
 
-### 5. Page transitions too slow
-- Status: `Fixed`
-- Report: nav link transitions should feel near-instant
-- Notes:
-  - leave animation: 240ms → 120ms
-  - enter animation: 280ms → 150ms
-- Verified: ✅ 2026-04-11 00:11 BST — pushed as 0168629, awaiting user confirmation
+### 13c54aa - Bridge projects filter UI to Finsweet inputs
+- Date: 2026-04-15 17:21:33Z
+- Changes:
+  - Added custom filter-item bridge in projects.js to trigger hidden Finsweet inputs
+  - Filter clicks now trigger input change events and restart Finsweet list
+- Related to: Issue #18 (Projects/Zine Finsweet Attributes v2 integration)
 
-### 6. Unused scroll data attributes
-- Status: `Fixed`
-- Report: `data-scrolling-direction` and `data-scrolling-started` no longer needed
-- Notes:
-  - removed `data-scrolling-direction` DOM attribute updates from `features/scroll-direction.js`
-  - `data-scrolling-started` was only in `script.js` (legacy monolith), not in the modular runtime
-  - nav show/hide handled purely by gsap transforms
-- Verified: ✅ 2026-04-11 00:07 BST — pushed as 03ab119
+### 1f3f946 - Fix Finsweet Attributes v2 loading and reinit
+- Date: 2026-04-15 16:35:38Z
+- Changes:
+  - Fixed loader.js to inject Finsweet Attributes v2 with fs-list marker
+  - Added window.FinsweetAttributes priming
+  - Updated features/finsweet.js with safe restart/destroy helpers
+  - Added page-level inspection logging
+- Related to: Issue #18 (Projects/Zine Finsweet Attributes v2 integration)
 
-### 7. Project-detail: Refokus next-prev script
-- Status: `Fixed`
-- Report: next-prev-articles script needs to run on each project-detail page load/transition
-- Notes:
-  - Refokus script (`bundle.v1.0.0.js`) is re-injected fresh on each `project-detail` mount
-  - ensures DOM is processed after Barba transitions
-- Verified: ✅ 2026-04-11 00:17 BST — pushed as 2e1a2e8
+### 3468602 - Fix Finsweet init on projects and zine
+- Date: 2026-04-15 15:37:34Z
+- Changes:
+  - Restored shared Finsweet Attributes v2 path for projects and zine
+  - Updated zine.js to use shared path instead of standalone slider
+  - Rebuilt bundled runtime
+- Related to: Issue #18 (Projects/Zine Finsweet Attributes v2 integration)
 
-### 8. Project-detail: data-animate-scroll
-- Status: `Fixed`
-- Report: `data-animate-scroll` elements need IntersectionObserver init on each project-detail load
-- Notes:
-  - ported `data-animate-scroll` logic from legacy `script.js` into `project-detail.js` mount
-  - supports `data-offset` and `data-delay` attributes
-  - observers are cleaned up on unmount
-- Verified: ✅ 2026-04-11 00:17 BST — pushed as 2e1a2e8
+### bcbafd2 - docs: add repo guide for future agents
+- Date: 2026-04-14 11:20:39Z
+- Changes: Created agent.md with comprehensive guide for AI agents working on this repo
 
-### 9. Project-detail: video modal close broken after refactor
-- Status: `Fixed`
-- Report: closing video modal doesn't reliably remove/destroy the player on project-detail
-- Notes:
-  - root cause: video init runs AFTER finsweet modal init, but video init replaces `#video` element with a `stableWrapper` div — Finsweet was already bound to the pre-replacement DOM
-  - fix: swapped order so videos init → finsweet modal init (same pattern as home page)
-- Verified: ✅ 2026-04-11 00:20 BST — pushed as 2fe20d7
+### d0d4240 - docs: update task log with latest nav and project detail fixes
+- Date: 2026-04-14 11:17:07Z
+- Changes: Updated task.md with issues #15-17 and corresponding commit references
 
-### 10. Zine page: data-move-talk not moving, missing pagination & tab shortcuts
-- Status: `Fixed`
-- Report: `[data-move-talk]` doesn't move into `[data-talk]` on zine page; pagination and tab shortcuts also missing
-- Notes:
-  - root cause: no `zine.js` page module existed — zine fell through to `default` handler which had none of this logic
-  - created `pages/zine.js` porting all zine features from legacy `script.js`:
-    - `[data-move-talk]` → `[data-talk]` DOM move
-    - pagination click delegation
-    - tab shortcuts (anatomy, head, luxury)
-    - scroll-to-anchor
-  - registered in loader.js and bundle-runtime-entry.js
-- Verified: ✅ 2026-04-11 00:24 BST — pushed as 087e30a
+### 8c81aa8 - Delete index.html
+- Date: 2026-04-14 11:15:08Z
+- Changes: Removed unused index.html file
 
-### 11. IX3 not initializing on about, projects, and cross-transitions
-- Status: `Fixed`
-- Report: IX3 doesn't init on about (hard reload), projects (hard reload), home→projects→home, projects→home→projects
-- Notes:
-  - webflow-manager `reinit()` was single-pass — IX3 needs the DOM fully settled before init
-  - added double-pass for ix/full tiers: destroy → ready → IX → wait → ready → IX again
-  - affects all pages using `webflowTier: 'ix'` or `'full'`
-- Verified: ✅ 2026-04-11 00:46 BST — pushed as c4b5f93
+### c38cdae - Delete folio-book-regular_IbeCW.zip
+- Date: 2026-04-14 11:14:57Z
+- Changes: Removed unused font zip file
 
-### 12. Projects: .filters__item not animating
-- Status: `Fixed`
-- Report: filter items on projects page don't animate in on tab changes
-- Notes:
-  - load-animations deliberately excludes `.filters__item` (they need separate handling)
-  - added filter animation logic to projects.js: `setPaneFiltersInactive`, `showPaneFiltersImmediately`, `animatePaneFilters`
-  - MutationObserver watches `.w-tab-pane` class changes for tab switching
-  - also added search close handler ported from legacy
-- Verified: 2026-04-11 00:46 BST — pushed as c4b5f93
+### 553cca7 - Delete osmo.md
+- Date: 2026-04-14 11:14:43Z
+- Changes: Removed osmo.md file
 
-### 13. HorizontalScroll not working on home/projects
-- Status: `Fixed`
-- Report: horizontal scroll sections fail on both hard refresh and transitions
-- Notes:
-  - root cause: `horizontalScroll.init` captured `wrap` and `panels` DOM refs once at init time. When `webflow.refreshUI` ran later, Webflow's tabs module could replace tab pane DOM nodes, detaching the original panel refs. Subsequent `reflow()` calls used stale detached refs where `p.offsetWidth = 0`, causing `distance = 0` and silent failure
-  - fix: moved `wrap` and `panels` queries inside `createOrRefreshTrigger()` so every reflow attempt reads fresh live DOM nodes
-  - also changed ResizeObserver to observe `container` instead of stale wrap/panels refs
-  - added debug logging to trace: `panels.length`, `panel[0].offsetWidth`, `total`, `vw`, `distance`
-- Verified: 2026-04-11 16:20 BST — pushed as `726422a`, awaiting user confirmation on live transitions
+### 828e880 - Delete Folio Book Regular directory
+- Date: 2026-04-14 11:14:24Z
+- Changes: Removed unused font directory
 
-### 14. Per-page runtime tracing for debugging
-- Status: `Fixed`
-- Report: need runtime timings for page-level functions so slow or failing page init work can be traced quickly
-- Notes:
-  - added shared `traceAsync()` and `traceSync()` helpers in `core/utils.js`
-  - instrumented page-level mount/init work across home, projects, project-detail, zine, about, and default
-  - rebuilt bundled runtime so `[MBC Trace]` logs include per-page function runtimes in bundled mode
-- Verified: ✅ 2026-04-11 12:34 BST — pushed as `2d6a171`
+### 8ca9994 - fix: keep project detail ordering synced after cms updates
+- Date: 2026-04-13 20:33:23Z
+- Changes:
+  - Added MutationObserver in project-detail.js to detect late CMS/Webflow DOM updates
+  - Re-runs invisible-item cleanup and order numbering when DOM changes
+- Related to: Issue #17 (Project-detail revisit reliability)
 
-### 15. Nav theme, blur, and mobile nav consistency across pages
-- Status: `Fixed`
-- Report: nav blur/theme behavior was inconsistent across pages, especially `project-detail`, and mobile nav stagger/link-close behavior was missing
-- Notes:
-  - normalized transition nav state in `main.js` so `data-nav-blur="false"` resolves to transparent/no blur and dark sections can still drive dark nav state
-  - limited transition nav attributes to the `.nav` element so body theme can be managed independently on `project-detail`
-  - updated `pages/project-detail.js` to keep nav transparent at the top, follow active section theme on scroll, and keep body theme synced
-  - updated `features/nav.js` so mobile/tablet burger bar borders stay dark and mobile open state forces logo/button styling black
-  - restored GSAP-driven mobile nav open/close behavior with staggered `.nav-link` reveal and close-before-navigation on internal mobile nav links
-- Verified: ✅ 2026-04-14 14:10 BST — pushed across `1560686`, `f9c3c82`
+### 0f17149 - fix: remove invisible project detail items before ordering
+- Date: 2026-04-13 20:27:49Z
+- Changes:
+  - Removed .w-condition-invisible items before applying order numbering
+  - Ensures hidden items don't affect numbering sequence
+- Related to: Issue #17 (Project-detail revisit reliability)
 
-### 16. Projects/Zine route transitions felt delayed
-- Status: `Fixed`
-- Report: transitions into `projects` and `zine` felt slower than necessary even without changing the visual transition timing
-- Notes:
-  - made `projects` Finsweet list init non-blocking during mount, then rebound horizontal scroll / stagger hover after it settled
-  - made `zine` FS slider load asynchronous so route visibility is not blocked waiting for the script
-  - preserved the existing visual transition animation timings
-- Verified: ✅ 2026-04-14 14:10 BST — pushed as `1560686`
+### 3d38bcf - feat: restore project detail title and order logic
+- Date: 2026-04-13 20:25:42Z
+- Changes:
+  - Restored .h1_display-project fit-to-container behavior with debounced resize
+  - Added document.fonts.ready reflow for title fitting
+  - Restored [data-set="order"] numbering logic
+- Related to: Issue #17 (Project-detail revisit reliability)
 
-### 17. Project-detail revisit reliability: prev/next, video modal, title, and ordering
-- Status: `Fixed`
-- Report: detail-to-detail transitions could break video modal behavior and prev/next project UI; project title sizing and order numbering from legacy behavior were also missing or incorrect on load
-- Notes:
-  - replaced fragile external Refokus dependency with local prev/next project mapping in `pages/project-detail.js`
-  - added stronger project-detail video DOM reset and reinit flow around Finsweet modal setup so revisiting detail pages behaves like a fresh load
-  - restored legacy `.h1_display-project` fit-to-container behavior with debounced resize + `document.fonts.ready` reflow
-  - restored legacy `[data-set="order"]` numbering and removal of `.w-condition-invisible` items before numbering
-  - added mutation-driven resync so late CMS/Webflow changes re-run invisible-item cleanup and order numbering after mount
-- Verified: ✅ 2026-04-14 14:40 BST — pushed across `d5d63d6`, `3d38bcf`, `0f17149`, `8ca9994`
+### d5d63d6 - fix: hard reset project detail video and prev-next
+- Date: 2026-04-13 20:21:34Z
+- Changes:
+  - Replaced fragile external Refokus dependency with local prev/next project mapping
+  - Added stronger project-detail video DOM reset and reinit flow
+  - Ensures revisiting detail pages behaves like a fresh load
+- Related to: Issue #17 (Project-detail revisit reliability)
 
-### 18. Projects/Zine Finsweet Attributes v2 integration and Projects regressions
+### f9c3c82 - fix: reset project detail nav refokus and video state
+- Date: 2026-04-13 20:15:23Z
+- Changes:
+  - Forced project-detail top nav transparent
+  - Refreshed Refokus/video reinit path
+- Related to: Issue #17 (Project-detail revisit reliability)
+
+### 1560686 - fix: restore mobile nav stagger and speed route mounts
+- Date: 2026-04-13 20:00:12Z
+- Changes:
+  - Restored GSAP-driven mobile nav open/close with staggered .nav-link reveal
+  - Added close-before-navigation on internal mobile nav links
+  - Made projects Finsweet list init non-blocking during mount
+  - Made zine FS slider load asynchronous
+- Related to: Issues #15, #16 (Nav consistency, route transition speed)
+
+### 1c4b7f9 - fix: darken mobile nav controls when open
+- Date: 2026-04-13 19:48:48Z
+- Changes: Updated features/nav.js to force logo/button styling black when mobile menu is open
+- Related to: Issue #15 (Nav theme, blur, and mobile nav consistency)
+
+### 586c0fc - fix: only force mobile nav bar border dark
+- Date: 2026-04-13 19:45:51Z
+- Changes: Limited mobile nav bar border styling to dark only
+- Related to: Issue #15 (Nav theme, blur, and mobile nav consistency)
+
+### 231ef3b - fix: keep mobile nav bars dark
+- Date: 2026-04-13 19:44:42Z
+- Changes: Updated features/nav.js to keep mobile/tablet burger bar borders dark
+- Related to: Issue #15 (Nav theme, blur, and mobile nav consistency)
+
+### 095ced2 - fix: sync project detail nav with scroll sections
+- Date: 2026-04-13 19:42:39Z
+- Changes: Updated pages/project-detail.js to sync nav theme with scroll position
+- Related to: Issue #15 (Nav theme, blur, and mobile nav consistency)
+
+### 726422a - fix: re-query DOM in horizontal-scroll on each reflow
+- Date: 2026-04-11 16:20:00Z
+- Changes:
+  - Moved wrap and panels queries inside createOrRefreshTrigger()
+  - Changed ResizeObserver to observe container instead of stale refs
+  - Added debug logging for panels.length, panel[0].offsetWidth, total, vw, distance
+- Related to: Issue #13 (HorizontalScroll not working on home/projects)
+
+### 2d6a171 - feat: add per-page runtime tracing
+- Date: 2026-04-11 12:34:00Z
+- Changes:
+  - Added traceAsync() and traceSync() helpers in core/utils.js
+  - Instrumented page-level mount/init work across all pages
+  - Rebuilt bundled runtime with [MBC Trace] logs
+- Related to: Issue #14 (Per-page runtime tracing for debugging)
+
+### 57a2f90 - fix: add delayed horizontal-scroll reflow
+- Date: 2026-04-11 12:21:00Z
+- Changes: Added delayed/observed horizontal-scroll reflow for late layout changes
+- Related to: Issue #13 (HorizontalScroll not working on home/projects)
+
+### 3ae8338 - fix: harden horizontal scroll init/reflow
+- Date: 2026-04-11 12:08:00Z
+- Changes: Hardened horizontal scroll init/reflow for home+projects and rebuilt bundled runtime
+- Related to: Issue #13 (HorizontalScroll not working on home/projects)
+
+### c4b5f93 - fix: double-pass IX reinit + projects filter animations
+- Date: 2026-04-11 00:46:00Z
+- Changes:
+  - Added double-pass for ix/full tiers: destroy → ready → IX → wait → ready → IX
+  - Added filter animation logic to projects.js
+  - Added MutationObserver for tab switching
+  - Added search close handler
+- Related to: Issues #11, #12 (IX3 initialization, Projects filter animations)
+
+### 9a2e5c2 - fix: standalone FS modal+a11y scripts
+- Date: 2026-04-11 00:38:00Z
+- Changes: Added standalone Finsweet modal and a11y scripts, skip full attributes library
+- Related to: Issue #3 (Closing video modal does not mute or stop video)
+
+### 547faf1 - fix: align page module deps
+- Date: 2026-04-11 00:34:00Z
+- Changes:
+  - Aligned page module dependencies
+  - Changed about to ix tier
+  - Stripped videos from default
+  - Added FS slider to zine
+- Related to: Multiple issues
+
+### 087e30a - feat: create pages/zine.js
+- Date: 2026-04-11 00:24:00Z
+- Changes:
+  - Created pages/zine.js with data-move-talk, pagination, tab shortcuts
+  - Registered in loader.js and bundle-runtime-entry.js
+- Related to: Issue #10 (Zine page missing features)
+
+### 2fe20d7 - fix: swap video/finsweet init order on project-detail
+- Date: 2026-04-11 00:20:00Z
+- Changes: Swapped order so videos init → finsweet modal init (same pattern as home page)
+- Related to: Issue #9 (Project-detail video modal close broken)
+
+### 2e1a2e8 - feat: add Refokus script and data-animate-scroll to project-detail
+- Date: 2026-04-11 00:17:00Z
+- Changes:
+  - Added Refokus next-prev script re-injection on each project-detail mount
+  - Ported data-animate-scroll logic from legacy script.js
+- Related to: Issues #7, #8 (Project-detail Refokus and scroll animations)
+
+### 0168629 - fix: change home webflowTier and cut transition animations
+- Date: 2026-04-11 00:11:00Z
+- Changes:
+  - Changed home webflowTier from 'full' to 'light'
+  - Cut transition animations: leave 120ms, enter 150ms
+- Related to: Issues #4, #5 (Home IX breaking, page transitions slow)
+
+### 03ab119 - fix: reorder refreshUI and remove unused scroll attrs
+- Date: 2026-04-11 00:07:00Z
+- Changes:
+  - Reordered refreshUI before finsweet/video init
+  - Sequenced post-hero chains
+  - Removed unused scroll data attributes
+- Related to: Issues #3, #6 (Video modal, unused attributes)
+
+### 00fb828 - fix: bundled-mode flag + duplicate afterEnter skip
+- Date: 2026-04-10 23:14:00Z
+- Changes: Fixed bundled-mode flag and skipped duplicate first-load afterEnter path
+- Related to: Issue #1 (Home hero/nav flashes)
+
+### 97e25d9 - feat: set up esbuild bundling
+- Date: 2026-04-10 00:49:00Z
+- Changes: Set up esbuild bundling and generate production bundle
+- Related to: Issue #1 (Home hero/nav flashes - bundled runtime)
+
+### a9f42d2 - fix: restore full script parity and rebuild bundle
+- Date: 2026-04-10 01:05:00Z
+- Changes: Restored full script parity and rebuilt bundle
+
+### 5823e79 - fix: fix home reinit timing for IX and interactive UI
+- Date: 2026-04-10 01:15:00Z
+- Changes: Fixed home reinit timing for IX and interactive UI
+
+### 28b230f - fix: stabilize home re-entry
+- Date: 2026-04-10 01:19:00Z
+- Changes: Stabilized home re-entry by forcing Webflow restart before hero
+
+### fffc2f3 - feat: integrate robust home tabs state machine
+- Date: 2026-04-10 01:23:00Z
+- Changes: Integrated robust home tabs state machine on transitions
+
+### 2b9a901 - fix: fix home hero and modal
+- Date: 2026-04-10 01:28:00Z
+- Changes: Fixed home hero and modal by avoiding full destroy on home re-entry
+
+### 9fe876a - fix: revert home tabs changes
+- Date: 2026-04-10 01:35:00Z
+- Changes: Reverted home tabs changes and hardened modal Vimeo lifecycle
+
+### 7e394cf - feat: add home isolation mode
+- Date: 2026-04-10 01:41:00Z
+- Changes: Added home isolation mode and targeted tabs diagnostics
+
+### d091039 - feat: restore custom home tabs controller
+- Date: 2026-04-10 01:45:00Z
+- Changes: Restored custom home tabs controller with transition-safe cleanup
+
+### 636712d - feat: implement modular loader system
+- Date: 2026-04-10 15:50:00Z
+- Changes:
+  - Added loader.js with dependency resolution and DOM feature detection
+  - Added main.js entry point with Barba patterns
+  - Created feature modules: tabs, hero, videos, finsweet, horizontal-scroll
+  - Updated page modules: home, projects, project-detail, about, default
+  - Simplified webflow-manager.js reinit
+  - Dynamic Finsweet loading based on [fs-*] attribute detection
+- Related to: Initial modular architecture
+
+### be39185 - feat: add dynamic loading for Finsweet modal and Vimeo scripts
+- Date: 2026-04-10 16:39:00Z
+- Changes:
+  - Added finsweet-modal and vimeo-player to EXTERNAL_SCRIPTS
+  - Detect [fs-modal-element] for modal script loading
+  - Detect video elements for Vimeo
+  - Load external scripts BEFORE modules
+- Related to: Initial modular architecture
+
+### 66ffd20 - fix: correct page-registry.js filename in loader
+- Date: 2026-04-10 16:47:00Z
+- Changes: Fixed page-registry.js filename in loader module manifest (was registry.js)
+- Related to: Initial modular architecture
+
+### 7ca302f - fix: update Finsweet Attributes CDN to v2
+- Date: 2026-04-10 16:50:00Z
+- Changes: Updated Finsweet Attributes CDN to v2 path
+- Related to: Initial modular architecture
+
+### d9f3be2 - feat: add ES module support and page self-registration
+- Date: 2026-04-10 16:54:00Z
+- Changes:
+  - Finsweet Attributes/Modal now load with type='module'
+  - Vimeo loads as classic script
+  - All page modules now self-register with MBC.core.registry.register()
+  - Fixed project-detail namespace mismatch
+  - Added MBC_ENV flag
+  - Debug logging enabled in local mode
+- Related to: Initial modular architecture
+
+### 95bbee1 - fix: restore home feature wiring
+- Date: 2026-04-10 17:53:00Z
+- Changes:
+  - Widened loader feature detection
+  - Load page feature deps explicitly
+  - Initialize horizontal scroll on home page
+  - Restore Vimeo data-video handling
+  - Preserve page self-registration
+- Related to: Initial modular architecture
+
+### 55d3088 - fix: restore original home hero animation
+- Date: 2026-04-10 18:03:00Z
+- Changes:
+  - Replaced simplified fade hero with original crisp-loader animation
+  - Keep SPA-safe singleton cleanup for matchMedia and timeline
+  - Support both [data-load-items=nav] and [data-load-items=nav-item]
+  - Preserve modular cleanup contract
+- Related to: Initial modular architecture
+
+### 9c6c09d - feat: refine home transition, reveal, and video behavior
+- Date: 2026-04-10 20:44:00Z
+- Changes: Refined home transition, reveal, and video behavior
+
+### 095ced2 - feat: add nav pre-hide and Vimeo handling
+- Date: 2026-04-10 21:00:00Z
+- Changes: Added nav pre-hide, stronger Vimeo modal/background handling, and stronger Webflow/IX refresh passes
+
+### feca373 - feat: initialize modular GSAP/Barba/Webflow architecture
+- Date: 2026-04-10 00:44:00Z
+- Changes: Initialized modular GSAP/Barba/Webflow architecture
+- Related to: Initial modular architecture
+
+## Active Issues
+
+### Projects Finsweet Filters
 - Status: `Investigating`
-- Report: projects and zine needed the shared Finsweet Attributes v2 path restored, but projects filters still do not work reliably and SPA return to projects has been fragile
+- Report: Projects filters still do not work reliably after Finsweet Attributes v2 integration
 - Notes:
-  - loader now injects `https://cdn.jsdelivr.net/npm/@finsweet/attributes@2/attributes.js` with the required `fs-list` marker and primes `window.FinsweetAttributes`
-  - `features/finsweet.js` now logs page-level inspection output and exposes safe `restart()` / `destroy()` helpers for the list module
-  - `pages/zine.js` no longer uses the broken standalone slider package path; it now relies on the shared Attributes v2 path
-  - `pages/projects.js` now includes a custom filter-item bridge for hidden inputs plus list reset/restart handling on mount, tab activation, and page cleanup
-  - latest live testing showed partial improvement:
-    - hard reload on projects: pagination improved, filters still broken
-    - `Projects > Home > Projects`: pagination and filters both broke before the latest reset/re-entry patch
-  - latest projects re-entry fix has been pushed but still needs end-to-end retesting on live pages
-- Verified: ⚠️ 2026-04-15 — pushed across `3468602`, `1f3f946`, `13c54aa`, `c37ebd2`; final verification still pending
-
-### 19. Legacy runtime/archive cleanup
-- Status: `Fixed`
-- Report: the repo still contains older non-active runtime entry files and build artifacts that are no longer part of the live modular runtime, which makes future maintenance harder
-- Notes:
-  - active runtime remains `main.js` + `loader.js` + `core/*` + `features/*` + `pages/*` + `bundle-runtime-entry.js` + `dist/mbc.runtime.js`
-  - moved the following legacy files out of the active repo path into `legacy/`:
-    - `script.js`
-    - `app.js`
-    - `bundle-entry.js`
-    - `transitions/barba-transition.js`
-    - `dist/mbc.bundle.js`
-  - `package.json` build entry has been updated to point to the active runtime bundle path only
-- Verified: ✅ 2026-04-15 — legacy runtime/archive moved into `legacy/`; active runtime paths unchanged
-
-## Change log
-- 2026-04-10 ~21:00: created task log and recorded current known issues from runtime review
-- 2026-04-10 ~21:30: added nav pre-hide, stronger Vimeo modal/background handling, and stronger Webflow/IX refresh passes
-- 2026-04-10 ~22:00: added Home startup cover, deferred noncritical Home modules, fallback cover release
-- 2026-04-10 ~22:30: restored modal destroy-on-close behavior, simplified Webflow refresh
-- 2026-04-10 ~23:00: added bundled production runtime, `[MBC Trace]` logging, fixed bundled-mode startup ordering
-- 2026-04-10 23:14: fixed bundled-mode flag + duplicate afterEnter skip → pushed as 00fb828
-- 2026-04-11 00:07: reordered refreshUI before finsweet/video init, sequenced post-hero chains, removed unused scroll attrs → pushed as 03ab119
-- 2026-04-11 00:11: changed home webflowTier to 'light', cut transition animations (leave 120ms, enter 150ms) → pushed as 0168629
-- 2026-04-11 00:17: added Refokus next-prev script + data-animate-scroll to project-detail mount → pushed as 2e1a2e8
-- 2026-04-11 00:20: fixed video modal close on project-detail by swapping init order (videos before finsweet) → pushed as 2fe20d7
-- 2026-04-11 00:24: created pages/zine.js with data-move-talk, pagination, tab shortcuts → pushed as 087e30a
-- 2026-04-11 00:34: aligned page module deps, about→ix, default stripped videos, zine+FS slider → pushed as 547faf1
-- 2026-04-11 00:38: standalone FS modal+a11y scripts, skip full attributes library → pushed as 9a2e5c2
-- 2026-04-11 00:46: double-pass IX reinit + projects filter animations → pushed as c4b5f93
-- 2026-04-11 12:08: hardened horizontal scroll init/reflow for home+projects and rebuilt bundled runtime → pushed as 3ae8338
-- 2026-04-11 12:21: added delayed/observed horizontal-scroll reflow for late layout changes → pushed as 57a2f90
-- 2026-04-11 12:34: added shared per-page runtime tracing in bundled runtime → pushed as 2d6a171
-- 2026-04-11 16:20: re-query DOM in horizontal-scroll on each reflow to fix stale refs → pushed as 726422a
-- 2026-04-14 14:10: normalized nav blur/theme behavior, restored GSAP mobile nav stagger, and reduced blocking mount work for projects/zine → pushed as 1560686
-- 2026-04-14 14:18: forced project-detail top nav transparent and refreshed Refokus/video reinit path → pushed as f9c3c82
-- 2026-04-14 14:24: replaced project-detail prev/next script dependency with local builder and hardened video DOM reset → pushed as d5d63d6
-- 2026-04-14 14:31: restored project-detail title fit and order numbering logic from legacy behavior → pushed as 3d38bcf
-- 2026-04-14 14:34: broadened invisible-item removal before project-detail ordering → pushed as 0f17149
-- 2026-04-14 14:40: added mutation-driven project-detail order resync for late CMS/Webflow DOM updates → pushed as 8ca9994
-- 2026-04-15 17:20: fixed loader injection for shared Finsweet Attributes v2 script, restored shared zine/projects Finsweet path, and rebuilt runtime → pushed as 3468602, 1f3f946
-- 2026-04-15 18:00: added projects custom filter-item bridge to hidden Finsweet inputs → pushed as 13c54aa
-- 2026-04-15 18:30: added projects list destroy/restart handling for SPA re-entry and shared Finsweet restart/destroy helpers → pushed as c37ebd2
-- 2026-04-15 18:35: updated task log for open projects Finsweet issues and prepared legacy runtime archive cleanup
+  - Latest live testing showed partial improvement:
+    - Hard reload on projects: pagination improved, filters still broken
+    - Projects > Home > Projects: pagination and filters both broke before the latest reset/re-entry patch
+  - Latest commits attempted to fix this: c37ebd2, 13c54aa, 1f3f946, 3468602
+  - Final verification still pending on live pages
+- Related commits: c04b5a6, c37ebd2, 13c54aa, 1f3f946, 3468602
