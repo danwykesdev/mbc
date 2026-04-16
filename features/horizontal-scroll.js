@@ -92,11 +92,23 @@
 
     function shouldReflow(wrap, panels) {
       if (!wrap) return true;
-      if (window.innerWidth !== lastWindowWidth) return true;
-      if (panels.length !== lastPanelCount) return true;
-      if (Math.abs(wrap.clientWidth - lastWrapWidth) > 1) return true;
-      if (Math.abs(wrap.scrollWidth - lastWrapScrollWidth) > 1) return true;
-      return false;
+      var should = false;
+      if (window.innerWidth !== lastWindowWidth) should = true;
+      if (panels.length !== lastPanelCount) should = true;
+      if (Math.abs(wrap.clientWidth - lastWrapWidth) > 1) should = true;
+      if (Math.abs(wrap.scrollWidth - lastWrapScrollWidth) > 1) should = true;
+      console.log('[MBC HorizontalScroll] shouldReflow', {
+        should: should,
+        lastWindowWidth: lastWindowWidth,
+        currentWindowWidth: window.innerWidth,
+        lastWrapWidth: lastWrapWidth,
+        currentWrapWidth: wrap.clientWidth,
+        lastWrapScrollWidth: lastWrapScrollWidth,
+        currentWrapScrollWidth: wrap.scrollWidth,
+        lastPanelCount: lastPanelCount,
+        currentPanelCount: panels.length
+      });
+      return should;
     }
 
     function createOrRefreshTrigger() {
@@ -110,6 +122,18 @@
         return false;
       }
 
+      var wrapRect = wrap.getBoundingClientRect();
+      console.log('[MBC HorizontalScroll] createOrRefreshTrigger start', {
+        wrapClientWidth: wrap.clientWidth,
+        wrapScrollWidth: wrap.scrollWidth,
+        wrapHeight: wrap.clientHeight,
+        wrapRectWidth: wrapRect.width,
+        wrapRectHeight: wrapRect.height,
+        windowInnerWidth: window.innerWidth,
+        windowInnerHeight: window.innerHeight,
+        scrollTriggerActive: !!ScrollTrigger.getById('horizontal-pin')
+      });
+
       clearPanelTransforms(wrap);
 
       var panels = gsap.utils.toArray('[data-horizontal-scroll-panel]', wrap);
@@ -117,6 +141,8 @@
         console.log('[MBC HorizontalScroll] panels:', panels.length, 'distance: 0');
         return false;
       }
+
+      console.log('[MBC HorizontalScroll] panels found', panels.length);
 
       var vw = window.innerWidth;
       wrap.style.paddingRight = vw < 768 ? '20px' : vw < 992 ? '40px' : '80px';
@@ -132,7 +158,8 @@
       }
 
       var last = panels[panels.length - 1];
-      last.style.marginRight = vw < 768 ? '1rem' : vw < 992 ? '1.5rem' : '2rem';
+      var lastMarginRight = vw < 768 ? '1rem' : vw < 992 ? '1.5rem' : '2rem';
+      last.style.marginRight = lastMarginRight;
 
       var getDistance = function () {
         return calculateDistance(wrap, panels, window.innerWidth, gap);
@@ -140,7 +167,19 @@
 
       syncMeasurements(wrap, panels);
 
-      if (getDistance() <= 0) {
+      var distance = getDistance();
+      console.log('[MBC HorizontalScroll] distance details', {
+        distance: distance,
+        vw: window.innerWidth,
+        gap: gap,
+        wrapScrollWidth: wrap.scrollWidth,
+        wrapClientWidth: wrap.clientWidth,
+        wrapPaddingRight: getComputedStyle(wrap).paddingRight,
+        lastMarginRight: getComputedStyle(last).marginRight,
+        panelWidths: panels.map(function (panel) { return panel.offsetWidth; })
+      });
+
+      if (distance <= 0) {
         console.log('[MBC HorizontalScroll] distance 0, scrollWidth:', wrap.scrollWidth);
         return false;
       }
@@ -161,8 +200,23 @@
           pin: true,
           pinSpacing: true,
           anticipatePin: 1,
-          invalidateOnRefresh: true
+          invalidateOnRefresh: true,
+          onRefresh: function () {
+            console.log('[MBC HorizontalScroll] ScrollTrigger onRefresh', {
+              progress: this.progress,
+              start: this.start,
+              end: this.end,
+              pinType: this.pinType,
+              trigger: this.trigger && this.trigger.tagName
+            });
+          }
         }
+      });
+
+      console.log('[MBC HorizontalScroll] ScrollTrigger created', {
+        totalDistance: distance,
+        trigger: wrap.tagName,
+        panelCount: panels.length
       });
 
       ScrollTrigger.refresh(true);
