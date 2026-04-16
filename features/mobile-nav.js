@@ -85,7 +85,7 @@
     }
 
     function closeMenu(forceClose) {
-      if (!isOpen) return false;
+      if (!isOpen && !forceClose) return false;
       isOpen = false;
       menuTl.timeScale(forceClose ? 2.5 : 1.15).reverse();
       refreshNavStyles();
@@ -139,7 +139,21 @@
       link.addEventListener('click', onNavLinkClick);
     });
     window._closeMobileNav = function (force) {
-      closeMenu(force || false);
+      var didClose = closeMenu(force || false);
+      
+      // Aggressive fallback: if force is true and menu didn't close, force close via DOM manipulation
+      if (force && !didClose) {
+        nav.classList.remove('is-open');
+        menuBtn.classList.remove('w--open');
+        gsap.set(menuWrapper, { autoAlpha: 0, x: -16, pointerEvents: 'none', visibility: 'hidden' });
+        gsap.set(navLinks, { autoAlpha: 0, x: -14 });
+        gsap.set(navBottom, { width: 0 });
+        isOpen = false;
+        if (window.lenis && typeof window.lenis.start === 'function') {
+          window.lenis.start();
+        }
+        refreshNavStyles();
+      }
     };
     refreshNavStyles();
 
