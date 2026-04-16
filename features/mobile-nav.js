@@ -179,7 +179,7 @@
           }
         });
         menuTl
-          .to(navBottom, { width: '0%', duration: 0.5 }, 0)
+          .to(navBottom, { width: '100%', duration: 0.5 }, 0)
           .to(navLogo, { autoAlpha: 0.35, x: 8, duration: 0.25 }, 0)
           .to(menuWrapper, { autoAlpha: 1, x: 0, duration: 0.38 }, 0)
           .to(navLinks, { autoAlpha: 1, x: 0, stagger: 0.06, duration: 0.42 }, 0);
