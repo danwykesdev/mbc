@@ -15,6 +15,8 @@ This is the main entry point for the MBC modular runtime system. It bootstraps t
 - Disables browser scroll restoration for SPA behavior
 - Adds CSS classes to enable JavaScript-dependent styling
 - Configures GSAP to suppress null target warnings
+- Configures ScrollTrigger to ignore mobile-only vertical resize refreshes
+- Enables `ScrollTrigger.normalizeScroll(true)` on touch-only devices
 - Initializes Lenis smooth scrolling as a global feature
 
 ### Barba.js SPA Setup
@@ -69,3 +71,5 @@ Determines whether Barba should handle a navigation. Returns true for external l
 - It sets `window.__MBC_APP_ACTIVE` to prevent duplicate initialization
 - The file must be loaded after loader.js is available
 - Environment detection happens automatically but can be overridden
+- `ScrollTrigger.config({ ignoreMobileResize: true })` is applied globally to avoid iOS address-bar height changes forcing refreshes during pinned sections
+- `ScrollTrigger.normalizeScroll(true)` is enabled only when `ScrollTrigger.isTouch === 1` so touch devices use GSAP-managed scrolling to reduce iOS pinning jumps and viewport jitter

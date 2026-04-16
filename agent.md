@@ -449,6 +449,9 @@ If video behavior breaks on revisits:
 
 This repo depends heavily on GSAP.
 
+- `main.js` applies `ScrollTrigger.config({ ignoreMobileResize: true })` globally so mobile address-bar height changes do not refresh pinned sections mid-scroll
+- `main.js` enables `ScrollTrigger.normalizeScroll(true)` only when `ScrollTrigger.isTouch === 1` so touch-only devices can avoid native mobile scroll/pin jitter without changing desktop behavior
+
 When changing animation-related code:
 
 - kill or clear stale tweens when reinitializing

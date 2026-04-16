@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 20:15 BST
+Last updated: 2026-04-16 21:14 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,22 @@ Last updated: 2026-04-16 20:15 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### investigating - normalize touch scroll for ScrollTrigger
+- Date: 2026-04-16 21:14:00Z
+- Branch: main
+- Changes:
+  - Enabled `ScrollTrigger.normalizeScroll(true)` when `ScrollTrigger.isTouch === 1`
+  - Documented the touch-only scroll normalization behavior in runtime and agent docs
+- Related to: Home horizontal scroll gaps and pin jitter on iOS touch devices
+
+### investigating - ignore mobile ScrollTrigger resize refreshes
+- Date: 2026-04-16 21:05:00Z
+- Branch: main
+- Changes:
+  - Applied `ScrollTrigger.config({ ignoreMobileResize: true })` globally in the runtime entry
+  - Documented the global mobile resize guard in runtime and agent docs
+- Related to: Home horizontal scroll gaps on iOS after address-bar viewport-height changes
 
 ### 1b243c6 - harden home horizontal scroll on iOS
 - Date: 2026-04-16 20:15:23Z
