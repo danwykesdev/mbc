@@ -121,6 +121,7 @@ Shared runtime infrastructure.
 
 - `utils.js`
   - helpers like `debounce`, `waitForLayout`, `normalizeNamespace`, selector diagnostics, `traceAsync`, `traceSync`
+  - selector diagnostics on Projects should be interpreted against `fs-list-element="filters"` forms and native Webflow pagination, not only `fs-filter-element`
 
 - `cleanup.js`
   - page/global cleanup stack management

@@ -83,15 +83,45 @@
     return el;
   }
 
+  function syncProjectsMainListInstance(container) {
+    if (!container || !container.querySelectorAll) return null;
+
+    var mainList = container.querySelector('[fs-list-instance="main"] [fs-list-element="list"]');
+    var instanceHolder = mainList && mainList.closest ? mainList.closest('[fs-list-instance]') : null;
+    var instanceName = instanceHolder && instanceHolder.getAttribute ? instanceHolder.getAttribute('fs-list-instance') : null;
+
+    if (!instanceName) return null;
+
+    var bridgeSelectors = [
+      '[fs-list-element="filters"]',
+      '[fs-list-element="scroll-anchor-filter"]'
+    ];
+
+    bridgeSelectors.forEach(function (selector) {
+      var nodes = container.querySelectorAll(selector);
+
+      Array.prototype.forEach.call(nodes, function (node) {
+        if (!node || !node.setAttribute) return;
+        if (node.closest && node.closest('[fs-list-instance="' + instanceName + '"]')) return;
+        if (node.hasAttribute && node.hasAttribute('fs-list-instance')) return;
+
+        node.setAttribute('fs-list-instance', instanceName);
+      });
+    });
+
+    return instanceName;
+  }
+
   function logProjectsDiagnostics(container, label) {
     var utils = MBC.core && MBC.core.utils;
     var selectorMap = {
       listElements: '[fs-list-element]',
-      filterElements: '[fs-filter-element]',
+      filtersForms: '[fs-list-element="filters"]',
       filterInputs: 'input[fs-list-field], input[fs-list-value], select[fs-list-field], textarea[fs-list-field]',
       filterItems: '.filters__item',
-      paginationNext: '[data-pagination-next], [fs-list-element="pagination-next"]',
-      paginationPrev: '[data-pagination-prev], [fs-list-element="pagination-previous"]',
+      paginationNext: '.w-pagination-next, [data-pagination-next], [fs-list-element="pagination-next"]',
+      paginationPrev: '.w-pagination-previous, [data-pagination-prev], [fs-list-element="pagination-previous"]',
+      pageCount: '.w-page-count, [fs-list-element="page-count"]',
       customPaginationNext: '[data-pagination="next"]',
       customPaginationPrev: '[data-pagination="prev"]',
       searchInputs: '#Search'
@@ -171,6 +201,7 @@
     }
 
     function refreshProjectsBindings(reason) {
+      syncProjectsMainListInstance(container);
       applyProjectsCardBottomInset(container);
       bindHorizontalScroll('projects horizontalScroll.init ' + reason);
       bindStaggerHover('projects staggerHover.init ' + reason);
@@ -214,15 +245,12 @@
       if (paginationTrigger && container.contains(paginationTrigger)) {
         var direction = paginationTrigger.getAttribute('data-pagination');
         var paginationTarget = direction === 'prev'
-          ? queryOne(container, '[data-pagination-prev], [fs-list-element="pagination-previous"]', true)
-          : queryOne(container, '[data-pagination-next], [fs-list-element="pagination-next"]', true);
+          ? queryOne(container, '.w-pagination-previous, [data-pagination-prev], [fs-list-element="pagination-previous"]', true)
+          : queryOne(container, '.w-pagination-next, [data-pagination-next], [fs-list-element="pagination-next"]', true);
 
         if (paginationTarget) {
           event.preventDefault();
           paginationTarget.click();
-          setTimeout(function () {
-            restartProjectsList('pagination ' + direction);
-          }, 30);
         }
 
         return;
@@ -236,16 +264,14 @@
       if (!input) return;
 
       triggerProjectsFilterInput(input);
-
-      setTimeout(function () {
-        restartProjectsList('filter click');
-      }, 30);
     };
 
     container.addEventListener('click', onProjectsClick);
     cleanups.push(function () {
       container.removeEventListener('click', onProjectsClick);
     });
+
+    syncProjectsMainListInstance(container);
 
     logProjectsDiagnostics(container, 'before init');
 

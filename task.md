@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 15:35 BST
+Last updated: 2026-04-16 16:15 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,15 @@ Last updated: 2026-04-16 15:35 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### investigating - bind Projects filters form to main Finsweet list instance
+- Date: 2026-04-16 16:15:00Z
+- Branch: main
+- Changes:
+  - Patched `pages/projects.js` to assign the external `fs-list-element="filters"` form and filter scroll anchor to `fs-list-instance="main"` before Finsweet init
+  - Removed unnecessary per-click Finsweet list restarts for bridged filter chips and custom pagination wrappers
+  - Updated Projects/Finsweet diagnostics to report real staging selectors, including native Webflow pagination and the filters form
+- Related to: Projects Finsweet filter, search, and infinite-load binding investigation
 
 ### investigating - restore Projects filter bridge and add lifecycle diagnostics
 - Date: 2026-04-16 15:35:00Z
@@ -480,10 +489,11 @@ Last updated: 2026-04-16 15:35 BST
 - Status: `Investigating`
 - Report: Projects filters still do not work reliably after Finsweet Attributes v2 integration
 - Notes:
-  - Current trace shows the list module loading, but `filterElements` and hidden pagination controls are still not being detected on initial scan
+  - Live staging markup shows the main filtered grid is `fs-list-instance="main"`, while the `fs-list-element="filters"` form sits outside that instance and therefore is not auto-bound by Finsweet
   - Projects now restores the custom filter bridge and adds delayed/tab-change list restarts to better match lifecycle timing
-  - Shared selector diagnostics now log which controls actually exist before init, after init, and after delayed restarts
+  - Projects now stamps the external filters form and filter scroll anchor with `fs-list-instance="main"` before list init so search and filter inputs can bind to the main list
+  - Shared selector diagnostics now log the real staging selectors before init, after init, and after delayed restarts
   - Verification is still pending on live Webflow markup and interactions after the bridge restoration
-  - Latest commits attempted to fix this: c37ebd2, 13c54aa, 1f3f946, 3468602, 1a44bb3
+  - Latest commits attempted to fix this: c37ebd2, 13c54aa, 1f3f946, 3468602, 1a44bb3, f10a671
   - Final verification still pending on live pages
 - Related commits: c04b5a6, c37ebd2, 13c54aa, 1f3f946, 3468602, 1a44bb3

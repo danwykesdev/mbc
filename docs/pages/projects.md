@@ -8,6 +8,7 @@ This is the page module for the Projects page. It handles Finsweet list/filter i
 ### Finsweet Integration
 - Initializes Finsweet list/filter controls for Projects
 - Supports Finsweet-powered filter buttons, search inputs, and list refresh
+- Re-attaches the external filters form and filter scroll anchor to the `main` list instance before Finsweet initializes
 - Re-syncs layout-sensitive features after Finsweet list updates
 - Destroys and re-initializes the list on mount to reduce stale SPA state
 - Re-runs the list after delayed layout settling and tab changes
@@ -15,7 +16,7 @@ This is the page module for the Projects page. It handles Finsweet list/filter i
 ### Custom Filter Bridge
 - Bridges `.filters__item` wrappers to hidden Finsweet inputs
 - Supports radio and checkbox style filter controls inside the custom UI
-- Restarts the Finsweet list after bridged clicks so filtered results update reliably
+- Leaves filtering to Finsweet's native form listeners once the main list instance wiring is restored
 
 ### Custom Pagination Bridge
 - Supports optional visible wrappers using `[data-pagination="next"]` and `[data-pagination="prev"]`
@@ -55,7 +56,7 @@ This is the page module for the Projects page. It handles Finsweet list/filter i
 
 ### Diagnostics
 - Logs selector counts before init, after init, after delayed restarts, and after tab changes
-- Helps verify whether Barba/Webflow lifecycle timing is leaving filter or pagination controls out of the DOM scan
+- Reports the live Webflow contract used on staging: `fs-list-element="filters"`, `#Search`, and native `.w-pagination-next/.w-pagination-previous` controls
 
 ### Navigation State
 - Sets navigation to dark theme with solid background and blur
@@ -75,6 +76,7 @@ Main mount function with Finsweet and tab handling.
 - `triggerProjectsFilterInput(input)` - triggers filter change
 - `restartProjectsList(reason)` - restarts the Finsweet list and re-syncs layout bindings
 - `logProjectsDiagnostics(container, label)` - logs key selector counts for debugging
+- `syncProjectsMainListInstance(container)` - assigns the external filters form and scroll anchor to the `main` Finsweet instance when Webflow renders them outside the list wrapper
 - `applyProjectsCardBottomInset(container)` - applies spacing
 
 ### Helper Functions
@@ -109,7 +111,7 @@ Main mount function with Finsweet and tab handling.
 Uses 'light' tier because the Projects page relies more on Finsweet and custom features than Webflow IX animations.
 
 ### Finsweet Root Contract
-The page expects Finsweet list/filter markup, including `[fs-list-element]`, `[fs-filter-element]`, and associated filter controls on each project card.
+The page expects a `main` list instance for the filtered project grid and a standard `fs-list-element="filters"` form for search and filter inputs. If Webflow renders the filters form outside `fs-list-instance="main"`, the page module re-attaches that form and the filter scroll anchor to the `main` instance before Finsweet boots.
 
 ### Custom UI Contract
 If the visible Projects filter or pagination UI does not use native Finsweet attributes directly, the page expects bridgeable wrappers such as `.filters__item` and optional `[data-pagination]` controls.
