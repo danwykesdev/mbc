@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 22:00 BST
+Last updated: 2026-04-16 22:24 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,15 @@ Last updated: 2026-04-16 22:00 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### 4aff2e4 - silence shared trace logs during horizontal-scroll debugging
+- Date: 2026-04-16 22:20:00Z
+- Branch: main
+- Changes:
+  - Gated shared `[MBC Trace]` logging behind `window.MBC_DEBUG === true` in core, loader, lifecycle, and Finsweet helpers
+  - Strengthened horizontal-scroll diagnostics with a dedicated `[MBC HorizontalScroll Debug]` prefix and init-time logging
+  - Updated docs and agent notes so live iPad testing can focus on horizontal-scroll console output only
+- Related to: Home horizontal scroll issue needing targeted live console logs without runtime trace noise
 
 ### a9f2b3d - enable horizontal scroll diagnostics by default
 - Date: 2026-04-16 21:00:03Z
