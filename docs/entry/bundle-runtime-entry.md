@@ -13,7 +13,7 @@ This is the build entry point for creating the bundled production file (`dist/mb
 Imports all modules in dependency order:
 1. Loader (must be first)
 2. Core modules (state, utils, cleanup, registry, webflow, lifecycle)
-3. Feature modules (all 11 features)
+3. Feature modules (including Finsweet integration)
 4. Page modules (all 6 pages)
 5. Main entry point (must be last)
 

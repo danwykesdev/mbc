@@ -303,11 +303,11 @@ Responsible for:
 - stagger hover binding/rebinding
 - projects filter animation behavior
 - search close behavior
-- Finsweet list init
+- Advanced Filter System init
 
 Key idea:
 
-- projects has late DOM/layout dependencies, so some behavior rebinds after Finsweet or tab changes
+- projects has late DOM/layout dependencies, so some behavior rebinds after filter, search, pagination, or tab changes
 
 ### `pages/project-detail.js`
 

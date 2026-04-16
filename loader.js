@@ -53,7 +53,7 @@
   // External scripts that may be loaded dynamically
   // type: 'module' means it's an ES module that needs type="module"
   var EXTERNAL_SCRIPTS = {
-    'finsweet-attributes': { url: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes@2/attributes.js', type: 'module', attrs: { 'fs-list': '' } },
+    'finsweet-attributes': { url: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes@2/attributes.js', type: 'module', attrs: { 'fs-attributes-auto': '' } },
     'finsweet-modal': { url: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-modal@1/modal.js', type: 'module' },
     'finsweet-a11y': { url: 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-a11y@1/a11y.js', type: 'module' },
     'vimeo-player': { url: 'https://player.vimeo.com/api/player.js', type: 'classic' }
@@ -342,16 +342,18 @@
    * Load all modules needed for a page transition
    */
   function loadForPage(container, namespace) {
+    var normalizedNamespace = normalizeNamespace(namespace);
+
     // 1. Detect features needed for this container
-    var features = filterInitialFeatures(namespace, detectFeatures(container));
+    var features = filterInitialFeatures(normalizedNamespace, detectFeatures(container));
 
     // 2. Get page module for namespace
-    var pageModule = getPageModule(namespace);
+    var pageModule = getPageModule(normalizedNamespace);
 
     // 3. Detect external script needs
     var needsFinsweetModal = hasDomFeature(container, '[fs-modal-element]');
     var needsVimeo = hasDomFeature(container, '#videoLoad, #video, [data-video], [data-vimeo-id], [data-modal-video]');
-    var needsFinsweetAttributes = hasDomFeature(container, '[fs-list-element], [fs-slider-element], [fs-filter-element]');
+    var needsFinsweetAttributes = hasDomFeature(container, '[fs-list-element], [fs-slider-element], [fs-filter-element], [fs-modal-element]');
     var needsFinsweet = needsFinsweetModal || needsFinsweetAttributes;
 
     // 4. Collect all modules to load
@@ -414,12 +416,13 @@
       });
     }
 
-    return traceAsync('loadForPage ' + normalizeNamespace(namespace), function () {
+    return traceAsync('loadForPage ' + normalizedNamespace, function () {
       return promise;
     }).then(function () {
       return {
         features: features,
         pageModule: pageModule,
+        hasAdvancedFilter: false,
         hasFinsweet: needsFinsweet,
         hasFinsweetModal: needsFinsweetModal,
         hasFinsweetAttributes: needsFinsweetAttributes,

@@ -1,15 +1,14 @@
 # projects.md
 
 ## Purpose
-This is the page module for the Projects page. It handles Finsweet list/filter integration, horizontal scroll, stagger hover, and tab-based filtering animations.
+This is the page module for the Projects page. It handles Finsweet list/filter integration, horizontal scroll, stagger hover, and tab-based filter animations.
 
 ## What It Does
 
 ### Finsweet Integration
-- Detects and initializes Finsweet modules (list, filter, slider)
-- Excludes slider module (not used on projects page)
-- Destroys existing list module before reinitialization
-- Restarts list module after tab changes
+- Initializes Finsweet list/filter controls for Projects
+- Supports Finsweet-powered filter buttons, search inputs, and list refresh
+- Re-syncs layout-sensitive features after Finsweet list updates
 
 ### Filter Item Animation
 - Animate filter items in when tab becomes active
@@ -19,13 +18,13 @@ This is the page module for the Projects page. It handles Finsweet list/filter i
 
 ### Horizontal Scroll Integration
 - Initializes horizontal scroll for project cards
-- Rebinds after Finsweet initialization
+- Rebinds after Finsweet updates
 - Rebinds after tab changes
 - Applies bottom inset for proper spacing
 
 ### Stagger Hover Integration
 - Initializes stagger hover for project cards
-- Rebinds after Finsweet initialization
+- Rebinds after Finsweet updates
 - Rebinds after tab changes
 
 ### Card Bottom Inset
@@ -36,12 +35,11 @@ This is the page module for the Projects page. It handles Finsweet list/filter i
 ### Tab Change Handling
 - Detects Webflow tab changes via MutationObserver
 - Animate filter items when tab activates
-- Restart Finsweet list module for new content
 - Rebind horizontal scroll and stagger hover
 - Refresh Webflow IX and ScrollTrigger
 
 ### Search Functionality
-- Clears search input and triggers change event on close button click
+- Clears search input and triggers a new search pass on close button click
 - Resets placeholder text
 
 ### Navigation State
@@ -81,38 +79,35 @@ Main mount function with Finsweet and tab handling.
 ## Initialization Sequence
 
 1. **Setup**: Set nav state, bind horizontal scroll and stagger hover (early)
-2. **Filter Click Handler**: Set up click handler for filter items
-3. **Finsweet Inspect**: Log Finsweet state before init
-4. **Finsweet Reset**: Destroy existing list module
-5. **Finsweet Init**: Initialize list and filter modules
-6. **Post-Finsweet**: Apply card inset, rebind features, refresh triggers
-7. **Tab State**: Set initial tab filter states
-8. **Tab Observer**: Set up MutationObserver for tab changes
-9. **Delayed Reflow**: Rebind features after content settles
-10. **Search Handler**: Set up search clear functionality
+2. **Finsweet Init**: Initialize Finsweet list/filter on projects roots
+3. **Post-Init Sync**: Apply card inset, rebind features, refresh triggers
+4. **Tab State**: Set initial tab filter states
+5. **Tab Observer**: Set up MutationObserver for tab changes
+6. **Delayed Reflow**: Rebind features after content settles
+7. **Search Handler**: Set up search clear functionality
 
 ## Important Notes
 
 ### Webflow Tier
 Uses 'light' tier because the Projects page relies more on Finsweet and custom features than Webflow IX animations.
 
-### Finsweet Reset/Init Pattern
-The page destroys the existing list module before reinitializing. This is critical for SPA transitions to ensure clean state.
+### Finsweet Root Contract
+The page expects Finsweet list/filter markup, including `[fs-list-element]`, `[fs-filter-element]`, and associated filter controls on each project card.
 
 ### Tab Change Detection
-Uses MutationObserver on tab pane `class` attribute to detect when Webflow switches tabs. This allows triggering animations and Finsweet restart when content changes.
+Uses MutationObserver on tab pane `class` attribute to detect when Webflow switches tabs. This allows triggering filter animations and layout rebinds when content changes.
 
 ### Filter Item Animation
 Filter items are animated in with a staggered slide-in effect. They're hidden when tabs are inactive to prevent visual clutter.
 
 ### Search Clear
-The search close button clears the input and triggers the change event, which causes Finsweet to reset the filter.
+The search close button clears the input and triggers a fresh search pass.
 
 ### Cleanup
-On unmount, the page destroys the Finsweet list module to prevent memory leaks and conflicts on subsequent pages.
+On unmount, the page destroys Finsweet list instances and feature bindings.
 
 ## Dependencies
-- MBC.features.finsweet (for list and filter functionality)
+- MBC.features.finsweet (for Finsweet list/filter init)
 - MBC.features.horizontalScroll (for horizontal scroll sections)
 - MBC.features.staggerHover (for project card hover effects)
 - MBC.features.nav (for navigation state)

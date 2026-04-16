@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 13:29 BST
+Last updated: 2026-04-16 15:00 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,26 @@ Last updated: 2026-04-16 13:29 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### investigating - try fs-attributes-auto for Finsweet detection
+- Date: 2026-04-16 15:10:00Z
+- Branch: main
+- Changes:
+  - Updated loader.js to load Finsweet Attributes with `fs-attributes-auto`
+  - Broadened Finsweet detection to include modal attributes as a trigger for loading
+  - Keeping the existing Finsweet feature init path while testing improved auto-detection
+- Related to: Projects Finsweet filter stability investigation
+
+### fixed - revert Projects Advanced Filter System and restore Finsweet
+- Date: 2026-04-16 15:00:00Z
+- Branch: main
+- Changes:
+  - Removed Projects-specific Advanced Filter System integration
+  - Restored Finsweet loading and page module support for Projects
+  - Updated loader.js to allow Finsweet on the Projects namespace again
+  - Removed advanced-filter bundle import and docs references
+  - Updated Projects docs and agent guide to reflect Finsweet instead of Advanced Filter System
+- Related to: Projects filter integration rollback
 
 ### 143f1fe - fix: add z-index 999 to navBottom to prevent it from being covered by mobile nav menu
 - Date: 2026-04-16 13:29:00Z
@@ -450,6 +470,9 @@ Last updated: 2026-04-16 13:29 BST
 - Status: `Investigating`
 - Report: Projects filters still do not work reliably after Finsweet Attributes v2 integration
 - Notes:
+  - Finsweet list/filter loading is now disabled on the `projects` namespace for isolated testing
+  - Advanced Filter System has been wired in as the replacement filter/search/pagination path
+  - Verification is still pending on live Webflow markup and interactions
   - Latest live testing showed partial improvement:
     - Hard reload on projects: pagination improved, filters still broken
     - Projects > Home > Projects: pagination and filters both broke before the latest reset/re-entry patch

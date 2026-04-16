@@ -37,6 +37,7 @@ This is the dynamic module loader for the MBC system. It manages dependency reso
 - Manages loading of Finsweet Attributes (full library)
 - Manages loading of Finsweet Modal (standalone ES module)
 - Manages loading of Finsweet A11y (accessibility module)
+- Manages loading of Advanced Filter System for Projects page filtering
 - Manages loading of Vimeo Player API
 - Tracks which external scripts are already loaded
 
@@ -90,7 +91,7 @@ Polls for a window global to become available (e.g., waiting for Vimeo.Player to
 
 ### Page Modules
 - `pages/home` - Namespace: `home`, Depends on many features
-- `pages/projects` - Namespace: `projects`, Depends on many features
+- `pages/projects` - Namespace: `projects`, Depends on horizontal-scroll, finsweet, and stagger-hover
 - `pages/project-detail` - Namespace: `project-detail`, Depends on many features
 - `pages/about` - Namespace: `about`, Minimal dependencies
 - `pages/zine` - Namespace: `zine`, Minimal dependencies
@@ -100,4 +101,5 @@ Polls for a window global to become available (e.g., waiting for Vimeo.Player to
 - The loader is initialized before main.js runs
 - In bundled runtime mode, all modules are pre-loaded and this file just provides the API
 - External scripts are loaded with specific attributes (e.g., `fs-list` for Finsweet)
+- The Projects namespace explicitly skips Finsweet loading so the Advanced Filter System can be tested in isolation
 - The loader uses performance tracing for debugging module load times

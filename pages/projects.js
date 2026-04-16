@@ -38,45 +38,6 @@
     });
   }
 
-  function isNativeFormControl(el) {
-    return !!(el && (el.closest && el.closest('input, select, textarea, button')));
-  }
-
-  function findProjectsFilterInput(scope) {
-    if (!scope || !scope.querySelector) return null;
-    return scope.querySelector('input[fs-list-field], input[fs-list-value], select[fs-list-field], textarea[fs-list-field]');
-  }
-
-  function triggerProjectsFilterInput(input) {
-    if (!input || input.disabled) return;
-
-    var tagName = input.tagName;
-    var type = (input.type || '').toLowerCase();
-
-    if (tagName === 'INPUT' && type === 'checkbox') {
-      input.checked = !input.checked;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-      return;
-    }
-
-    if (tagName === 'INPUT' && type === 'radio') {
-      if (input.checked) return;
-      input.checked = true;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-      return;
-    }
-
-    if (typeof input.click === 'function') {
-      input.click();
-      return;
-    }
-
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-  }
-
   function applyProjectsCardBottomInset(container) {
     var wrap = container.querySelector('[data-horizontal-scroll-wrap]');
     if (!wrap) return;
@@ -96,6 +57,7 @@
   async function mount(ctx) {
     var container = ctx.container;
     var cleanups = [];
+    var finsweetInitPromise = null;
     var horizontalScrollCleanup = null;
     var staggerHoverCleanup = null;
     var traceAsync = MBC.core && MBC.core.utils && MBC.core.utils.traceAsync
@@ -147,70 +109,17 @@
       MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: true });
     }
 
-    var onFilterItemClick = function (event) {
-      var target = event.target;
-      if (!(target instanceof Element)) return;
-
-      var item = target.closest('.filters__item');
-      if (!item || !container.contains(item)) return;
-      if (isNativeFormControl(target)) return;
-
-      var input = findProjectsFilterInput(item);
-      if (!input) return;
-
-      triggerProjectsFilterInput(input);
-
-      if (MBC.features.finsweet && typeof MBC.features.finsweet.restart === 'function') {
-        setTimeout(function () {
-          MBC.features.finsweet.restart(container, { modules: ['list'] }).catch(function () {});
-        }, 20);
-      }
-    };
-
-    container.addEventListener('click', onFilterItemClick);
-    cleanups.push(function () {
-      container.removeEventListener('click', onFilterItemClick);
-    });
-
-    if (MBC.features.finsweet && typeof MBC.features.finsweet.inspect === 'function') {
-      traceSync('projects finsweet inspect before init', function () {
-        MBC.features.finsweet.inspect(container, 'projects before init');
-      });
-    }
-
     if (MBC.features.finsweet && typeof MBC.features.finsweet.init === 'function') {
       var finsweetModules = typeof MBC.features.finsweet.detectModules === 'function'
         ? MBC.features.finsweet.detectModules(container).filter(function (moduleName) {
-            return moduleName !== 'slider';
+            return moduleName !== 'modal';
           })
-        : ['list', 'filter'];
+        : ['list'];
 
       if (finsweetModules.length) {
-        traceAsync('projects finsweet reset', function () {
-          if (!MBC.features.finsweet || typeof MBC.features.finsweet.destroy !== 'function') {
-            return Promise.resolve();
-          }
-          return MBC.features.finsweet.destroy({ modules: ['list'], timeout: 300 });
-        }).then(function () {
-          return traceAsync('projects finsweet init', function () {
-            return MBC.features.finsweet.init(container, { modules: finsweetModules, label: 'projects' });
-          });
-        }).then(function () {
-          if (MBC.features.finsweet && typeof MBC.features.finsweet.inspect === 'function') {
-            traceSync('projects finsweet inspect after init', function () {
-              MBC.features.finsweet.inspect(container, 'projects after init');
-            });
-          }
-          applyProjectsCardBottomInset(container);
-          bindHorizontalScroll('projects horizontalScroll.init after finsweet');
-          bindStaggerHover('projects staggerHover.init after finsweet');
-          if (MBC.core && MBC.core.webflow) {
-            MBC.core.webflow.refreshIX();
-          }
-          if (typeof ScrollTrigger !== 'undefined') {
-            ScrollTrigger.refresh(true);
-          }
-        }).catch(function () {});
+        finsweetInitPromise = traceAsync('projects finsweet init', function () {
+          return MBC.features.finsweet.init(container, { modules: finsweetModules, label: 'projects' });
+        });
       }
     }
 
@@ -260,9 +169,6 @@
           if (isActive) {
             setTimeout(function () {
               animatePaneFilters(pane);
-              if (MBC.features.finsweet && typeof MBC.features.finsweet.restart === 'function') {
-                MBC.features.finsweet.restart(container, { modules: ['list'] }).catch(function () {});
-              }
               applyProjectsCardBottomInset(container);
               bindHorizontalScroll('projects horizontalScroll.init tab change');
               bindStaggerHover('projects staggerHover.init tab change');
@@ -307,6 +213,12 @@
     }
 
     cleanups.push(function () {
+      if (MBC.features.finsweet && typeof MBC.features.finsweet.destroy === 'function') {
+        MBC.features.finsweet.destroy({ modules: ['list'] });
+      }
+    });
+
+    cleanups.push(function () {
       clearTimeout(observerTimeout);
       clearTimeout(reflowTimeout);
       if (observer) observer.disconnect();
@@ -326,15 +238,16 @@
         staggerHoverCleanup = null;
       }
 
+      if (typeof finsweetCleanup === 'function') {
+        try { finsweetCleanup(); } catch (_) {}
+        finsweetCleanup = null;
+      }
+
       cleanups.forEach(function (fn) {
         if (typeof fn === 'function') {
           try { fn(); } catch (_) {}
         }
       });
-
-      if (MBC.features.finsweet && typeof MBC.features.finsweet.destroy === 'function') {
-        MBC.features.finsweet.destroy({ modules: ['list'], timeout: 300 }).catch(function () {});
-      }
     };
   }
  
