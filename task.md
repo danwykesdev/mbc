@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 21:55 BST
+Last updated: 2026-04-16 22:00 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,14 @@ Last updated: 2026-04-16 21:55 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### a9f2b3d - enable horizontal scroll diagnostics by default
+- Date: 2026-04-16 21:00:03Z
+- Branch: main
+- Changes:
+  - Enabled horizontal-scroll diagnostics by default without enabling the broader runtime trace logs
+  - Documented how to disable the targeted horizontal-scroll logging with `window.MBC_HORIZONTAL_SCROLL_DEBUG = false`
+- Related to: Capturing iPad console output for the home horizontal scroll issue
 
 ### 1b37ab6 - gate horizontal scroll debug logs
 - Date: 2026-04-16 20:55:51Z
