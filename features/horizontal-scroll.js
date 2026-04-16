@@ -9,6 +9,15 @@
 
   MBC.features = MBC.features || {};
   var activeInstance = null;
+  var debugEnabled = !!window.MBC_DEBUG;
+
+  function debugLog() {
+    if (!debugEnabled || typeof console === 'undefined' || typeof console.log !== 'function') {
+      return;
+    }
+
+    console.log.apply(console, arguments);
+  }
 
   function killTriggerById(id) {
     if (typeof ScrollTrigger === 'undefined') return;
@@ -97,7 +106,7 @@
       if (panels.length !== lastPanelCount) should = true;
       if (Math.abs(wrap.clientWidth - lastWrapWidth) > 1) should = true;
       if (Math.abs(wrap.scrollWidth - lastWrapScrollWidth) > 1) should = true;
-      console.log('[MBC HorizontalScroll] shouldReflow', {
+      debugLog('[MBC HorizontalScroll] shouldReflow', {
         should: should,
         lastWindowWidth: lastWindowWidth,
         currentWindowWidth: window.innerWidth,
@@ -118,12 +127,12 @@
 
       var wrap = container.querySelector('[data-horizontal-scroll-wrap]');
       if (!wrap) {
-        console.log('[MBC HorizontalScroll] no wrap found');
+        debugLog('[MBC HorizontalScroll] no wrap found');
         return false;
       }
 
       var wrapRect = wrap.getBoundingClientRect();
-      console.log('[MBC HorizontalScroll] createOrRefreshTrigger start', {
+      debugLog('[MBC HorizontalScroll] createOrRefreshTrigger start', {
         wrapClientWidth: wrap.clientWidth,
         wrapScrollWidth: wrap.scrollWidth,
         wrapHeight: wrap.clientHeight,
@@ -138,11 +147,11 @@
 
       var panels = gsap.utils.toArray('[data-horizontal-scroll-panel]', wrap);
       if (panels.length < 2) {
-        console.log('[MBC HorizontalScroll] panels:', panels.length, 'distance: 0');
+        debugLog('[MBC HorizontalScroll] panels:', panels.length, 'distance: 0');
         return false;
       }
 
-      console.log('[MBC HorizontalScroll] panels found', panels.length);
+      debugLog('[MBC HorizontalScroll] panels found', panels.length);
 
       var vw = window.innerWidth;
       wrap.style.paddingRight = vw < 768 ? '20px' : vw < 992 ? '40px' : '80px';
@@ -168,7 +177,7 @@
       syncMeasurements(wrap, panels);
 
       var distance = getDistance();
-      console.log('[MBC HorizontalScroll] distance details', {
+      debugLog('[MBC HorizontalScroll] distance details', {
         distance: distance,
         vw: window.innerWidth,
         gap: gap,
@@ -180,7 +189,7 @@
       });
 
       if (distance <= 0) {
-        console.log('[MBC HorizontalScroll] distance 0, scrollWidth:', wrap.scrollWidth);
+        debugLog('[MBC HorizontalScroll] distance 0, scrollWidth:', wrap.scrollWidth);
         return false;
       }
 
@@ -202,7 +211,7 @@
           anticipatePin: 1,
           invalidateOnRefresh: true,
           onRefresh: function () {
-            console.log('[MBC HorizontalScroll] ScrollTrigger onRefresh', {
+            debugLog('[MBC HorizontalScroll] ScrollTrigger onRefresh', {
               progress: this.progress,
               start: this.start,
               end: this.end,
@@ -213,7 +222,7 @@
         }
       });
 
-      console.log('[MBC HorizontalScroll] ScrollTrigger created', {
+      debugLog('[MBC HorizontalScroll] ScrollTrigger created', {
         totalDistance: distance,
         trigger: wrap.tagName,
         panelCount: panels.length
