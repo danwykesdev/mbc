@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 19:00 BST
+Last updated: 2026-04-16 20:15 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,15 @@ Last updated: 2026-04-16 19:00 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### 1b243c6 - harden home horizontal scroll on iOS
+- Date: 2026-04-16 20:15:23Z
+- Branch: main
+- Changes:
+  - Restored legacy-style horizontal distance math based on panel widths, gap, trailing margin, and wrapper padding
+  - Added width-only resize guards so iOS browser chrome height changes do not recreate the pinned section mid-scroll
+  - Restored legacy pin tuning with `scrub: 1`, `pinSpacing: true`, and `anticipatePin: 1`
+- Related to: Home horizontal scroll panels creating large white gaps on iPad and mobile during scroll
 
 ### 3d00b1a - remove zine move-talk DOM reparenting
 - Date: 2026-04-16 19:00:29Z
