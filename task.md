@@ -9,6 +9,16 @@ Last updated: 2026-04-16 12:36 BST
 
 ## Commit History
 
+### 83c77ed - fix: kill and recreate timeline after aggressive fallback to ensure clean animation state
+- Date: 2026-04-16 12:48:00Z
+- Branch: main
+- Changes:
+  - Replace clearProps approach with timeline recreation
+  - Kill and recreate GSAP timeline after aggressive fallback
+  - This ensures nav__bottom and other elements animate correctly when menu is re-opened
+  - Prevents timeline state corruption from interfering with animations
+- Related to: Nav__bottom width animation issue after aggressive fallback
+
 ### b11bd71 - fix: clear GSAP props in aggressive fallback to ensure proper re-open animation
 - Date: 2026-04-16 12:36:00Z
 - Branch: main
