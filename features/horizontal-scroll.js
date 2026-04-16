@@ -40,6 +40,10 @@
     var retryAttempts = 0;
     var maxRetries = 12;
     var cleanedUp = false;
+    var lastWindowWidth = window.innerWidth;
+    var lastWrapWidth = 0;
+    var lastWrapScrollWidth = 0;
+    var lastPanelCount = 0;
 
     function clearPanelTransforms(wrap) {
       if (!wrap) return;
@@ -63,6 +67,36 @@
 
       clearPanelTransforms(liveWrap);
       tween = null;
+    }
+
+    function calculateDistance(wrap, panels, viewportWidth, gap) {
+      var total = 0;
+
+      panels.forEach(function (panel, index) {
+        total += index < panels.length - 1 ? panel.offsetWidth + gap : panel.offsetWidth;
+      });
+
+      var last = panels[panels.length - 1];
+      total += parseFloat(getComputedStyle(last).marginRight) || 0;
+      total += parseFloat(getComputedStyle(wrap).paddingRight) || 0;
+
+      return Math.max(0, total - viewportWidth);
+    }
+
+    function syncMeasurements(wrap, panels) {
+      lastWindowWidth = window.innerWidth;
+      lastWrapWidth = wrap ? wrap.clientWidth : 0;
+      lastWrapScrollWidth = wrap ? wrap.scrollWidth : 0;
+      lastPanelCount = panels ? panels.length : 0;
+    }
+
+    function shouldReflow(wrap, panels) {
+      if (!wrap) return true;
+      if (window.innerWidth !== lastWindowWidth) return true;
+      if (panels.length !== lastPanelCount) return true;
+      if (Math.abs(wrap.clientWidth - lastWrapWidth) > 1) return true;
+      if (Math.abs(wrap.scrollWidth - lastWrapScrollWidth) > 1) return true;
+      return false;
     }
 
     function createOrRefreshTrigger() {
@@ -101,8 +135,10 @@
       last.style.marginRight = vw < 768 ? '1rem' : vw < 992 ? '1.5rem' : '2rem';
 
       var getDistance = function () {
-        return Math.max(0, wrap.scrollWidth - window.innerWidth);
+        return calculateDistance(wrap, panels, window.innerWidth, gap);
       };
+
+      syncMeasurements(wrap, panels);
 
       if (getDistance() <= 0) {
         console.log('[MBC HorizontalScroll] distance 0, scrollWidth:', wrap.scrollWidth);
@@ -121,8 +157,10 @@
           end: function () {
             return '+=' + getDistance();
           },
-          scrub: true,
+          scrub: 1,
           pin: true,
+          pinSpacing: true,
+          anticipatePin: 1,
           invalidateOnRefresh: true
         }
       });
@@ -173,6 +211,7 @@
 
     var onResize = function () {
       if (cleanedUp) return;
+      if (window.innerWidth === lastWindowWidth) return;
       if (resizeRaf) {
         cancelAnimationFrame(resizeRaf);
       }
@@ -193,6 +232,13 @@
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(function () {
         if (cleanedUp) return;
+        var liveWrap = container.querySelector('[data-horizontal-scroll-wrap]');
+        var livePanels = liveWrap ? gsap.utils.toArray('[data-horizontal-scroll-panel]', liveWrap) : [];
+
+        if (!shouldReflow(liveWrap, livePanels)) {
+          return;
+        }
+
         if (resizeRaf) {
           cancelAnimationFrame(resizeRaf);
         }
@@ -202,7 +248,12 @@
         });
       });
 
-      resizeObserver.observe(container);
+      var observedWrap = container.querySelector('[data-horizontal-scroll-wrap]');
+      if (observedWrap) {
+        resizeObserver.observe(observedWrap);
+      } else {
+        resizeObserver.observe(container);
+      }
     }
 
     reflow();

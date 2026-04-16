@@ -61,13 +61,19 @@ The module maintains a single active instance. If initialized again, it cleans u
 - Wrapper must have `[data-horizontal-scroll-wrap]` attribute
 
 ### Scroll Distance Calculation
-Scroll distance = wrapper scroll width - window width. If this is 0 or negative, horizontal scroll is disabled.
+Scroll distance is calculated from the live panel widths plus inter-panel gap, trailing margin, and wrapper padding. If this is 0 or negative, horizontal scroll is disabled.
+
+### iOS Resize Guard
+The feature ignores height-only resize churn and only recreates the trigger when viewport width or horizontal layout measurements change. This prevents iOS browser chrome changes from reflowing the pinned section mid-scroll and creating large vertical gaps.
 
 ### Delayed Reflow
 The module schedules delayed reflows at 700ms and 2000ms after initialization. This handles cases where layout settles after initial load (e.g., images loading, fonts loading).
 
 ### Trigger ID
 Uses a fixed ID 'horizontal-pin' for the ScrollTrigger. This allows targeted cleanup and prevents conflicts with other triggers.
+
+### Pin Behavior
+The trigger uses `pinSpacing: true`, `anticipatePin: 1`, and `scrub: 1`, matching the legacy horizontal-scroll behavior more closely on tablet and mobile.
 
 ## Dependencies
 - GSAP (for animations)
