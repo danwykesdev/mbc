@@ -83,6 +83,27 @@
     return el;
   }
 
+  var PROJECTS_LIST_LOAD_MODES = ['more', 'all', 'infinite', 'pagination'];
+
+  function normalizeProjectsListLoadMode(value) {
+    var mode = String(value || '').toLowerCase().trim();
+    return PROJECTS_LIST_LOAD_MODES.indexOf(mode) !== -1 ? mode : 'pagination';
+  }
+
+  function applyProjectsListLoadMode(container) {
+    var list = queryOne(container, '[fs-list-element="list"]', false);
+    if (!list) return 'pagination';
+
+    var requestedMode = list.getAttribute('fs-list-load')
+      || container.getAttribute('data-projects-list-load')
+      || container.getAttribute('data-list-load');
+    var normalizedMode = normalizeProjectsListLoadMode(requestedMode);
+
+    list.setAttribute('fs-list-load', normalizedMode);
+
+    return normalizedMode;
+  }
+
   function logProjectsDiagnostics(container, label) {
     var utils = MBC.core && MBC.core.utils;
     var selectorMap = {
@@ -202,6 +223,8 @@
       }).catch(function () {});
     }
 
+    var projectsListLoadMode = applyProjectsListLoadMode(container);
+
     if (MBC.features.nav) {
       MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: true });
     }
@@ -210,22 +233,24 @@
       var target = event.target;
       if (!(target instanceof Element)) return;
 
-      var paginationTrigger = target.closest('[data-pagination="next"], [data-pagination="prev"]');
-      if (paginationTrigger && container.contains(paginationTrigger)) {
-        var direction = paginationTrigger.getAttribute('data-pagination');
-        var paginationTarget = direction === 'prev'
-          ? queryOne(container, '[data-pagination-prev], [fs-list-element="pagination-previous"]', true)
-          : queryOne(container, '[data-pagination-next], [fs-list-element="pagination-next"]', true);
+      if (projectsListLoadMode === 'pagination') {
+        var paginationTrigger = target.closest('[data-pagination="next"], [data-pagination="prev"]');
+        if (paginationTrigger && container.contains(paginationTrigger)) {
+          var direction = paginationTrigger.getAttribute('data-pagination');
+          var paginationTarget = direction === 'prev'
+            ? queryOne(container, '[data-pagination-prev], [fs-list-element="pagination-previous"]', true)
+            : queryOne(container, '[data-pagination-next], [fs-list-element="pagination-next"]', true);
 
-        if (paginationTarget) {
-          event.preventDefault();
-          paginationTarget.click();
-          setTimeout(function () {
-            restartProjectsList('pagination ' + direction);
-          }, 30);
+          if (paginationTarget) {
+            event.preventDefault();
+            paginationTarget.click();
+            setTimeout(function () {
+              restartProjectsList('pagination ' + direction);
+            }, 30);
+          }
+
+          return;
         }
-
-        return;
       }
 
       var item = target.closest('.filters__item');

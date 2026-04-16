@@ -304,11 +304,11 @@ Responsible for:
 - stagger hover binding/rebinding
 - projects filter animation behavior
 - search close behavior
-- Advanced Filter System init
+- Projects list-load normalization and pagination bridge behavior
 
 Key idea:
 
-- projects has late DOM/layout dependencies, so some behavior rebinds after filter, search, pagination, or tab changes
+- projects has late DOM/layout dependencies, so some behavior rebinds after filter, search, pagination, or tab changes; supported list-load values are `more`, `all`, `infinite`, and `pagination`
 
 ### `pages/project-detail.js`
 

@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 16:15 BST
+Last updated: 2026-04-16 16:20 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,15 @@ Last updated: 2026-04-16 16:15 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### investigating - normalize Projects list-load mode for pagination options
+- Date: 2026-04-16 16:20:51Z
+- Branch: main
+- Changes:
+  - Added a Projects-side list-load normalizer that only accepts `more`, `all`, `infinite`, and `pagination`
+  - Defaulted invalid or missing values to `pagination`
+  - Gated the custom visible pagination click bridge so it only runs in pagination mode
+- Related to: Projects pagination mode support
 
 ### investigating - bind Projects filters form to main Finsweet list instance
 - Date: 2026-04-16 16:15:00Z

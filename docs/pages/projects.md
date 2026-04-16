@@ -9,6 +9,7 @@ This is the page module for the Projects page. It handles Finsweet list/filter i
 - Initializes Finsweet list/filter controls for Projects
 - Supports Finsweet-powered filter buttons, search inputs, and list refresh
 - Re-attaches the external filters form and filter scroll anchor to the `main` list instance before Finsweet initializes
+- Normalizes the list load mode to one of Finsweet's official values: `more`, `all`, `infinite`, or `pagination`
 - Re-syncs layout-sensitive features after Finsweet list updates
 - Destroys and re-initializes the list on mount to reduce stale SPA state
 - Re-runs the list after delayed layout settling and tab changes
@@ -112,6 +113,8 @@ Uses 'light' tier because the Projects page relies more on Finsweet and custom f
 
 ### Finsweet Root Contract
 The page expects a `main` list instance for the filtered project grid and a standard `fs-list-element="filters"` form for search and filter inputs. If Webflow renders the filters form outside `fs-list-instance="main"`, the page module re-attaches that form and the filter scroll anchor to the `main` instance before Finsweet boots.
+
+The Projects list load mode is taken from the list wrapper and normalized to one of Finsweet's supported values: `fs-list-load="more"`, `fs-list-load="all"`, `fs-list-load="infinite"`, or `fs-list-load="pagination"`. Invalid values fall back to `pagination`.
 
 ### Custom UI Contract
 If the visible Projects filter or pagination UI does not use native Finsweet attributes directly, the page expects bridgeable wrappers such as `.filters__item` and optional `[data-pagination]` controls.
