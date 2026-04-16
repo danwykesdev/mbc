@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 13:06 BST
+Last updated: 2026-04-16 13:08 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,15 @@ Last updated: 2026-04-16 13:06 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### 11f6e4a - fix: correct navBottom timeline animation to animate to 100% when nav opens
+- Date: 2026-04-16 13:08:00Z
+- Branch: main
+- Changes:
+  - Fix recreated timeline animation from width: '0%' to width: '100%'
+  - This ensures navBottom animates to 100% when menu opens
+  - Timeline reverse will animate back to 0% when menu closes
+- Related to: Nav__bottom width animation behavior
 
 ### af4af26 - revert: change nav__bottom width back to 0% for proper animation
 - Date: 2026-04-16 13:06:00Z
