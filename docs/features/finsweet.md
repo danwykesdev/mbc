@@ -76,6 +76,9 @@ Polls for the Finsweet Attributes global to become available. Times out after th
 
 ## Important Notes
 
+### Trace Logging
+Finsweet's internal trace helper stays silent unless `window.MBC_DEBUG === true`. This keeps production console output focused on targeted diagnostics like the horizontal-scroll investigation.
+
 ### Modal-Only vs Full Library
 - **Modal-only**: Uses standalone ES modules from different CDN URLs. Self-initializes on load. Requires cache-busting for SPA transitions.
 - **Full library**: Uses the main Finsweet Attributes library. Requires explicit module loading and restart.

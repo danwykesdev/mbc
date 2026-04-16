@@ -10,13 +10,22 @@
   MBC.features = MBC.features || {};
   var activeInstance = null;
   var debugEnabled = window.MBC_HORIZONTAL_SCROLL_DEBUG !== false;
+  var DEBUG_PREFIX = '[MBC HorizontalScroll Debug]';
 
   function debugLog() {
     if (!debugEnabled || typeof console === 'undefined' || typeof console.log !== 'function') {
       return;
     }
 
-    console.log.apply(console, arguments);
+    var args = Array.prototype.slice.call(arguments);
+
+    if (!args.length || typeof args[0] !== 'string') {
+      args.unshift(DEBUG_PREFIX);
+    } else if (args[0].indexOf(DEBUG_PREFIX) !== 0) {
+      args[0] = DEBUG_PREFIX + ' ' + args[0];
+    }
+
+    console.log.apply(console, args);
   }
 
   function killTriggerById(id) {
@@ -34,6 +43,14 @@
     if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
       return null;
     }
+
+    debugLog('init start', {
+      hasContainer: !!container,
+      windowInnerWidth: window.innerWidth,
+      windowInnerHeight: window.innerHeight,
+      isTouch: ScrollTrigger.isTouch,
+      normalizeScrollActive: !!(typeof ScrollTrigger.normalizeScroll === 'function' && ScrollTrigger.normalizeScroll())
+    });
 
     if (activeInstance && typeof activeInstance.cleanup === 'function') {
       activeInstance.cleanup();

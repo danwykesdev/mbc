@@ -97,29 +97,47 @@
     return summary;
   }
 
+  function shouldTrace() {
+    return window.MBC_DEBUG === true;
+  }
+
+  function traceLog(state, label, start) {
+    if (!shouldTrace()) {
+      return;
+    }
+
+    var args = ['[MBC Trace] ' + state + ':', label];
+
+    if (typeof start === 'number') {
+      args.push(Math.round(performance.now() - start) + 'ms');
+    }
+
+    console.log.apply(console, args);
+  }
+
   function traceAsync(label, promiseFactory) {
     var start = performance.now();
-    console.log('[MBC Trace] start:', label);
+    traceLog('start', label);
 
     return Promise.resolve().then(promiseFactory).then(function (result) {
-      console.log('[MBC Trace] done:', label, Math.round(performance.now() - start) + 'ms');
+      traceLog('done', label, start);
       return result;
     }).catch(function (err) {
-      console.log('[MBC Trace] fail:', label, Math.round(performance.now() - start) + 'ms');
+      traceLog('fail', label, start);
       throw err;
     });
   }
 
   function traceSync(label, fn) {
     var start = performance.now();
-    console.log('[MBC Trace] start:', label);
+    traceLog('start', label);
 
     try {
       var result = fn();
-      console.log('[MBC Trace] done:', label, Math.round(performance.now() - start) + 'ms');
+      traceLog('done', label, start);
       return result;
     } catch (err) {
-      console.log('[MBC Trace] fail:', label, Math.round(performance.now() - start) + 'ms');
+      traceLog('fail', label, start);
       throw err;
     }
   }

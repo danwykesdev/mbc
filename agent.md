@@ -418,6 +418,7 @@ Important:
 - stale refs here have broken Home/Projects before
 - width-only resize guards matter on iOS, because browser chrome height changes can otherwise reflow the pinned section and create large white gaps
 - horizontal-scroll diagnostics currently default to on; disable them only with `window.MBC_HORIZONTAL_SCROLL_DEBUG = false`
+- horizontal-scroll logs are prefixed with `[MBC HorizontalScroll Debug]` so they stay visible without enabling broader trace output
 
 ### `features/load-animations.js`
 
@@ -452,6 +453,7 @@ This repo depends heavily on GSAP.
 
 - `main.js` applies `ScrollTrigger.config({ ignoreMobileResize: true })` globally so mobile address-bar height changes do not refresh pinned sections mid-scroll
 - `main.js` enables `ScrollTrigger.normalizeScroll(true)` only when `ScrollTrigger.isTouch === 1` so touch-only devices can avoid native mobile scroll/pin jitter without changing desktop behavior
+- shared `[MBC Trace]` timing logs stay off unless `window.MBC_DEBUG === true`; use targeted feature diagnostics for single-issue debugging
 
 When changing animation-related code:
 

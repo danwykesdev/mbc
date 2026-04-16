@@ -25,6 +25,7 @@ This module provides utility functions used throughout the MBC runtime. It inclu
 ### Performance Tracing
 - `traceAsync(label, promiseFactory)` - traces async operations with timing
 - `traceSync(label, fn)` - traces synchronous operations with timing
+- Trace logs only print when `window.MBC_DEBUG === true`
 
 ### Debouncing
 - `debounce(fn, ms)` - creates a debounced version of a function
@@ -117,7 +118,7 @@ MBC.core.utils.traceSync('my sync operation', function() {
 ```
 
 ## Important Notes
-- Tracing functions are used extensively for debugging performance issues
+- Tracing functions are used extensively for debugging performance issues, but stay silent unless `window.MBC_DEBUG === true`
 - The RAF-based timing is critical for DOM-dependent operations
 - Namespace normalization ensures consistent handling across the codebase
 - SafeCall prevents single errors from breaking the entire application

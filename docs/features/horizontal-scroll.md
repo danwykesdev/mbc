@@ -76,7 +76,7 @@ Uses a fixed ID 'horizontal-pin' for the ScrollTrigger. This allows targeted cle
 The trigger uses `pinSpacing: true`, `anticipatePin: 1`, and `scrub: 1`, matching the legacy horizontal-scroll behavior more closely on tablet and mobile.
 
 ### Debug Logging
-Horizontal-scroll diagnostics are enabled by default so live mobile/tablet testing can capture measurements without turning on the broader runtime trace logs. Set `window.MBC_HORIZONTAL_SCROLL_DEBUG = false` before the runtime loads to suppress these logs.
+Horizontal-scroll diagnostics are enabled by default so live mobile/tablet testing can capture measurements without turning on the broader runtime trace logs. The logger prefixes every message with `[MBC HorizontalScroll Debug]`. Set `window.MBC_HORIZONTAL_SCROLL_DEBUG = false` before the runtime loads to suppress these logs.
 
 ## Dependencies
 - GSAP (for animations)
