@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 16:20 BST
+Last updated: 2026-04-16 16:38 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,15 @@ Last updated: 2026-04-16 16:20 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### 313b7dd - fix project-detail modal transition bugs
+- Date: 2026-04-16 15:38:31Z
+- Branch: main
+- Changes:
+  - Added a reusable video modal close trigger and call it on project-detail mount/cleanup
+  - Made project-detail prev/next CMS link hydration retry once if the current item is not ready yet
+  - Updated project-detail docs and agent notes for the modal close and retry behavior
+- Related to: Project-detail modal sticking open on navigation and unreliable prev/next hydration
 
 ### investigating - force Projects list-load to pagination by default
 - Date: 2026-04-16 16:20:00Z
