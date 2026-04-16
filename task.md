@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 12:07 BST
+Last updated: 2026-04-16 12:36 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,15 @@ Last updated: 2026-04-16 12:07 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### b11bd71 - fix: clear GSAP props in aggressive fallback to ensure proper re-open animation
+- Date: 2026-04-16 12:36:00Z
+- Branch: main
+- Changes:
+  - Use clearProps to reset GSAP state after aggressive fallback
+  - Re-set initial state for next menu open
+  - This ensures nav__bottom and other elements animate correctly when menu is re-opened
+- Related to: Mobile nav re-open animation issue after aggressive fallback
 
 ### 6b1b66f - fix: add aggressive fallback for mobile nav close to prevent menu staying open
 - Date: 2026-04-16 12:07:00Z
