@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 13:23 BST
+Last updated: 2026-04-16 13:29 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,15 @@ Last updated: 2026-04-16 13:23 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### 143f1fe - fix: add z-index 999 to navBottom to prevent it from being covered by mobile nav menu
+- Date: 2026-04-16 13:29:00Z
+- Branch: main
+- Changes:
+  - Added `zIndex: 999` to `navBottom` initialization and fallback state
+  - This ensures the line is painted OVER the mobile nav menu (which has a z-index of 998)
+  - Resolves the issue where only 5% of the navBottom was visible because it was overlapped by the menu background
+- Related to: Nav__bottom display coverage issue
 
 ### 0c12ed0 - fix: change navBottom animation from 100% to 100vw for full viewport width
 - Date: 2026-04-16 13:23:00Z
