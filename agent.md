@@ -120,7 +120,7 @@ Shared runtime infrastructure.
   - current namespace, container, cleanup stacks, Lenis instance, nav token
 
 - `utils.js`
-  - helpers like `debounce`, `waitForLayout`, `normalizeNamespace`, `traceAsync`, `traceSync`
+  - helpers like `debounce`, `waitForLayout`, `normalizeNamespace`, selector diagnostics, `traceAsync`, `traceSync`
 
 - `cleanup.js`
   - page/global cleanup stack management

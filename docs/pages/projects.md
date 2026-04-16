@@ -9,6 +9,17 @@ This is the page module for the Projects page. It handles Finsweet list/filter i
 - Initializes Finsweet list/filter controls for Projects
 - Supports Finsweet-powered filter buttons, search inputs, and list refresh
 - Re-syncs layout-sensitive features after Finsweet list updates
+- Destroys and re-initializes the list on mount to reduce stale SPA state
+- Re-runs the list after delayed layout settling and tab changes
+
+### Custom Filter Bridge
+- Bridges `.filters__item` wrappers to hidden Finsweet inputs
+- Supports radio and checkbox style filter controls inside the custom UI
+- Restarts the Finsweet list after bridged clicks so filtered results update reliably
+
+### Custom Pagination Bridge
+- Supports optional visible wrappers using `[data-pagination="next"]` and `[data-pagination="prev"]`
+- Forwards those clicks to hidden Finsweet pagination controls when present
 
 ### Filter Item Animation
 - Animate filter items in when tab becomes active
@@ -42,6 +53,10 @@ This is the page module for the Projects page. It handles Finsweet list/filter i
 - Clears search input and triggers a new search pass on close button click
 - Resets placeholder text
 
+### Diagnostics
+- Logs selector counts before init, after init, after delayed restarts, and after tab changes
+- Helps verify whether Barba/Webflow lifecycle timing is leaving filter or pagination controls out of the DOM scan
+
 ### Navigation State
 - Sets navigation to dark theme with solid background and blur
 
@@ -58,6 +73,8 @@ Main mount function with Finsweet and tab handling.
 - `showPaneFiltersImmediately(pane)` - shows filter items without animation
 - `findProjectsFilterInput(scope)` - finds Finsweet filter input
 - `triggerProjectsFilterInput(input)` - triggers filter change
+- `restartProjectsList(reason)` - restarts the Finsweet list and re-syncs layout bindings
+- `logProjectsDiagnostics(container, label)` - logs key selector counts for debugging
 - `applyProjectsCardBottomInset(container)` - applies spacing
 
 ### Helper Functions
@@ -79,8 +96,8 @@ Main mount function with Finsweet and tab handling.
 ## Initialization Sequence
 
 1. **Setup**: Set nav state, bind horizontal scroll and stagger hover (early)
-2. **Finsweet Init**: Initialize Finsweet list/filter on projects roots
-3. **Post-Init Sync**: Apply card inset, rebind features, refresh triggers
+2. **Finsweet Init**: Destroy stale list state, then initialize Finsweet list/filter on projects roots
+3. **Post-Init Sync**: Apply card inset, rebind features, refresh triggers, and log selector diagnostics
 4. **Tab State**: Set initial tab filter states
 5. **Tab Observer**: Set up MutationObserver for tab changes
 6. **Delayed Reflow**: Rebind features after content settles
@@ -94,6 +111,9 @@ Uses 'light' tier because the Projects page relies more on Finsweet and custom f
 ### Finsweet Root Contract
 The page expects Finsweet list/filter markup, including `[fs-list-element]`, `[fs-filter-element]`, and associated filter controls on each project card.
 
+### Custom UI Contract
+If the visible Projects filter or pagination UI does not use native Finsweet attributes directly, the page expects bridgeable wrappers such as `.filters__item` and optional `[data-pagination]` controls.
+
 ### Tab Change Detection
 Uses MutationObserver on tab pane `class` attribute to detect when Webflow switches tabs. This allows triggering filter animations and layout rebinds when content changes.
 
@@ -104,7 +124,7 @@ Filter items are animated in with a staggered slide-in effect. They're hidden wh
 The search close button clears the input and triggers a fresh search pass.
 
 ### Cleanup
-On unmount, the page destroys Finsweet list instances and feature bindings.
+On unmount, the page destroys Finsweet list instances, removes bridge listeners, and clears feature bindings.
 
 ## Dependencies
 - MBC.features.finsweet (for Finsweet list/filter init)

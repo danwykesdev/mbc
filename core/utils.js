@@ -69,6 +69,34 @@
     }
   }
 
+  function countSelectorMatches(container, selector) {
+    var root = container && typeof container.querySelectorAll === 'function'
+      ? container
+      : document;
+
+    try {
+      return root.querySelectorAll(selector).length;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function collectSelectorSummary(container, selectorMap) {
+    var summary = {};
+
+    Object.keys(selectorMap || {}).forEach(function (key) {
+      summary[key] = countSelectorMatches(container, selectorMap[key]);
+    });
+
+    return summary;
+  }
+
+  function logSelectorSummary(label, container, selectorMap) {
+    var summary = collectSelectorSummary(container, selectorMap);
+    console.log('[MBC] Selector inspect ' + (label || ''), summary);
+    return summary;
+  }
+
   function traceAsync(label, promiseFactory) {
     var start = performance.now();
     console.log('[MBC Trace] start:', label);
@@ -104,6 +132,9 @@
     normalizeNamespace: normalizeNamespace,
     isHome: isHome,
     safeCall: safeCall,
+    countSelectorMatches: countSelectorMatches,
+    collectSelectorSummary: collectSelectorSummary,
+    logSelectorSummary: logSelectorSummary,
     traceAsync: traceAsync,
     traceSync: traceSync
   };

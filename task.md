@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 15:00 BST
+Last updated: 2026-04-16 15:35 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,16 @@ Last updated: 2026-04-16 15:00 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### investigating - restore Projects filter bridge and add lifecycle diagnostics
+- Date: 2026-04-16 15:35:00Z
+- Branch: main
+- Changes:
+  - Restored the custom `.filters__item` bridge to hidden Finsweet inputs in `pages/projects.js`
+  - Added delayed and tab-change Finsweet list restarts to better match Barba/Webflow lifecycle timing
+  - Added generic selector diagnostics helpers in `core/utils.js` and used them for Projects/Finsweet debugging
+  - Added optional custom pagination forwarding for `[data-pagination="next"]` and `[data-pagination="prev"]`
+- Related to: Projects Finsweet filter and pagination lifecycle investigation
 
 ### investigating - try fs-attributes-auto for Finsweet detection
 - Date: 2026-04-16 15:10:00Z
@@ -470,12 +480,10 @@ Last updated: 2026-04-16 15:00 BST
 - Status: `Investigating`
 - Report: Projects filters still do not work reliably after Finsweet Attributes v2 integration
 - Notes:
-  - Finsweet list/filter loading is now disabled on the `projects` namespace for isolated testing
-  - Advanced Filter System has been wired in as the replacement filter/search/pagination path
-  - Verification is still pending on live Webflow markup and interactions
-  - Latest live testing showed partial improvement:
-    - Hard reload on projects: pagination improved, filters still broken
-    - Projects > Home > Projects: pagination and filters both broke before the latest reset/re-entry patch
-  - Latest commits attempted to fix this: c37ebd2, 13c54aa, 1f3f946, 3468602
+  - Current trace shows the list module loading, but `filterElements` and hidden pagination controls are still not being detected on initial scan
+  - Projects now restores the custom filter bridge and adds delayed/tab-change list restarts to better match lifecycle timing
+  - Shared selector diagnostics now log which controls actually exist before init, after init, and after delayed restarts
+  - Verification is still pending on live Webflow markup and interactions after the bridge restoration
+  - Latest commits attempted to fix this: c37ebd2, 13c54aa, 1f3f946, 3468602, 1a44bb3
   - Final verification still pending on live pages
-- Related commits: c04b5a6, c37ebd2, 13c54aa, 1f3f946, 3468602
+- Related commits: c04b5a6, c37ebd2, 13c54aa, 1f3f946, 3468602, 1a44bb3

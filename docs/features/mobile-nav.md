@@ -44,7 +44,7 @@ Initializes the mobile navigation. Returns a cleanup function.
 
 ### Internal Functions
 - `openMenu()` - opens the menu
-- `closeMenu()` - closes the menu, returns true if was open
+- `closeMenu(forceClose)` - Closes the menu. If `forceClose` is true, uses 2.5x speed animation for faster closing during transitions. Returns true if was open.
 - `onClick()` - handles menu button click
 - `onNavLinkClick(event)` - handles nav link clicks
 - `navigateToPendingHref()` - performs pending navigation after close
@@ -58,7 +58,7 @@ Initializes the mobile navigation. Returns a cleanup function.
 4. Nav links stagger in from left
 
 ### Close
-1. All animations reverse (1.15x speed for snappier feel)
+1. All animations reverse (1.15x speed for normal close, 2.5x speed for force close)
 2. After close, pending navigation executes
 3. Lenis scrolling resumes
 
@@ -68,7 +68,7 @@ Initializes the mobile navigation. Returns a cleanup function.
 This module only runs on mobile devices. On desktop, it returns immediately with an empty cleanup function.
 
 ### Global Close Function
-Exposes `window._closeMobileNav` for external code to close the menu programmatically.
+Exposes `window._closeMobileNav(force)` for external code to close the menu programmatically. When `force` is true, uses 2.5x speed animation for faster closing during transitions.
 
 ### Pending Navigation
 When a nav link is clicked, the navigation is deferred until the menu closes. This ensures the close animation plays before the page transition.

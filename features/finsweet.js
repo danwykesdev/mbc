@@ -95,6 +95,12 @@
   }
 
   function countMatches(container, selector) {
+    var utils = MBC.core && MBC.core.utils;
+
+    if (utils && typeof utils.countSelectorMatches === 'function') {
+      return utils.countSelectorMatches(container, selector);
+    }
+
     try {
       return container.querySelectorAll(selector).length;
     } catch (_) {
@@ -103,15 +109,33 @@
   }
 
   function inspect(container, label) {
-    var summary = {
-      listElements: countMatches(container, '[fs-list-element]'),
-      filterElements: countMatches(container, '[fs-filter-element]'),
-      sliderElements: countMatches(container, '[fs-slider-element]'),
-      modalElements: countMatches(container, '[fs-modal-element]'),
-      paginationNext: countMatches(container, '[data-pagination-next], [fs-list-element="pagination-next"]'),
-      paginationPrev: countMatches(container, '[data-pagination-prev], [fs-list-element="pagination-previous"]'),
-      activeModules: detectModules(container)
+    var utils = MBC.core && MBC.core.utils;
+    var selectorMap = {
+      listElements: '[fs-list-element]',
+      filterElements: '[fs-filter-element]',
+      filterInputs: 'input[fs-list-field], input[fs-list-value], select[fs-list-field], textarea[fs-list-field]',
+      sliderElements: '[fs-slider-element]',
+      modalElements: '[fs-modal-element]',
+      paginationNext: '[data-pagination-next], [fs-list-element="pagination-next"]',
+      paginationPrev: '[data-pagination-prev], [fs-list-element="pagination-previous"]',
+      customPaginationNext: '[data-pagination="next"]',
+      customPaginationPrev: '[data-pagination="prev"]'
     };
+    var summary = utils && typeof utils.collectSelectorSummary === 'function'
+      ? utils.collectSelectorSummary(container, selectorMap)
+      : {
+          listElements: countMatches(container, selectorMap.listElements),
+          filterElements: countMatches(container, selectorMap.filterElements),
+          filterInputs: countMatches(container, selectorMap.filterInputs),
+          sliderElements: countMatches(container, selectorMap.sliderElements),
+          modalElements: countMatches(container, selectorMap.modalElements),
+          paginationNext: countMatches(container, selectorMap.paginationNext),
+          paginationPrev: countMatches(container, selectorMap.paginationPrev),
+          customPaginationNext: countMatches(container, selectorMap.customPaginationNext),
+          customPaginationPrev: countMatches(container, selectorMap.customPaginationPrev)
+        };
+
+    summary.activeModules = detectModules(container);
 
     console.log('[MBC] Finsweet inspect ' + (label || ''), summary);
     return summary;

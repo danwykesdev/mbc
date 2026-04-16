@@ -1,7 +1,7 @@
 # utils.js
 
 ## Purpose
-This module provides utility functions used throughout the MBC runtime. It includes timing helpers, namespace normalization, safe function execution, and performance tracing tools.
+This module provides utility functions used throughout the MBC runtime. It includes timing helpers, namespace normalization, safe function execution, selector diagnostics, and performance tracing tools.
 
 ## What It Does
 
@@ -16,6 +16,11 @@ This module provides utility functions used throughout the MBC runtime. It inclu
 
 ### Safe Execution
 - `safeCall(fn, label)` - executes a function with error handling and logging
+
+### Selector Diagnostics
+- `countSelectorMatches(container, selector)` - counts matches for a selector within a root
+- `collectSelectorSummary(container, selectorMap)` - returns a keyed count summary for a selector map
+- `logSelectorSummary(label, container, selectorMap)` - logs a selector summary for lifecycle/debugging work
 
 ### Performance Tracing
 - `traceAsync(label, promiseFactory)` - traces async operations with timing
@@ -50,6 +55,15 @@ Convenience function that checks if a normalized namespace equals 'home'.
 
 ### `safeCall(fn, label)`
 Wraps a function call in try-catch. Logs warnings with the provided label if the function throws. Returns null on error.
+
+### `countSelectorMatches(container, selector)`
+Counts DOM matches for a selector within the provided root. Falls back to `document` if the root is invalid.
+
+### `collectSelectorSummary(container, selectorMap)`
+Builds an object of selector match counts using the provided key-to-selector map.
+
+### `logSelectorSummary(label, container, selectorMap)`
+Logs a selector count summary to the console. Useful when debugging Barba/Webflow timing issues where expected elements may not exist yet.
 
 ### `traceAsync(label, promiseFactory)`
 Measures and logs the duration of async operations:
@@ -107,3 +121,4 @@ MBC.core.utils.traceSync('my sync operation', function() {
 - The RAF-based timing is critical for DOM-dependent operations
 - Namespace normalization ensures consistent handling across the codebase
 - SafeCall prevents single errors from breaking the entire application
+- Selector diagnostics are intended for temporary runtime debugging and page-specific lifecycle investigations
