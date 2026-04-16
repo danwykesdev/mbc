@@ -94,9 +94,9 @@
     var list = queryOne(container, '[fs-list-element="list"]', false);
     if (!list) return 'pagination';
 
-    var requestedMode = list.getAttribute('fs-list-load')
-      || container.getAttribute('data-projects-list-load')
-      || container.getAttribute('data-list-load');
+    var requestedMode = container.getAttribute('data-projects-list-load')
+      || container.getAttribute('data-list-load')
+      || 'pagination';
     var normalizedMode = normalizeProjectsListLoadMode(requestedMode);
 
     list.setAttribute('fs-list-load', normalizedMode);

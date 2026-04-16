@@ -308,7 +308,7 @@ Responsible for:
 
 Key idea:
 
-- projects has late DOM/layout dependencies, so some behavior rebinds after filter, search, pagination, or tab changes; supported list-load values are `more`, `all`, `infinite`, and `pagination`
+- projects has late DOM/layout dependencies, so some behavior rebinds after filter, search, pagination, or tab changes; the page module forces `pagination` by default unless a page-level override sets `data-projects-list-load` or `data-list-load`
 
 ### `pages/project-detail.js`
 

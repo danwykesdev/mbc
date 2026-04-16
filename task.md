@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 16:08 BST
+Last updated: 2026-04-16 16:20 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,15 @@ Last updated: 2026-04-16 16:08 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### investigating - force Projects list-load to pagination by default
+- Date: 2026-04-16 16:20:00Z
+- Branch: main
+- Changes:
+  - Changed Projects to ignore the wrapper's existing `fs-list-load` value and default to `pagination`
+  - Allowed only explicit page-level overrides via `data-projects-list-load` or `data-list-load`
+  - Updated docs and agent notes to match the default pagination contract
+- Related to: Projects pagination not activating because the live wrapper was still set to `infinite`
 
 ### 8df623d - fix: normalize Projects list-load modes
 - Date: 2026-04-16 15:08:31Z
