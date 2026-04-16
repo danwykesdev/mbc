@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 16:38 BST
+Last updated: 2026-04-16 16:18 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -9,8 +9,8 @@ Last updated: 2026-04-16 16:38 BST
 
 ## Commit History
 
-### investigating - add zine list-tabs support
-- Date: 2026-04-16 15:38:31Z
+### 1547023 - add zine list-tabs support
+- Date: 2026-04-16 16:18:09Z
 - Branch: main
 - Changes:
   - Added Finsweet list-tabs detection and diagnostics to the shared Finsweet bridge
