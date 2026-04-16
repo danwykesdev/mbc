@@ -97,6 +97,13 @@
     var lastWrapWidth = 0;
     var lastWrapScrollWidth = 0;
     var lastPanelCount = 0;
+    var suppressAutoReflow = ScrollTrigger.isTouch === 1 || window.innerWidth <= 991;
+
+    debugLog('[MBC HorizontalScroll] auto reflow mode', {
+      suppressAutoReflow: suppressAutoReflow,
+      isTouch: ScrollTrigger.isTouch,
+      windowInnerWidth: window.innerWidth
+    });
 
     function clearPanelTransforms(wrap) {
       if (!wrap) return;
@@ -145,6 +152,18 @@
 
     function shouldReflow(wrap, panels) {
       if (!wrap) return true;
+
+      if (suppressAutoReflow) {
+        debugLog('[MBC HorizontalScroll] shouldReflow suppressed', {
+          suppressAutoReflow: suppressAutoReflow,
+          currentWindowWidth: window.innerWidth,
+          wrapClientWidth: wrap.clientWidth,
+          wrapScrollWidth: wrap.scrollWidth,
+          panelCount: panels.length
+        });
+        return false;
+      }
+
       var should = false;
       if (window.innerWidth !== lastWindowWidth) should = true;
       if (panels.length !== lastPanelCount) should = true;
@@ -306,7 +325,7 @@
     }
 
     function scheduleDelayedReflow(delay) {
-      if (cleanedUp) return;
+      if (cleanedUp || suppressAutoReflow) return;
 
       if (delayedReflowTimer) {
         clearTimeout(delayedReflowTimer);
@@ -332,6 +351,13 @@
     };
 
     var onWindowLoad = function () {
+      if (suppressAutoReflow) {
+        debugLog('[MBC HorizontalScroll] skipping load reflow', {
+          suppressAutoReflow: suppressAutoReflow
+        });
+        return;
+      }
+
       reflow();
       scheduleDelayedReflow(2000);
     };
@@ -339,7 +365,7 @@
     window.addEventListener('resize', onResize, { passive: true });
     window.addEventListener('load', onWindowLoad, { once: true });
 
-    if (typeof ResizeObserver !== 'undefined') {
+    if (!suppressAutoReflow && typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(function () {
         if (cleanedUp) return;
         var liveWrap = container.querySelector('[data-horizontal-scroll-wrap]');
@@ -364,6 +390,10 @@
       } else {
         resizeObserver.observe(container);
       }
+    } else if (suppressAutoReflow) {
+      debugLog('[MBC HorizontalScroll] skipping ResizeObserver auto reflow', {
+        suppressAutoReflow: suppressAutoReflow
+      });
     }
 
     reflow();

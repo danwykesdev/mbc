@@ -421,6 +421,7 @@ Important:
 - horizontal-scroll diagnostics currently default to on; disable them only with `window.MBC_HORIZONTAL_SCROLL_DEBUG = false`
 - horizontal-scroll logs are prefixed with `[MBC HorizontalScroll Debug]` so they stay visible without enabling broader trace output
 - horizontal-scroll diagnostics should log abort reasons and pin-spacer metrics while this iPad issue is under investigation
+- touch/tablet layouts should suppress ResizeObserver and delayed auto-reflows after the trigger is created, otherwise the pinned section can keep resetting instead of progressing
 
 ### `features/stagger-hover.js`
 

@@ -34,6 +34,7 @@ This module creates horizontal scrolling sections using GSAP ScrollTrigger. It's
 - Uses ResizeObserver to detect container size changes
 - Reflows the scroll trigger on resize
 - Debounces resize handling with requestAnimationFrame
+- Suppresses ResizeObserver-driven and delayed auto-reflows on touch devices and widths at `<= 991px` to avoid resetting the pinned section mid-scroll
 
 ### Cleanup
 - Kills the GSAP tween
@@ -66,8 +67,11 @@ Scroll distance is calculated from the live panel widths plus inter-panel gap, t
 ### iOS Resize Guard
 The feature ignores height-only resize churn and only recreates the trigger when viewport width or horizontal layout measurements change. This prevents iOS browser chrome changes from reflowing the pinned section mid-scroll and creating large vertical gaps.
 
+### Touch/Tablet Reflow Guard
+On touch devices or widths at `<= 991px`, the feature suppresses ResizeObserver-driven and delayed auto-reflows after the initial trigger creation. This avoids repeated trigger recreation while the user is actively scrolling through the pinned section.
+
 ### Delayed Reflow
-The module schedules delayed reflows at 700ms and 2000ms after initialization. This handles cases where layout settles after initial load (e.g., images loading, fonts loading).
+The module schedules delayed reflows at 700ms and 2000ms after initialization on desktop layouts. Touch/tablet layouts suppress those automatic reflows and rely on the initial setup plus explicit page-driven `reflow()` calls after Home finishes settling.
 
 ### Trigger ID
 Uses a fixed ID 'horizontal-pin' for the ScrollTrigger. This allows targeted cleanup and prevents conflicts with other triggers.
