@@ -58,6 +58,16 @@ Simplified hero for mobile/reduced motion. Just fades in the hero element.
 
 ## Important Notes
 
+### Nav Visibility by Breakpoint
+- Desktop: Nav is hidden during hero animation (yPercent: -100)
+- Mobile/Tablet: Nav remains visible during hero animation
+- Nav hiding is controlled via matchMedia to ensure correct behavior per breakpoint
+
+### MatchMedia Refresh
+- Forces GSAP matchMedia to re-evaluate on each init
+- Ensures correct breakpoint detection on page transitions
+- Prevents animation from playing wrong breakpoint animation
+
 ### MatchMedia Usage
 The animation uses GSAP matchMedia to define different behaviors for different breakpoints. This ensures the animation works correctly on all screen sizes and responds to window resizing.
 

@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 11:48 BST
+Last updated: 2026-04-16 12:00 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -9,14 +9,26 @@ Last updated: 2026-04-16 11:48 BST
 
 ## Commit History
 
-### [pending] - Fix mobile navigation menu staying open during page transitions on iOS
-- Date: 2026-04-16 11:48:00Z
+### 5117918 - fix: prevent hero animation from disappearing on mobile transitions
+- Date: 2026-04-16 12:00:00Z
+- Branch: main
+- Changes:
+  - Move nav hiding inside matchMedia to only hide on desktop, keep visible on mobile/tablet
+  - Update prepareHeroEntryState to only hide nav on desktop
+  - Add matchMediaRefresh to force GSAP breakpoint re-evaluation on transitions
+  - This ensures crisp-loader animation plays correctly when navigating projects > home on mobile
+- Related to: Hero animation reliability on mobile transitions
+
+### ab37215 - fix: force close mobile navigation menu during transitions on iOS
+- Date: 2026-04-16 11:50:00Z
+- Branch: main
 - Changes:
   - Added forceClose parameter to closeMenu function in features/mobile-nav.js for faster closing during transitions (2.5x speed vs 1.15x)
   - Updated onNavLinkClick to use closeMenu(true) when navigating
   - Updated cleanup function to force close menu if still open
   - Updated window._closeMobileNav to support force parameter
   - Added mobile nav close logic to barba.hooks.beforeEnter in main.js to force close before any transition
+  - Added documentation sync rule to copilot-instructions.md
   - Rebuilt bundled runtime with mobile navigation fixes
 - Related to: Mobile navigation reliability on iOS
 
