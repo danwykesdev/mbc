@@ -32,11 +32,13 @@ This is the page module for the Project Detail page. It handles complex initiali
 - Reads project list from CMS collection
 - Finds current project and determines prev/next
 - Updates prev/next button links, titles, and images
+- Retries once if the CMS current link is not ready during SPA hydration
 
 ### Video Integration
 - Resets video DOM before initialization
 - Initializes videos (background and modal)
 - Re-initializes after Finsweet to ensure stable DOM
+- Closes any open modal on mount and cleanup so transitions do not leave the video modal stuck open
 - Critical ordering: videos before Finsweet, then again after
 
 ### Finsweet Integration

@@ -47,6 +47,35 @@
     return Promise.resolve();
   }
 
+  function triggerModalClose() {
+    var closeButtons = Array.from(document.querySelectorAll('[fs-modal-element="close"], [data-modal-close], .w-close, .w-lightbox-close, [aria-label="Close"]'));
+    var clicked = false;
+
+    closeButtons.some(function (button) {
+      if (!button) return false;
+
+      if (typeof button.click === 'function') {
+        button.click();
+        clicked = true;
+        return true;
+      }
+
+      if (typeof button.dispatchEvent === 'function') {
+        button.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+        clicked = true;
+        return true;
+      }
+
+      return false;
+    });
+
+    if (!clicked) {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    }
+
+    return clicked;
+  }
+
   function isModalHidden(modal) {
     if (!modal) return true;
     if (modal.hasAttribute('hidden')) return true;
@@ -387,6 +416,10 @@
     }
 
     return function cleanup() {
+      triggerModalClose();
+      clearDestroyTimeouts();
+      destroyModalPlayer();
+
       openers.forEach(function (el) {
         el.removeEventListener('click', onOpen);
       });
@@ -405,9 +438,6 @@
         modalObserver.disconnect();
         modalObserver = null;
       }
-
-      clearDestroyTimeouts();
-      destroyModalPlayer();
     };
   }
 
@@ -444,6 +474,7 @@
   }
 
   MBC.features.videos = {
+    closeModal: triggerModalClose,
     initBackground: initBackgroundVideos,
     initModal: initModalVideos,
     initStandalone: initStandaloneVideos,

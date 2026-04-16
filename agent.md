@@ -326,7 +326,7 @@ Responsible for:
 
 Key idea:
 
-- this page is sensitive to detail-to-detail transitions; revisit behavior must be treated like a fresh load
+- this page is sensitive to detail-to-detail transitions; revisit behavior must be treated like a fresh load, and it must explicitly close any open video modal on mount/cleanup while retrying CMS prev/next hydration once if the current link is not ready yet
 
 ### `pages/zine.js`
 
@@ -391,6 +391,10 @@ Use it when changing:
 - close/destroy behavior
 
 This is a high-risk file because stale DOM or modal timing often breaks revisits.
+
+Key idea:
+
+- project-detail can call `MBC.features.videos.closeModal()` to force-close any open modal before teardown or re-entry
 
 ### `features/finsweet.js`
 

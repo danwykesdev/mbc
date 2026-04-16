@@ -52,7 +52,9 @@
     };
   }
 
-  function initPrevNextProjects(container) {
+  function initPrevNextProjects(container, attempt) {
+    attempt = attempt || 0;
+    var retryTimer = null;
     var sourceRoot = document.querySelector('[r-prevnext-source], [np-articles-source]');
     var currentEl;
     var links;
@@ -61,23 +63,73 @@
     var prevLink;
     var nextLink;
 
-    if (!sourceRoot) return;
+    function retryLater() {
+      if (attempt >= 1) return;
+      if (retryTimer) return;
+
+      retryTimer = setTimeout(function () {
+        retryTimer = null;
+        initPrevNextProjects(container, attempt + 1);
+      }, 80);
+    }
+
+    if (!sourceRoot) {
+      retryLater();
+      return function cleanup() {
+        if (retryTimer) {
+          clearTimeout(retryTimer);
+          retryTimer = null;
+        }
+      };
+    }
 
     currentEl = sourceRoot.querySelector('.w--current');
-    if (!currentEl) return;
+    if (!currentEl) {
+      retryLater();
+      return function cleanup() {
+        if (retryTimer) {
+          clearTimeout(retryTimer);
+          retryTimer = null;
+        }
+      };
+    }
 
     links = Array.from(sourceRoot.querySelectorAll('a[href]'));
-    if (!links.length) return;
+    if (!links.length) {
+      retryLater();
+      return function cleanup() {
+        if (retryTimer) {
+          clearTimeout(retryTimer);
+          retryTimer = null;
+        }
+      };
+    }
 
     currentLink =
       (currentEl.matches && currentEl.matches('a') ? currentEl : null) ||
       (currentEl.closest ? currentEl.closest('a') : null) ||
       (currentEl.querySelector ? currentEl.querySelector('a') : null);
 
-    if (!currentLink) return;
+    if (!currentLink) {
+      retryLater();
+      return function cleanup() {
+        if (retryTimer) {
+          clearTimeout(retryTimer);
+          retryTimer = null;
+        }
+      };
+    }
 
     currentIndex = links.indexOf(currentLink);
-    if (currentIndex < 0) return;
+    if (currentIndex < 0) {
+      retryLater();
+      return function cleanup() {
+        if (retryTimer) {
+          clearTimeout(retryTimer);
+          retryTimer = null;
+        }
+      };
+    }
 
     prevLink = links[(currentIndex - 1 + links.length) % links.length];
     nextLink = links[(currentIndex + 1) % links.length];
@@ -112,6 +164,13 @@
     applyMapping('[r-prevnext-prev-text], [np-articles-prev-text]', 'text', prev.title);
     applyMapping('[r-prevnext-prev-img], [np-articles-prev-img]', 'src', prev.imgSrc);
     applyMapping('[r-prevnext-next-img], [np-articles-next-img]', 'src', next.imgSrc);
+
+    return function cleanup() {
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+        retryTimer = null;
+      }
+    };
   }
 
   function processProjectDetailPageData(container) {
@@ -403,6 +462,9 @@
       : function (_, fn) { return fn(); };
 
     applyInitialProjectDetailNavState();
+    if (MBC.features.videos && typeof MBC.features.videos.closeModal === 'function') {
+      MBC.features.videos.closeModal();
+    }
     resetProjectDetailVideoDom(container);
     traceSync('project-detail processPageData', function () {
       processProjectDetailPageData(container);
@@ -436,6 +498,10 @@
     if (MBC.features.videos) {
       if (typeof videoCleanup === 'function') {
         try { videoCleanup(); } catch (_) {}
+      }
+
+      if (typeof MBC.features.videos.closeModal === 'function') {
+        MBC.features.videos.closeModal();
       }
 
       resetProjectDetailVideoDom(container);
@@ -475,11 +541,14 @@
       }
     }
 
-    await traceAsync('project-detail initPrevNextProjects', function () {
+    var prevNextCleanup = await traceAsync('project-detail initPrevNextProjects', function () {
       return Promise.resolve().then(function () {
-        initPrevNextProjects(container);
+        return initPrevNextProjects(container);
       });
     });
+    if (typeof prevNextCleanup === 'function') {
+      cleanups.push(prevNextCleanup);
+    }
 
     traceSync('project-detail processPageData final', function () {
       processProjectDetailPageData(container);
