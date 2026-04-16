@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 16:18 BST
+Last updated: 2026-04-16 19:00 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,14 @@ Last updated: 2026-04-16 16:18 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### 3d00b1a - remove zine move-talk DOM reparenting
+- Date: 2026-04-16 19:00:29Z
+- Branch: main
+- Changes:
+  - Removed the zine `[data-move-talk]` to `[data-talk]` reparenting block
+  - Updated zine docs and agent notes to stop describing the DOM move behavior
+- Related to: Testing whether Finsweet combine works without additional DOM reparenting
 
 ### 1547023 - add zine list-tabs support
 - Date: 2026-04-16 16:18:09Z
