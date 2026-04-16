@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 16:20 BST
+Last updated: 2026-04-16 16:08 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -9,8 +9,8 @@ Last updated: 2026-04-16 16:20 BST
 
 ## Commit History
 
-### investigating - normalize Projects list-load mode for pagination options
-- Date: 2026-04-16 16:20:51Z
+### 8df623d - fix: normalize Projects list-load modes
+- Date: 2026-04-16 15:08:31Z
 - Branch: main
 - Changes:
   - Added a Projects-side list-load normalizer that only accepts `more`, `all`, `infinite`, and `pagination`
