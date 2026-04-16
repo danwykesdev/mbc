@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 12:00 BST
+Last updated: 2026-04-16 12:07 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,15 @@ Last updated: 2026-04-16 12:00 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### 6b1b66f - fix: add aggressive fallback for mobile nav close to prevent menu staying open
+- Date: 2026-04-16 12:07:00Z
+- Branch: main
+- Changes:
+  - Allow forceClose to bypass isOpen check in closeMenu function
+  - Add DOM manipulation fallback in window._closeMobileNav if animation fails
+  - Directly remove nav classes and set GSAP state to ensure menu closes
+- Related to: Mobile nav menu staying open despite forceClose fixes
 
 ### 5117918 - fix: prevent hero animation from disappearing on mobile transitions
 - Date: 2026-04-16 12:00:00Z
