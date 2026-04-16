@@ -22,6 +22,11 @@
       window.__homeHeroTL = null;
     }
 
+    // Force matchMedia to re-evaluate current breakpoint
+    if (typeof gsap !== 'undefined' && gsap.matchMediaRefresh) {
+      gsap.matchMediaRefresh();
+    }
+
     var containers = root.querySelectorAll('.crisp-loader');
     var navItems = document.querySelectorAll('[data-load-items="nav-item"], [data-load-item="nav"], [data-load-items="nav"]');
     var nav = document.querySelector('.nav');
@@ -37,9 +42,6 @@
 
     MBC.core.state.heroAnimating = true;
 
-    if (nav) gsap.set(nav, { yPercent: -100, autoAlpha: 0, transition: 'none' });
-    if (navItems.length) gsap.set(navItems, { autoAlpha: 0, x: -10, transition: 'none' });
-
     var mm = gsap.matchMedia();
     window.__homeHeroMM = mm;
 
@@ -53,6 +55,15 @@
         var isDesktop = context.conditions.isDesktop;
         var isTablet = context.conditions.isTablet;
         var isMobile = context.conditions.isMobile;
+
+        // Only hide nav on desktop, keep it visible on mobile/tablet
+        if (isDesktop && nav) {
+          gsap.set(nav, { yPercent: -100, autoAlpha: 0, transition: 'none' });
+        }
+        if (isDesktop && navItems.length) {
+          gsap.set(navItems, { autoAlpha: 0, x: -10, transition: 'none' });
+        }
+
         var masterTl = gsap.timeline({
           onComplete: function () {
             MBC.core.state.heroAnimating = false;

@@ -122,13 +122,15 @@
 
       var nav = document.querySelector('.nav');
       var navItems = document.querySelectorAll('[data-load-items="nav-item"], [data-load-item="nav"], [data-load-items="nav"]');
+      var isDesktop = window.innerWidth >= 992;
 
-      if (nav) {
+      // Only hide nav on desktop, keep it visible on mobile/tablet
+      if (isDesktop && nav) {
         gsap.killTweensOf(nav);
         gsap.set(nav, { yPercent: -100, autoAlpha: 0 });
       }
 
-      if (navItems.length) {
+      if (isDesktop && navItems.length) {
         gsap.killTweensOf(navItems);
         gsap.set(navItems, { autoAlpha: 0, x: -10 });
       }
