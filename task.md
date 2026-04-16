@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 12:58 BST
+Last updated: 2026-04-16 13:06 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,16 @@ Last updated: 2026-04-16 12:58 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### af4af26 - revert: change nav__bottom width back to 0% for proper animation
+- Date: 2026-04-16 13:06:00Z
+- Branch: main
+- Changes:
+  - Revert initial state of navBottom from width: '100%' to width: '0%'
+  - Revert aggressive fallback state of navBottom from width: '100%' to width: '0%'
+  - Revert timeline animation from width: '100%' to width: '0%'
+  - This ensures proper animation behavior
+- Related to: Nav__bottom width animation fix
 
 ### e7e68cb - fix: set nav__bottom width to 100% initially to fix display issue
 - Date: 2026-04-16 12:58:00Z
