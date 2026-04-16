@@ -9,7 +9,7 @@
 
   MBC.features = MBC.features || {};
   var activeInstance = null;
-  var debugEnabled = !!window.MBC_DEBUG;
+  var debugEnabled = window.MBC_HORIZONTAL_SCROLL_DEBUG !== false;
 
   function debugLog() {
     if (!debugEnabled || typeof console === 'undefined' || typeof console.log !== 'function') {

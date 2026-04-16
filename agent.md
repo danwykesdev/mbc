@@ -417,6 +417,7 @@ Important:
 - it must query live DOM on reflow
 - stale refs here have broken Home/Projects before
 - width-only resize guards matter on iOS, because browser chrome height changes can otherwise reflow the pinned section and create large white gaps
+- horizontal-scroll diagnostics currently default to on; disable them only with `window.MBC_HORIZONTAL_SCROLL_DEBUG = false`
 
 ### `features/load-animations.js`
 
