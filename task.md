@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 22:49 BST
+Last updated: 2026-04-16 23:07 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,15 @@ Last updated: 2026-04-16 22:49 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### 6e4fdba - stabilize touch horizontal scroll reflows
+- Date: 2026-04-16 23:06:00Z
+- Branch: main
+- Changes:
+  - Suppressed ResizeObserver-driven and delayed auto-reflows for horizontal scroll on touch devices and tablet widths at `<= 991px`
+  - Kept width-based window resize handling and manual Home lifecycle reflows so the section can still settle after deferred modules load
+  - Updated runtime docs and agent notes to reflect the touch/tablet reflow guard
+- Related to: Home tablet horizontal scroll resetting instead of advancing smoothly
 
 ### f714265 - remove home trace noise and disable stagger hover on tablet
 - Date: 2026-04-16 22:40:00Z
