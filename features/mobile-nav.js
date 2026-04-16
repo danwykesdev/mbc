@@ -140,7 +140,7 @@
     });
     window._closeMobileNav = function (force) {
       var didClose = closeMenu(force || false);
-      
+
       // Aggressive fallback: if force is true and menu didn't close, force close via DOM manipulation
       if (force && !didClose) {
         nav.classList.remove('is-open');
@@ -153,6 +153,12 @@
           window.lenis.start();
         }
         refreshNavStyles();
+        // Clear GSAP props to ensure proper re-open animation
+        gsap.set([menuWrapper, navLinks, navBottom], { clearProps: 'all' });
+        // Re-set initial state for next open
+        gsap.set(menuWrapper, { autoAlpha: 0, x: -16, pointerEvents: 'none', visibility: 'hidden' });
+        gsap.set(navLinks, { autoAlpha: 0, x: -14 });
+        gsap.set(navBottom, { width: 0 });
       }
     };
     refreshNavStyles();
