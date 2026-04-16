@@ -333,13 +333,14 @@ Key idea:
 Responsible for:
 
 - shared Finsweet Attributes v2 list/slider init path
+- list-tabs prep and hydration wait
 - pagination shortcut behavior
 - tab shortcut behavior
 - `[data-move-talk]` DOM move
 
 Key idea:
 
-- zine now uses the shared Finsweet Attributes runtime rather than a standalone slider script
+- zine now uses the shared Finsweet Attributes runtime rather than a standalone slider script, and it should mark `fs-list-element="tabs"` roots with `fs-list-resetix="true"` before Finsweet initializes
 
 ### `pages/about.js`
 

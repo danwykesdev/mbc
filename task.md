@@ -9,6 +9,15 @@ Last updated: 2026-04-16 16:38 BST
 
 ## Commit History
 
+### investigating - add zine list-tabs support
+- Date: 2026-04-16 15:38:31Z
+- Branch: main
+- Changes:
+  - Added Finsweet list-tabs detection and diagnostics to the shared Finsweet bridge
+  - Marked zine list-tabs roots for IX reset, waited for generated tab markup, and scrolled to the anchor after init
+  - Updated zine docs and agent notes for list-tabs support
+- Related to: Zine page support for Finsweet list-tabs tabs
+
 ### 313b7dd - fix project-detail modal transition bugs
 - Date: 2026-04-16 15:38:31Z
 - Branch: main

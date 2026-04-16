@@ -9,6 +9,7 @@ This module integrates Finsweet Attributes into the MBC runtime. It handles init
 - `detectModules(container)` - scans DOM for Finsweet attributes
 - Detects which modules are present based on attribute selectors:
   - `[fs-list-element]` → list module
+  - `[fs-list-element="tabs"]` / `[fs-list-element="tab-link"]` → list module via list-tabs contract
   - `[fs-modal-element]` → modal module
   - `[fs-slider-element]` → slider module
   - `[fs-filter-element]` → filter module
@@ -16,6 +17,7 @@ This module integrates Finsweet Attributes into the MBC runtime. It handles init
 ### Module Resolution
 - `resolveModules(container, requestedModules)` - normalizes module requests
 - Maps 'filter' and 'slider' to 'list' (they're part of the list module)
+- Maps list-tabs requests to the list module so CMS tabs initialize through the same Finsweet path
 - Handles modal as a separate standalone module
 - Removes duplicates from the module list
 
@@ -54,6 +56,7 @@ Two different initialization paths based on what's needed:
 ### Diagnostic Inspection
 - `inspect(container, label)` - logs diagnostic information
 - Counts elements with each Finsweet attribute
+- Includes list-tabs selectors in the diagnostic summary
 - Lists active modules
 - Useful for debugging initialization issues
 

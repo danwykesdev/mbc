@@ -57,6 +57,9 @@
     if (container.querySelector('[fs-list-element]')) {
       modules.push('list');
     }
+    if (container.querySelector('[fs-list-element="tabs"], [fs-list-element="tab-link"]')) {
+      modules.push('tabs');
+    }
     if (container.querySelector('[fs-modal-element]')) {
       modules.push('modal');
     }
@@ -86,7 +89,7 @@
         return;
       }
 
-      if (moduleName === 'list' || moduleName === 'filter' || moduleName === 'slider') {
+      if (moduleName === 'list' || moduleName === 'filter' || moduleName === 'slider' || moduleName === 'tabs') {
         pushUnique(resolved, 'list');
       }
     });
@@ -112,6 +115,8 @@
     var utils = MBC.core && MBC.core.utils;
     var selectorMap = {
       listElements: '[fs-list-element]',
+      tabsElements: '[fs-list-element="tabs"]',
+      tabLinkElements: '[fs-list-element="tab-link"]',
       filterElements: '[fs-filter-element]',
       filterInputs: 'input[fs-list-field], input[fs-list-value], select[fs-list-field], textarea[fs-list-field]',
       sliderElements: '[fs-slider-element]',
@@ -125,6 +130,8 @@
       ? utils.collectSelectorSummary(container, selectorMap)
       : {
           listElements: countMatches(container, selectorMap.listElements),
+          tabsElements: countMatches(container, selectorMap.tabsElements),
+          tabLinkElements: countMatches(container, selectorMap.tabLinkElements),
           filterElements: countMatches(container, selectorMap.filterElements),
           filterInputs: countMatches(container, selectorMap.filterInputs),
           sliderElements: countMatches(container, selectorMap.sliderElements),
@@ -345,6 +352,10 @@
 
     requestedModules.forEach(function (moduleName) {
       if (moduleName === 'filter' || moduleName === 'slider') {
+        moduleName = 'list';
+      }
+
+      if (moduleName === 'tabs') {
         moduleName = 'list';
       }
       if (modulesToDestroy.indexOf(moduleName) === -1) {

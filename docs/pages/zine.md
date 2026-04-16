@@ -8,6 +8,7 @@ This is the page module for the Zine page. It handles Finsweet list integration,
 ### Finsweet Integration
 - Detects and initializes Finsweet list module
 - Excludes modal module (not used on zine page)
+- Supports Finsweet list-tabs roots by marking them for IX reset before init
 - Inspects Finsweet state before and after initialization for debugging
 
 ### Custom Pagination
@@ -17,7 +18,7 @@ This is the page module for the Zine page. It handles Finsweet list integration,
 - Supports both next and previous navigation
 
 ### Tab Shortcuts
-- Binds custom triggers to Webflow tabs
+- Binds custom triggers to Webflow tabs or list-tabs generated tab links
 - Clicking a trigger activates a tab
 - Scrolls to list anchor after tab activation
 - Used for "anatomy", "head", and "luxury" sections
@@ -58,12 +59,13 @@ Main mount function with Finsweet, pagination, and tab handling.
 ## Initialization Sequence
 
 1. **Finsweet Inspect**: Log state before init
-2. **Finsweet Init**: Initialize list module
-3. **Finsweet Inspect**: Log state after init
-4. **Scroll to Anchor**: Scroll to list anchor
-5. **Pagination Handler**: Set up pagination click handler
-6. **Tab Shortcuts**: Bind custom tab triggers
-7. **DOM Move**: Move talk block into destination
+2. **List Tabs Prep**: Mark list-tabs roots for IX reset
+3. **Finsweet Init**: Initialize list module
+4. **Wait for Tabs**: Allow generated list-tabs markup to settle
+5. **Scroll to Anchor**: Scroll to list anchor
+6. **Pagination Handler**: Set up pagination click handler
+7. **Tab Shortcuts**: Bind custom tab triggers
+8. **DOM Move**: Move talk block into destination
 
 ## Important Notes
 
@@ -74,7 +76,9 @@ Uses 'ix' tier which destroys Webflow and reinitializes modules + IX. This is ap
 The zine uses custom pagination buttons that trigger hidden Finsweet pagination controls. This allows custom styling while using Finsweet's list functionality.
 
 ### Tab Shortcuts
-Custom buttons (marked with `data="anatomy"`, `data="head"`, `data="luxury"`) activate specific Webflow tabs. This provides a custom UI for tab switching.
+Custom buttons (marked with `data="anatomy"`, `data="head"`, `data="luxury"`) activate specific Webflow tabs or Finsweet list-tabs tabs. This provides a custom UI for tab switching.
+
+List-tabs tabs should use `fs-list-element="tabs"`, `fs-list-element="tab-link"`, and `fs-list-resetix="true"` on the Tabs component so generated tabs keep Webflow IX behavior.
 
 ### DOM Move
 The talk block is moved during mount to achieve the desired zine layout. This is a one-time DOM manipulation that happens on page load.
