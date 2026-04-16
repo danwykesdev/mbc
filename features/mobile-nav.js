@@ -153,12 +153,36 @@
           window.lenis.start();
         }
         refreshNavStyles();
-        // Clear GSAP props to ensure proper re-open animation
-        gsap.set([menuWrapper, navLinks, navBottom], { clearProps: 'all' });
-        // Re-set initial state for next open
-        gsap.set(menuWrapper, { autoAlpha: 0, x: -16, pointerEvents: 'none', visibility: 'hidden' });
-        gsap.set(navLinks, { autoAlpha: 0, x: -14 });
-        gsap.set(navBottom, { width: 0 });
+        // Kill and recreate timeline to ensure clean state for next open
+        menuTl.kill();
+        menuTl = gsap.timeline({
+          paused: true,
+          defaults: { duration: 0.45, ease: 'power2.out' },
+          onStart: function () {
+            nav.classList.add('is-open');
+            menuBtn.classList.add('w--open');
+            gsap.set(menuWrapper, { visibility: 'visible', pointerEvents: 'auto' });
+            if (window.lenis && typeof window.lenis.stop === 'function') {
+              window.lenis.stop();
+            }
+            refreshNavStyles();
+          },
+          onReverseComplete: function () {
+            nav.classList.remove('is-open');
+            menuBtn.classList.remove('w--open');
+            gsap.set(menuWrapper, { visibility: 'hidden', pointerEvents: 'none' });
+            if (window.lenis && typeof window.lenis.start === 'function') {
+              window.lenis.start();
+            }
+            refreshNavStyles();
+            navigateToPendingHref();
+          }
+        });
+        menuTl
+          .to(navBottom, { width: '100%', duration: 0.5 }, 0)
+          .to(navLogo, { autoAlpha: 0.35, x: 8, duration: 0.25 }, 0)
+          .to(menuWrapper, { autoAlpha: 1, x: 0, duration: 0.38 }, 0)
+          .to(navLinks, { autoAlpha: 1, x: 0, stagger: 0.06, duration: 0.42 }, 0);
       }
     };
     refreshNavStyles();
