@@ -52,7 +52,16 @@ Webflow, Barba, and Finsweet constantly mutate the DOM.
   - Update the "Last updated" timestamp at the top of the file
 - If making changes to JS runtime, always remind the user to rebuild the bundle using `npm run build:runtime`.
 
-### 6. Communication Style
+### 6. Documentation Sync Rule (Critical)
+- **ALWAYS** keep `task.md`, `agent.md`, and the `docs/` directory up to date with any code changes
+- Before finalizing any work, check if:
+  - `task.md` needs a new commit entry or issue status update
+  - `agent.md` needs architectural updates or new section references
+  - `docs/` needs new or updated module documentation
+- If documentation is not kept in sync, future agents will lack the necessary context to understand the codebase
+- This is mandatory for every meaningful change, not optional
+
+### 7. Communication Style
 - Output clean, modular JavaScript (ES5/ES6 depending on the file).
 - Do not add arbitrary comments unless explaining complex custom logic.
 - Prefer explicit variable names and keep functions small.

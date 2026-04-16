@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 10:56 BST
+Last updated: 2026-04-16 11:48 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,17 @@ Last updated: 2026-04-16 10:56 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### [pending] - Fix mobile navigation menu staying open during page transitions on iOS
+- Date: 2026-04-16 11:48:00Z
+- Changes:
+  - Added forceClose parameter to closeMenu function in features/mobile-nav.js for faster closing during transitions (2.5x speed vs 1.15x)
+  - Updated onNavLinkClick to use closeMenu(true) when navigating
+  - Updated cleanup function to force close menu if still open
+  - Updated window._closeMobileNav to support force parameter
+  - Added mobile nav close logic to barba.hooks.beforeEnter in main.js to force close before any transition
+  - Rebuilt bundled runtime with mobile navigation fixes
+- Related to: Mobile navigation reliability on iOS
 
 ### c04b5a6 - Force fresh Finsweet modal reload on SPA return
 - Date: 2026-04-16 09:41:03Z

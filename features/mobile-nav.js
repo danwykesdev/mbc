@@ -84,17 +84,17 @@
       refreshNavStyles();
     }
 
-    function closeMenu() {
+    function closeMenu(forceClose) {
       if (!isOpen) return false;
       isOpen = false;
-      menuTl.timeScale(1.15).reverse();
+      menuTl.timeScale(forceClose ? 2.5 : 1.15).reverse();
       refreshNavStyles();
       return true;
     }
 
     function onClick() {
       if (isOpen) {
-        closeMenu();
+        closeMenu(false);
       } else {
         openMenu();
       }
@@ -111,7 +111,7 @@
 
       href = link.getAttribute('href') || '';
       if (!href || /^#/.test(href) || /^(mailto:|tel:|javascript:)/i.test(href) || link.target === '_blank' || link.hasAttribute('download') || link.hasAttribute('data-no-barba')) {
-        closeMenu();
+        closeMenu(false);
         return;
       }
 
@@ -120,25 +120,27 @@
         currentPath = window.location.pathname.replace(/\/$/, '') || '/';
         nextPath = nextUrl.pathname.replace(/\/$/, '') || '/';
         if (nextUrl.origin !== window.location.origin || (currentPath === nextPath && nextUrl.hash)) {
-          closeMenu();
+          closeMenu(false);
           return;
         }
       } catch (_) {
-        closeMenu();
+        closeMenu(false);
         return;
       }
 
       event.preventDefault();
       pendingHref = nextUrl.href;
       pendingTarget = link;
-      closeMenu();
+      closeMenu(true);
     }
 
     menuBtn.addEventListener('click', onClick);
     navLinks.forEach(function (link) {
       link.addEventListener('click', onNavLinkClick);
     });
-    window._closeMobileNav = closeMenu;
+    window._closeMobileNav = function (force) {
+      closeMenu(force || false);
+    };
     refreshNavStyles();
 
     return function cleanup() {
@@ -146,6 +148,9 @@
       navLinks.forEach(function (link) {
         link.removeEventListener('click', onNavLinkClick);
       });
+      if (isOpen) {
+        closeMenu(true);
+      }
       menuTl.kill();
       gsap.set([menuWrapper, navLinks, navBottom, navLogo], { clearProps: 'all' });
       nav.classList.remove('is-open');

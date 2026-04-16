@@ -393,6 +393,10 @@
     barba.hooks.beforeEnter(function (data) {
       var nextNamespace = data && data.next ? data.next.namespace : 'default';
 
+      if (window._closeMobileNav && typeof window._closeMobileNav === 'function') {
+        window._closeMobileNav(true);
+      }
+
       if (isHomeNamespace(data && data.next ? data.next.namespace : 'default')) {
         prepareHomeHeroState();
       } else {
