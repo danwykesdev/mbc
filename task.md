@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 12:36 BST
+Last updated: 2026-04-16 12:58 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,15 @@ Last updated: 2026-04-16 12:36 BST
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### e7e68cb - fix: set nav__bottom width to 100% initially to fix display issue
+- Date: 2026-04-16 12:58:00Z
+- Branch: main
+- Changes:
+  - Change initial state of navBottom from width: 0 to width: '100%'
+  - Change aggressive fallback state of navBottom from width: 0 to width: '100%'
+  - This fixes nav__bottom display issue in viewport
+- Related to: Nav__bottom width display issue
 
 ### 83c77ed - fix: kill and recreate timeline after aggressive fallback to ensure clean animation state
 - Date: 2026-04-16 12:48:00Z
