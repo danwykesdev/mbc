@@ -22,7 +22,7 @@
 
     gsap.set(menuWrapper, { autoAlpha: 0, x: -16, pointerEvents: 'none', visibility: 'hidden' });
     gsap.set(navLinks, { autoAlpha: 0, x: -14 });
-    gsap.set(navBottom, { width: 0 });
+    gsap.set(navBottom, { width: "100%" });
 
     function refreshNavStyles() {
       if (MBC.features.nav && typeof MBC.features.nav.refreshMobileStyles === 'function') {
@@ -147,7 +147,7 @@
         menuBtn.classList.remove('w--open');
         gsap.set(menuWrapper, { autoAlpha: 0, x: -16, pointerEvents: 'none', visibility: 'hidden' });
         gsap.set(navLinks, { autoAlpha: 0, x: -14 });
-        gsap.set(navBottom, { width: 0 });
+        gsap.set(navBottom, { width: "100%" });
         isOpen = false;
         if (window.lenis && typeof window.lenis.start === 'function') {
           window.lenis.start();
