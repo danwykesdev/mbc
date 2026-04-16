@@ -112,31 +112,27 @@
     var utils = MBC.core && MBC.core.utils;
     var selectorMap = {
       listElements: '[fs-list-element]',
-      filtersForms: '[fs-list-element="filters"]',
+      filterElements: '[fs-filter-element]',
       filterInputs: 'input[fs-list-field], input[fs-list-value], select[fs-list-field], textarea[fs-list-field]',
       sliderElements: '[fs-slider-element]',
       modalElements: '[fs-modal-element]',
-      paginationNext: '.w-pagination-next, [data-pagination-next], [fs-list-element="pagination-next"]',
-      paginationPrev: '.w-pagination-previous, [data-pagination-prev], [fs-list-element="pagination-previous"]',
-      pageCount: '.w-page-count, [fs-list-element="page-count"]',
+      paginationNext: '[data-pagination-next], [fs-list-element="pagination-next"]',
+      paginationPrev: '[data-pagination-prev], [fs-list-element="pagination-previous"]',
       customPaginationNext: '[data-pagination="next"]',
-      customPaginationPrev: '[data-pagination="prev"]',
-      searchInputs: '#Search'
+      customPaginationPrev: '[data-pagination="prev"]'
     };
     var summary = utils && typeof utils.collectSelectorSummary === 'function'
       ? utils.collectSelectorSummary(container, selectorMap)
       : {
           listElements: countMatches(container, selectorMap.listElements),
-          filtersForms: countMatches(container, selectorMap.filtersForms),
+          filterElements: countMatches(container, selectorMap.filterElements),
           filterInputs: countMatches(container, selectorMap.filterInputs),
           sliderElements: countMatches(container, selectorMap.sliderElements),
           modalElements: countMatches(container, selectorMap.modalElements),
           paginationNext: countMatches(container, selectorMap.paginationNext),
           paginationPrev: countMatches(container, selectorMap.paginationPrev),
-          pageCount: countMatches(container, selectorMap.pageCount),
           customPaginationNext: countMatches(container, selectorMap.customPaginationNext),
-          customPaginationPrev: countMatches(container, selectorMap.customPaginationPrev),
-          searchInputs: countMatches(container, selectorMap.searchInputs)
+          customPaginationPrev: countMatches(container, selectorMap.customPaginationPrev)
         };
 
     summary.activeModules = detectModules(container);
