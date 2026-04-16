@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 22:40 BST
+Last updated: 2026-04-16 22:49 BST
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -9,7 +9,7 @@ Last updated: 2026-04-16 22:40 BST
 
 ## Commit History
 
-### investigating - remove home trace noise and disable stagger hover on tablet
+### f714265 - remove home trace noise and disable stagger hover on tablet
 - Date: 2026-04-16 22:40:00Z
 - Branch: main
 - Changes:
