@@ -178,6 +178,9 @@
   function reinjectStandaloneModal() {
     var MODAL_URL = 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-modal@1/modal.js';
     var A11Y_URL = 'https://cdn.jsdelivr.net/npm/@finsweet/attributes-a11y@1/a11y.js';
+    var cacheBust = 'mbc_reload=' + Date.now();
+    var modalSrc = MODAL_URL + (MODAL_URL.indexOf('?') === -1 ? '?' : '&') + cacheBust;
+    var a11ySrc = A11Y_URL + (A11Y_URL.indexOf('?') === -1 ? '?' : '&') + cacheBust;
 
     // Remove old script tags for these URLs
     document.querySelectorAll('script').forEach(function (s) {
@@ -196,11 +199,11 @@
       // Re-inject a11y first (dependency), then modal
       var a11yScript = document.createElement('script');
       a11yScript.type = 'module';
-      a11yScript.src = A11Y_URL;
+      a11yScript.src = a11ySrc;
       a11yScript.onload = function () {
         var modalScript = document.createElement('script');
         modalScript.type = 'module';
-        modalScript.src = MODAL_URL;
+        modalScript.src = modalSrc;
         modalScript.onload = function () {
           // Give the module time to initialize
           setTimeout(resolve, 80);
