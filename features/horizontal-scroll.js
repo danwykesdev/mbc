@@ -93,6 +93,7 @@
     var retryAttempts = 0;
     var maxRetries = 12;
     var cleanedUp = false;
+    var isReflowing = false;
     var lastWindowWidth = window.innerWidth;
     var lastWrapWidth = 0;
     var lastWrapScrollWidth = 0;
@@ -185,12 +186,20 @@
 
     function createOrRefreshTrigger() {
       if (cleanedUp) return false;
+      if (isReflowing) return false;
+
+      isReflowing = true;
+
+      // Disconnect ResizeObserver during DOM mutations to prevent re-entrant reflows
+      if (resizeObserver) resizeObserver.disconnect();
 
       clearTween();
 
       var wrap = container.querySelector('[data-horizontal-scroll-wrap]');
       if (!wrap) {
         debugLog('[MBC HorizontalScroll] no wrap found');
+        isReflowing = false;
+        if (resizeObserver && !cleanedUp) resizeObserver.observe(container);
         return false;
       }
 
@@ -212,6 +221,8 @@
       var panels = gsap.utils.toArray('[data-horizontal-scroll-panel]', wrap);
       if (panels.length < 2) {
         debugLog('[MBC HorizontalScroll] panels:', panels.length, 'distance: 0');
+        isReflowing = false;
+        if (resizeObserver && !cleanedUp) resizeObserver.observe(wrap);
         return false;
       }
 
@@ -254,6 +265,10 @@
 
       if (distance <= 0) {
         debugLog('[MBC HorizontalScroll] distance 0, scrollWidth:', wrap.scrollWidth);
+        isReflowing = false;
+        if (resizeObserver && !cleanedUp) {
+          resizeObserver.observe(wrap || container);
+        }
         return false;
       }
 
@@ -295,6 +310,18 @@
       });
 
       ScrollTrigger.refresh(true);
+
+      // Re-snapshot after refresh so the ResizeObserver baseline matches the settled layout
+      syncMeasurements(container.querySelector('[data-horizontal-scroll-wrap]') || wrap, panels);
+
+      isReflowing = false;
+
+      // Reconnect observer after all mutations are done
+      if (resizeObserver && !cleanedUp) {
+        var rewrap = container.querySelector('[data-horizontal-scroll-wrap]');
+        resizeObserver.observe(rewrap || container);
+      }
+
       return true;
     }
 
