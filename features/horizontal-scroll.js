@@ -334,9 +334,12 @@
         delayedReflowTimer = null;
         if (cleanedUp) return;
 
-        // Don't rebuild if the user is already scrolling through the pinned section
         var activeTrigger = typeof ScrollTrigger !== 'undefined' && ScrollTrigger.getById('horizontal-pin');
-        if (activeTrigger && activeTrigger.progress > 0 && activeTrigger.progress < 1) return;
+        if (activeTrigger) {
+          var progress = activeTrigger.progress;
+          if (progress > 0 && progress < 1) return;
+          if (progress >= 0.95) return;
+        }
 
         reflow();
       }, delay);
