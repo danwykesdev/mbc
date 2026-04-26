@@ -261,6 +261,7 @@
           return -getDistance();
         },
         ease: 'none',
+        force3D: true,
         scrollTrigger: {
           id: 'horizontal-pin',
           trigger: wrap,
@@ -268,7 +269,7 @@
           end: function () {
             return '+=' + getDistance();
           },
-          scrub: 1,
+          scrub: true,
           pin: true,
           pinSpacing: true,
           anticipatePin: 1,
@@ -293,7 +294,6 @@
         pinSpacer: getPinSpacerMetrics(wrap)
       });
 
-      ScrollTrigger.refresh(true);
       return true;
     }
 
@@ -333,6 +333,11 @@
       delayedReflowTimer = setTimeout(function () {
         delayedReflowTimer = null;
         if (cleanedUp) return;
+
+        // Don't rebuild if the user is already scrolling through the pinned section
+        var activeTrigger = typeof ScrollTrigger !== 'undefined' && ScrollTrigger.getById('horizontal-pin');
+        if (activeTrigger && activeTrigger.progress > 0 && activeTrigger.progress < 1) return;
+
         reflow();
       }, delay);
     }
@@ -396,7 +401,6 @@
     }
 
     reflow();
-    scheduleDelayedReflow(700);
     scheduleDelayedReflow(2000);
 
     var api = {
