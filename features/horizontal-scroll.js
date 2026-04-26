@@ -75,7 +75,8 @@
       hasContainer: !!container,
       windowInnerWidth: window.innerWidth,
       windowInnerHeight: window.innerHeight,
-      isTouch: ScrollTrigger.isTouch
+      isTouch: ScrollTrigger.isTouch,
+      normalizeScrollActive: !!(typeof ScrollTrigger.normalizeScroll === 'function' && ScrollTrigger.normalizeScroll())
     });
 
     if (activeInstance && typeof activeInstance.cleanup === 'function') {
@@ -261,7 +262,6 @@
           return -getDistance();
         },
         ease: 'none',
-        force3D: true,
         scrollTrigger: {
           id: 'horizontal-pin',
           trigger: wrap,
@@ -269,7 +269,7 @@
           end: function () {
             return '+=' + getDistance();
           },
-          scrub: true,
+          scrub: 1,
           pin: true,
           pinSpacing: true,
           anticipatePin: 1,
@@ -294,6 +294,7 @@
         pinSpacer: getPinSpacerMetrics(wrap)
       });
 
+      ScrollTrigger.refresh(true);
       return true;
     }
 
@@ -333,14 +334,6 @@
       delayedReflowTimer = setTimeout(function () {
         delayedReflowTimer = null;
         if (cleanedUp) return;
-
-        var activeTrigger = typeof ScrollTrigger !== 'undefined' && ScrollTrigger.getById('horizontal-pin');
-        if (activeTrigger) {
-          var progress = activeTrigger.progress;
-          if (progress > 0 && progress < 1) return;
-          if (progress >= 0.95) return;
-        }
-
         reflow();
       }, delay);
     }
@@ -404,6 +397,7 @@
     }
 
     reflow();
+    scheduleDelayedReflow(700);
     scheduleDelayedReflow(2000);
 
     var api = {
