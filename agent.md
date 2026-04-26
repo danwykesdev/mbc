@@ -463,7 +463,7 @@ If video behavior breaks on revisits:
 This repo depends heavily on GSAP.
 
 - `main.js` applies `ScrollTrigger.config({ ignoreMobileResize: true })` globally so mobile address-bar height changes do not refresh pinned sections mid-scroll
-- `main.js` enables `ScrollTrigger.normalizeScroll(true)` only when `ScrollTrigger.isTouch === 1` so touch-only devices can avoid native mobile scroll/pin jitter without changing desktop behavior
+- `main.js` applies `ScrollTrigger.config({ ignoreMobileResize: true })` globally to prevent iOS address-bar height changes from refreshing pinned sections mid-scroll
 - shared `[MBC Trace]` timing logs stay off unless `window.MBC_DEBUG === true`; use targeted feature diagnostics for single-issue debugging
 
 When changing animation-related code:

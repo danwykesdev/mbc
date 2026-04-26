@@ -75,8 +75,7 @@
       hasContainer: !!container,
       windowInnerWidth: window.innerWidth,
       windowInnerHeight: window.innerHeight,
-      isTouch: ScrollTrigger.isTouch,
-      normalizeScrollActive: !!(typeof ScrollTrigger.normalizeScroll === 'function' && ScrollTrigger.normalizeScroll())
+      isTouch: ScrollTrigger.isTouch
     });
 
     if (activeInstance && typeof activeInstance.cleanup === 'function') {

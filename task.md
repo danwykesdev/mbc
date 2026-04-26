@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-16 23:07 BST
+Last updated: 2026-04-26 14:30:00Z
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -17,6 +17,15 @@ Last updated: 2026-04-16 23:07 BST
   - Kept width-based window resize handling and manual Home lifecycle reflows so the section can still settle after deferred modules load
   - Updated runtime docs and agent notes to reflect the touch/tablet reflow guard
 - Related to: Home tablet horizontal scroll resetting instead of advancing smoothly
+
+### 83c7f1a - remove ScrollTrigger.normalizeScroll usage
+- Date: 2026-04-26 14:30:00Z
+- Branch: main
+- Changes:
+  - Removed `ScrollTrigger.normalizeScroll(true)` from `main.js`
+  - Dropped active `normalizeScroll` debug tracing from `features/horizontal-scroll.js`
+  - Updated runtime docs and agent notes to reflect the current `ignoreMobileResize`-only approach
+- Related to: remove unnecessary iOS scroll normalization behavior
 
 ### f714265 - remove home trace noise and disable stagger hover on tablet
 - Date: 2026-04-16 22:40:00Z
