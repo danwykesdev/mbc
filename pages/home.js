@@ -186,7 +186,11 @@
         MBC.features.loadAnimations.resetHoverStates(container);
       }
 
-      bindHorizontalScroll('home horizontalScroll.init final');
+      // Only reinit horizontal scroll if not already running, otherwise do nothing
+      // (early bindHorizontalScroll already set it up; reflow mid-scroll causes glitch)
+      if (typeof horizontalScrollCleanup !== 'function') {
+        bindHorizontalScroll('home horizontalScroll.init final');
+      }
       bindStaggerHover('home staggerHover.init final');
     }
 
@@ -201,10 +205,6 @@
           includeNav: false,
           excludeSelector: '.hero-animate, [data-hero]'
         });
-      }
-
-      if (MBC.features.horizontalScroll && typeof MBC.features.horizontalScroll.reflow === 'function') {
-        MBC.features.horizontalScroll.reflow();
       }
     }
 
