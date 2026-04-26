@@ -87,6 +87,14 @@
     ScrollTrigger.config({ ignoreMobileResize: true });
   }
 
+  if (
+    typeof ScrollTrigger !== 'undefined' &&
+    ScrollTrigger.isTouch === 1 &&
+    typeof ScrollTrigger.normalizeScroll === 'function'
+  ) {
+    ScrollTrigger.normalizeScroll(true);
+  }
+
   /**
    * Initialize global features that persist across transitions
    */
