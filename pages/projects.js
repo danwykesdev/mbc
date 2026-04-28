@@ -316,13 +316,9 @@
     }
 
     function restartProjectsList(reason) {
-      // --- Finsweet disabled ---
-      return Promise.resolve();
-      /*
       if (!MBC.features.finsweet || typeof MBC.features.finsweet.restart !== 'function') {
         return Promise.resolve();
       }
-      */
 
       if (isUnmounted) {
         return Promise.resolve();
@@ -356,20 +352,17 @@
       return restartInFlight;
     }
 
-    // --- Finsweet list setup disabled while debugging horizontal scroll ---
-    // var listRoot = resolveProjectsListRoot(container);
-    // var projectsListLoadMode = applyProjectsListLoadMode(container, listRoot);
-    // var projectsBindingState = syncProjectsMainListInstance(container, listRoot);
-    //
-    // if (projectsBindingState) {
-    //   console.log('[MBC] Projects list binding state', projectsBindingState);
-    // }
+    var listRoot = resolveProjectsListRoot(container);
+    var projectsListLoadMode = syncProjectsListLoadMode(container, listRoot);
+    var projectsBindingState = syncProjectsMainListInstance(container, listRoot);
+
+    if (projectsBindingState && typeof console !== 'undefined') {
+      console.log('[MBC] Projects list binding state', projectsBindingState);
+    }
 
     if (MBC.features.nav) {
       MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: true });
     }
-
-    // --- Filter/pagination click bridge disabled while FS is off ---
     // var onProjectsClick = function (event) {
     //   var target = event.target;
     //   if (!(target instanceof Element)) return;

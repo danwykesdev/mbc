@@ -216,8 +216,8 @@
     var isReflowing = false;
     var lastWindowWidth = window.innerWidth;
     var lastWrapWidth = 0;
-    var lastWrapScrollWidth = 0;
     var lastPanelCount = 0;
+    var lastTotalPanelWidth = 0;
     var suppressAutoReflow = ScrollTrigger.isTouch === 1 || window.innerWidth <= 991;
     var hasResizeObserver = typeof ResizeObserver !== 'undefined';
     var useDelayedReflowFallback = !suppressAutoReflow && !hasResizeObserver;
@@ -312,8 +312,13 @@
     function syncMeasurements(wrap, panels) {
       lastWindowWidth = window.innerWidth;
       lastWrapWidth = wrap ? wrap.clientWidth : 0;
-      lastWrapScrollWidth = wrap ? wrap.scrollWidth : 0;
       lastPanelCount = panels ? panels.length : 0;
+      
+      var totalPanelWidth = 0;
+      if (panels && panels.length) {
+        panels.forEach(function(p) { totalPanelWidth += p.offsetWidth; });
+      }
+      lastTotalPanelWidth = totalPanelWidth;
     }
 
     function shouldReflow(wrap, panels) {
@@ -334,18 +339,21 @@
       if (window.innerWidth !== lastWindowWidth) should = true;
       if (panels.length !== lastPanelCount) should = true;
       if (Math.abs(wrap.clientWidth - lastWrapWidth) > 1) should = true;
-      // scrollWidth is intentionally excluded: GSAP pin-spacer mutations change scrollWidth
-      // after every trigger creation without any real layout change, causing spurious reflows.
+      
+      var currentTotalPanelWidth = 0;
+      panels.forEach(function(p) { currentTotalPanelWidth += p.offsetWidth; });
+      if (Math.abs(currentTotalPanelWidth - lastTotalPanelWidth) > 10) should = true;
+
       debugLog('[MBC HorizontalScroll] shouldReflow', {
         should: should,
         lastWindowWidth: lastWindowWidth,
         currentWindowWidth: window.innerWidth,
         lastWrapWidth: lastWrapWidth,
         currentWrapWidth: wrap.clientWidth,
-        lastWrapScrollWidth: lastWrapScrollWidth,
-        currentWrapScrollWidth: wrap.scrollWidth,
         lastPanelCount: lastPanelCount,
-        currentPanelCount: panels.length
+        currentPanelCount: panels.length,
+        lastTotalPanelWidth: lastTotalPanelWidth,
+        currentTotalPanelWidth: currentTotalPanelWidth
       });
       return should;
     }
@@ -620,6 +628,20 @@
       } else {
         resizeObserver.observe(container);
       }
+
+      // Also observe DOM mutations to catch Finsweet async pagination appends
+      var mutationObserver = new MutationObserver(function(mutations) {
+        if (cleanedUp) return;
+        var hasRelevantChange = mutations.some(function(m) {
+          return m.addedNodes.length > 0 || m.removedNodes.length > 0;
+        });
+        if (hasRelevantChange) {
+          debugLog('[MBC HorizontalScroll] MutationObserver triggered reflow');
+          scheduleDelayedReflow(50);
+        }
+      });
+      mutationObserver.observe(observedWrap || container, { childList: true, subtree: true });
+
     } else if (suppressAutoReflow) {
       debugLog('[MBC HorizontalScroll] skipping ResizeObserver auto reflow', {
         suppressAutoReflow: suppressAutoReflow
@@ -668,6 +690,11 @@
       if (resizeObserver) {
         resizeObserver.disconnect();
         resizeObserver = null;
+      }
+      
+      if (typeof mutationObserver !== 'undefined' && mutationObserver) {
+        mutationObserver.disconnect();
+        mutationObserver = null;
       }
 
       window.removeEventListener('resize', onResize);
