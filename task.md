@@ -9,6 +9,11 @@ Last updated: 2026-04-28 20:05:00Z
 
 ## Commit History
 
+### be39060 - Add explicit image load listeners to horizontal scroll to catch layout shifts on SPA navigation
+- Date: 2026-04-28 21:02:00Z
+- Changes:
+  - Added explicit img.addEventListener('load') loop inside horizontal-scroll.js to accurately catch images resolving sizes after SPA page transitions.
+
 ### d357926 - Fix typo in projects.js applyProjectsListLoadMode function call
 - Date: 2026-04-28 20:59:00Z
 - Changes:

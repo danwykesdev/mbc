@@ -116,13 +116,6 @@
 
     var instanceName = list.getAttribute('fs-list-instance') || 'main';
     var filtersForm = queryOne(container, '[fs-list-element="filters"]', true);
-    var scrollAnchorSelector = '[fs-list-element="scroll-anchor"]';
-    var scrollAnchor = queryOne(container, scrollAnchorSelector, true);
-
-    if (!scrollAnchor) {
-      scrollAnchorSelector = '[fs-list-element="scroll-anchor-filter"]';
-      scrollAnchor = queryOne(container, scrollAnchorSelector, true);
-    }
 
     list.setAttribute('fs-list-instance', instanceName);
 
@@ -130,15 +123,17 @@
       filtersForm.setAttribute('fs-list-instance', instanceName);
     }
 
-    if (scrollAnchor) {
-      scrollAnchor.setAttribute('fs-list-instance', instanceName);
-    }
+    // Explicitly destroy scroll anchors to prevent Finsweet from jumping to top on filter tab click
+    var anchors = container.querySelectorAll('[fs-list-element="scroll-anchor"], [fs-list-element="scroll-anchor-filter"], [fs-cmsfilter-element="scroll-anchor"]');
+    Array.from(anchors).forEach(function(anchor) {
+      anchor.removeAttribute('fs-list-element');
+      anchor.removeAttribute('fs-cmsfilter-element');
+    });
 
     return {
       instanceName: instanceName,
       hasFiltersForm: !!filtersForm,
-      hasScrollAnchor: !!scrollAnchor,
-      scrollAnchorSelector: scrollAnchorSelector
+      hasScrollAnchor: false
     };
   }
 
