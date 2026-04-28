@@ -9,16 +9,17 @@ This is the page module for the Projects page. It handles Finsweet list/filter i
 - Initializes Finsweet list/filter controls for Projects
 - Supports Finsweet-powered filter buttons, search inputs, and list refresh
 - Re-attaches the external filters form and filter scroll anchor to the `main` list instance before Finsweet initializes
+- Supports both live scroll-anchor contracts: `fs-list-element="scroll-anchor"` and `fs-list-element="scroll-anchor-filter"`
 - Defaults the list load mode to `pagination` unless a page-level override sets `data-projects-list-load` or `data-list-load`
 - Supports Finsweet's official load modes only: `more`, `all`, `infinite`, and `pagination`
 - Re-syncs layout-sensitive features after Finsweet list updates
-- Destroys and re-initializes the list on mount to reduce stale SPA state
 - Queues restart requests until the list module is confirmed ready on route enter
 - Re-runs the list after delayed layout settling and tab changes
 
 ### Custom Filter Bridge
 - Bridges `.filters__item` wrappers to hidden Finsweet inputs
 - Supports radio and checkbox style filter controls inside the custom UI
+- Cancels wrapper clicks before triggering the hidden input so filter chips do not steal navigation or scroll position
 - Leaves filtering to Finsweet's native form listeners once the main list instance wiring is restored
 
 ### Custom Pagination Bridge
@@ -60,6 +61,7 @@ This is the page module for the Projects page. It handles Finsweet list/filter i
 
 ### Diagnostics
 - Logs selector counts before init, after init, after delayed restarts, and after tab changes
+- Reports which scroll-anchor selector matched during route enter
 - Reports the live Webflow contract used on staging: `fs-list-element="filters"`, `#Search`, and native `.w-pagination-next/.w-pagination-previous` controls
 
 ### Navigation State
@@ -117,6 +119,8 @@ Uses 'light' tier because the Projects page relies more on Finsweet and custom f
 ### Finsweet Root Contract
 The page expects a `main` list instance for the filtered project grid and a standard `fs-list-element="filters"` form for search and filter inputs. If Webflow renders the filters form outside `fs-list-instance="main"`, the page module re-attaches that form and the filter scroll anchor to the `main` instance before Finsweet boots.
 
+The page also supports both live scroll-anchor selector variants on staging and production deploys, so either `fs-list-element="scroll-anchor"` or `fs-list-element="scroll-anchor-filter"` can be used.
+
 The Projects list load mode is set by the page module. It defaults to `fs-list-load="pagination"` and can be overridden with `data-projects-list-load` or `data-list-load` set to one of `more`, `all`, `infinite`, or `pagination`.
 
 ### Custom UI Contract
@@ -132,7 +136,7 @@ Filter items are animated in with a staggered slide-in effect. They're hidden wh
 The search close button clears the input and triggers a fresh search pass.
 
 ### Cleanup
-On unmount, the page destroys Finsweet list instances, removes bridge listeners, and clears feature bindings.
+On unmount, the page removes bridge listeners and clears feature bindings.
 
 ## Dependencies
 - MBC.features.finsweet (for Finsweet list/filter init)

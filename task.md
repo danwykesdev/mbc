@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-28 16:45:00Z
+Last updated: 2026-04-28 19:40:00Z
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,17 @@ Last updated: 2026-04-28 16:45:00Z
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### investigating - harden projects route-enter selector binding and filter click bridge
+- Date: 2026-04-28 19:40:00Z
+- Branch: main
+- Changes:
+  - Updated Projects route-enter binding to support both `fs-list-element="scroll-anchor"` and `fs-list-element="scroll-anchor-filter"`
+  - Cancelled custom `.filters__item` wrapper clicks before triggering the hidden Finsweet input so filter interactions do not fall back to native navigation behavior
+  - Logged the matched Projects binding state during mount to make live route-enter debugging easier
+  - Defaulted horizontal-scroll diagnostics off so route-enter debugging can rely on shared `[MBC Trace]` logs instead
+  - Updated Projects docs to reflect the new anchor contract and filter bridge behavior
+- Related to: Projects SPA route-enter recovery and filter click scroll-to-top regression
 
 ### investigating - re-enable shared runtime trace logs for projects route debugging
 - Date: 2026-04-28 16:45:00Z

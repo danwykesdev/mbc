@@ -62,6 +62,10 @@
     window.MBC_DEBUG = true;
   }
 
+  if (typeof window.MBC_HORIZONTAL_SCROLL_DEBUG !== 'boolean') {
+    window.MBC_HORIZONTAL_SCROLL_DEBUG = false;
+  }
+
   // Set module base path based on environment
   window.MBC.loader.setBasePath(resolvedBasePath);
 

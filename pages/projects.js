@@ -116,7 +116,13 @@
 
     var instanceName = list.getAttribute('fs-list-instance') || 'main';
     var filtersForm = queryOne(container, '[fs-list-element="filters"]', true);
-    var scrollAnchor = queryOne(container, '[fs-list-element="scroll-anchor"]', true);
+    var scrollAnchorSelector = '[fs-list-element="scroll-anchor"]';
+    var scrollAnchor = queryOne(container, scrollAnchorSelector, true);
+
+    if (!scrollAnchor) {
+      scrollAnchorSelector = '[fs-list-element="scroll-anchor-filter"]';
+      scrollAnchor = queryOne(container, scrollAnchorSelector, true);
+    }
 
     list.setAttribute('fs-list-instance', instanceName);
 
@@ -131,7 +137,8 @@
     return {
       instanceName: instanceName,
       hasFiltersForm: !!filtersForm,
-      hasScrollAnchor: !!scrollAnchor
+      hasScrollAnchor: !!scrollAnchor,
+      scrollAnchorSelector: scrollAnchorSelector
     };
   }
 
@@ -347,7 +354,11 @@
 
     var listRoot = resolveProjectsListRoot(container);
     var projectsListLoadMode = applyProjectsListLoadMode(container, listRoot);
-    syncProjectsMainListInstance(container, listRoot);
+    var projectsBindingState = syncProjectsMainListInstance(container, listRoot);
+
+    if (projectsBindingState) {
+      console.log('[MBC] Projects list binding state', projectsBindingState);
+    }
 
     if (MBC.features.nav) {
       MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: true });
@@ -380,6 +391,14 @@
       var item = target.closest('.filters__item');
       if (!item || !container.contains(item)) return;
       if (isNativeFormControl(target)) return;
+
+      if (typeof event.preventDefault === 'function') {
+        event.preventDefault();
+      }
+
+      if (typeof event.stopPropagation === 'function') {
+        event.stopPropagation();
+      }
 
       var input = findProjectsFilterInput(item);
       if (!input) return;
