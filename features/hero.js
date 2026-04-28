@@ -148,8 +148,12 @@
           });
 
           if (isDesktop) {
+            var barbaContainer = container.closest('[data-barba="container"]') || document.body;
+            var barbaRect = barbaContainer.getBoundingClientRect();
             var containerRect = container.getBoundingClientRect();
-            var deltaY = window.innerHeight - containerRect.bottom - 40;
+            // Calculate true bottom relative to the new page container to avoid Barba layout shift bugs
+            var trueBottom = containerRect.bottom - barbaRect.top;
+            var deltaY = window.innerHeight - trueBottom - 40;
 
             columnTl.to(
               container,

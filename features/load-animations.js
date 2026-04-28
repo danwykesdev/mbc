@@ -71,12 +71,15 @@
 
         el.dataset.revealPlayed = 'true';
 
+        var isPinned = el.hasAttribute('data-horizontal-scroll-wrap') || el.hasAttribute('data-horizontal-scroll-panel') || !!el.closest('.pin-spacer');
+        var propsToClear = isPinned ? 'opacity,visibility' : 'transform,opacity,visibility';
+
         gsap.to(el, {
           autoAlpha: 1,
           x: 0,
           duration: 0.35,
           ease: 'power2.out',
-          clearProps: 'opacity,visibility'
+          clearProps: propsToClear
         });
 
         activeObserver.unobserve(el);
@@ -116,12 +119,15 @@
 
         el.dataset.slidePlayed = 'true';
 
+        var isPinned = el.hasAttribute('data-horizontal-scroll-wrap') || el.hasAttribute('data-horizontal-scroll-panel') || !!el.closest('.pin-spacer');
+        var propsToClear = isPinned ? 'opacity,visibility' : 'transform,opacity,visibility';
+
         gsap.to(el, {
           autoAlpha: 1,
           x: 0,
           duration: 0.6,
           ease: 'power2.out',
-          clearProps: 'opacity,visibility' // Do not clear transform, as it conflicts with ScrollTrigger pinning
+          clearProps: propsToClear
         });
 
         activeObserver.unobserve(el);
@@ -205,19 +211,44 @@
         x: 0,
         duration: 0.32,
         stagger: 0.08,
-        clearProps: 'opacity,visibility'
+        clearProps: 'transform,opacity,visibility'
       }, 0);
     }
 
     if (revealItems.length) {
       gsap.set(revealItems, { autoAlpha: 0, x: -14 });
-      tl.to(revealItems, {
-        autoAlpha: 1,
-        x: 0,
-        duration: 0.5,
-        stagger: 0.05,
-        clearProps: 'opacity,visibility'
-      }, navItems.length ? 0.08 : isFirstLoad ? 0.1 : 0);
+      var startTime = navItems.length ? 0.08 : isFirstLoad ? 0.1 : 0;
+      
+      var pinnedItems = [];
+      var unpinnedItems = [];
+      
+      revealItems.forEach(function(el) {
+        if (el.hasAttribute('data-horizontal-scroll-wrap') || el.hasAttribute('data-horizontal-scroll-panel') || !!el.closest('.pin-spacer')) {
+          pinnedItems.push(el);
+        } else {
+          unpinnedItems.push(el);
+        }
+      });
+
+      if (unpinnedItems.length) {
+        tl.to(unpinnedItems, {
+          autoAlpha: 1,
+          x: 0,
+          duration: 0.5,
+          stagger: 0.05,
+          clearProps: 'transform,opacity,visibility'
+        }, startTime);
+      }
+
+      if (pinnedItems.length) {
+        tl.to(pinnedItems, {
+          autoAlpha: 1,
+          x: 0,
+          duration: 0.5,
+          stagger: 0.05,
+          clearProps: 'opacity,visibility'
+        }, startTime);
+      }
     }
 
     return tl;

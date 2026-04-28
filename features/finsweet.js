@@ -8,7 +8,7 @@
 
   MBC.features = MBC.features || {};
 
-  var FINSWEET_MODULES = ['list', 'modal', 'slider', 'filter'];
+  var FINSWEET_MODULES = ['list', 'modal'];
   var fsTaskChain = Promise.resolve();
 
   function runFinsweetTask(taskFactory) {
@@ -83,23 +83,22 @@
   function detectModules(container) {
     var modules = [];
 
-    if (container.querySelector('[fs-list-element]')) {
+    // The 'list' module in V2 encompasses list, filter, tabs, and slider functionalities.
+    if (
+      container.querySelector('[fs-list-element]') ||
+      container.querySelector('input[fs-list-field], select[fs-list-field], textarea[fs-list-field]') ||
+      container.querySelector('[fs-filter-element]') ||
+      container.querySelector('[fs-slider-element]') ||
+      container.querySelector('[fs-list-element="tabs"], [fs-list-element="tab-link"]')
+    ) {
       modules.push('list');
     }
-    if (container.querySelector('[fs-list-element="tabs"], [fs-list-element="tab-link"]')) {
-      modules.push('tabs');
-    }
+
     if (container.querySelector('[fs-modal-element]')) {
       modules.push('modal');
     }
-    if (container.querySelector('[fs-slider-element]')) {
-      modules.push('slider');
-    }
-    if (container.querySelector('[fs-filter-element]')) {
-      modules.push('filter');
-    }
 
-    return modules;
+    return modules.filter(function(v, i, a) { return a.indexOf(v) === i; });
   }
 
   function pushUnique(modules, moduleName) {

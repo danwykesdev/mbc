@@ -23,5 +23,8 @@
   "homepage": "https://github.com/danwykesdev/mbc#readme",
   "devDependencies": {
     "esbuild": "^0.28.0"
+  },
+  "dependencies": {
+    "entroly-wasm": "^0.10.0"
   }
 }
