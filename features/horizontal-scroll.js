@@ -9,6 +9,7 @@
 
   MBC.features = MBC.features || {};
   var activeInstance = null;
+  var activeContainer = null;
   var DEBUG_PREFIX = '[MBC HorizontalScroll Debug]';
 
   function isDebugEnabled() {
@@ -165,6 +166,21 @@
         hasScrollTrigger: typeof ScrollTrigger !== 'undefined'
       });
       return null;
+    }
+
+    if (
+      activeInstance &&
+      activeContainer === container &&
+      typeof activeInstance.reflow === 'function' &&
+      typeof activeInstance.cleanup === 'function'
+    ) {
+      debugLog('init reuse existing instance', {
+        hasContainer: !!container,
+        windowInnerWidth: window.innerWidth,
+        windowInnerHeight: window.innerHeight
+      });
+      activeInstance.reflow();
+      return activeInstance.cleanup;
     }
 
     debugLog('init start', {
@@ -625,6 +641,7 @@
     };
 
     activeInstance = api;
+    activeContainer = container;
 
     function cleanup() {
       cleanedUp = true;
@@ -662,6 +679,7 @@
 
       if (activeInstance === api) {
         activeInstance = null;
+        activeContainer = null;
       }
     }
 

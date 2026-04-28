@@ -369,13 +369,6 @@
       });
     }, 400);
 
-    var reflowTimeout = setTimeout(function () {
-      logProjectsDiagnostics(container, 'delayed pre-restart');
-      if (MBC.features.horizontalScroll && typeof MBC.features.horizontalScroll.reflow === 'function') {
-        MBC.features.horizontalScroll.reflow();
-      }
-    }, 520);
-
     var searchClose = container.querySelector('#searchClose') || document.querySelector('#searchClose');
     var searchInput = container.querySelector('#Search') || document.querySelector('#Search');
     var onSearchClear = null;
@@ -397,7 +390,6 @@
 
     cleanups.push(function () {
       clearTimeout(observerTimeout);
-      clearTimeout(reflowTimeout);
       if (observer) observer.disconnect();
       if (onSearchClear && searchClose) {
         searchClose.removeEventListener('click', onSearchClear);
