@@ -467,6 +467,21 @@
       refreshProjectsBindings('final');
     }
 
+    // Prevent Webflow's native form module from hiding Finsweet filter forms
+    // Webflow uses event delegation on document, so stopPropagation prevents it
+    var filterForms = container.querySelectorAll('form');
+    Array.from(filterForms).forEach(function(form) {
+      if (form.closest('[fs-filter-element="filters"]') || form.hasAttribute('fs-filter-element')) {
+        var preventWebflowSubmit = function(e) {
+          e.stopPropagation();
+        };
+        form.addEventListener('submit', preventWebflowSubmit);
+        cleanups.push(function() {
+          form.removeEventListener('submit', preventWebflowSubmit);
+        });
+      }
+    });
+
     var tabPanes = container.querySelectorAll('.w-tab-pane');
     if (!tabPanes.length) {
       tabPanes = document.querySelectorAll('.w-tab-pane');
