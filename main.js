@@ -1,11 +1,7 @@
 /**
  * MBC Main Entry Point
  * Bootstraps the modular system with Barba.js transitions
- *
- * Environment: Set window.MBC_ENV before this script to control mode
- *   'local'      - loads from local server (e.g. localhost:3000)
- *   'production' - loads from GitHub via jsDelivr CDN
- *   auto (default) - detects from script src
+ * Runs from GitHub via jsDelivr CDN
  */
 (function () {
   if (window.__MBC_APP_ACTIVE) return;
@@ -13,50 +9,7 @@
 
   var initialHomeCoverTimer = null;
 
-  function getEntryScriptSrc() {
-    var currentScript = document.currentScript;
-    var scripts;
-    var i;
-
-    if (currentScript && currentScript.src) {
-      return currentScript.src;
-    }
-
-    scripts = document.getElementsByTagName('script');
-    for (i = scripts.length - 1; i >= 0; i -= 1) {
-      if (scripts[i] && scripts[i].src && /(^|\/)main\.js(?:\?.*)?$/.test(scripts[i].src)) {
-        return scripts[i].src;
-      }
-    }
-
-    return '';
-  }
-
-  function resolveProductionBasePath(scriptSrc) {
-    var normalizedSrc = String(scriptSrc || '').split('?')[0];
-    var jsDelivrMatch = normalizedSrc.match(/^(https:\/\/cdn\.jsdelivr\.net\/gh\/[^@]+@[^/]+)/i);
-
-    if (jsDelivrMatch) {
-      return jsDelivrMatch[1];
-    }
-
-    return 'https://cdn.jsdelivr.net/gh/danwykesdev/mbc@main';
-  }
-
-  // Environment detection
-  var env = window.MBC_ENV || 'auto';
-  var entryScriptSrc = getEntryScriptSrc();
-
-  if (env === 'auto') {
-    env = entryScriptSrc.indexOf('jsdelivr.net') !== -1 ? 'production' :
-         (entryScriptSrc.indexOf('localhost') !== -1 ? 'local' : 'production');
-  }
-
-  var localBaseUrl = window.MBC_LOCAL_BASE_URL || '';
-  var localPort = window.MBC_LOCAL_PORT || '5500';
-  var resolvedBasePath = env === 'local'
-    ? (localBaseUrl || ('http://localhost:' + localPort))
-    : resolveProductionBasePath(entryScriptSrc);
+  var resolvedBasePath = 'https://cdn.jsdelivr.net/gh/danwykesdev/mbc@main';
 
   if (typeof window.MBC_DEBUG !== 'boolean') {
     window.MBC_DEBUG = true;
@@ -66,11 +19,11 @@
     window.MBC_HORIZONTAL_SCROLL_DEBUG = false;
   }
 
-  // Set module base path based on environment
+  // Set module base path for CDN loading
   window.MBC.loader.setBasePath(resolvedBasePath);
 
-  if (window.MBC_DEBUG || env === 'local') {
-    console.log('[MBC] Environment:', env, '| Base path:', resolvedBasePath);
+  if (window.MBC_DEBUG) {
+    console.log('[MBC] Base path:', resolvedBasePath);
   }
 
   var MBC = window.MBC;
@@ -638,10 +591,16 @@
     }
   }
 
-  // Prevent clicks on current page links
+  // Prevent clicks on current page links and Webflow tab links from scrolling
   document.body.addEventListener('click', function (e) {
     var link = e.target && e.target.closest ? e.target.closest('a') : null;
     if (!link) return;
+
+    // Webflow tab links have href="#..." that scrolls to top — prevent default
+    if (link.classList.contains('w-tab-link') || link.hasAttribute('data-w-tab')) {
+      e.preventDefault();
+      return;
+    }
 
     if (link.classList.contains('w--current')) {
       e.preventDefault();

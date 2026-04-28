@@ -423,39 +423,41 @@
       });
     }
 
-    if (MBC.features.finsweet && typeof MBC.features.finsweet.init === 'function') {
-      var finsweetModules = detectProjectsFinsweetModules(container);
-
-      if (finsweetModules.length) {
-        // Destroy stale Finsweet state from previous SPA page before re-init
-        if (typeof MBC.features.finsweet.destroy === 'function') {
-          await traceAsync('projects finsweet destroy before init', function () {
-            return MBC.features.finsweet.destroy({ modules: finsweetModules, timeout: 500 });
-          }).catch(function () {});
-        }
-
-        await traceAsync('projects finsweet init', function () {
-          return MBC.features.finsweet.init(container, { modules: finsweetModules, label: 'projects' });
-        }).catch(function () {});
-
-        // Wait for Finsweet to render its filter/pagination DOM before binding
-        var waitForLayout = MBC.core && MBC.core.utils && MBC.core.utils.waitForLayout;
-        if (typeof waitForLayout === 'function') {
-          await traceAsync('projects post-finsweet layout settle', function () {
-            return waitForLayout();
-          });
-        }
-
-        if (MBC.features.finsweet && typeof MBC.features.finsweet.inspect === 'function') {
-          traceSync('projects finsweet inspect after init', function () {
-            MBC.features.finsweet.inspect(container, 'projects after init');
-          });
-        }
-
-        logProjectsDiagnostics(container, 'after init');
-        refreshProjectsBindings('after finsweet');
-      }
-    }
+    // --- Finsweet disabled while debugging horizontal scroll SPA init ---
+    // if (MBC.features.finsweet && typeof MBC.features.finsweet.init === 'function') {
+    //   var finsweetModules = detectProjectsFinsweetModules(container);
+    //
+    //   if (finsweetModules.length) {
+    //     // Destroy stale Finsweet state from previous SPA page before re-init
+    //     if (typeof MBC.features.finsweet.destroy === 'function') {
+    //       await traceAsync('projects finsweet destroy before init', function () {
+    //         return MBC.features.finsweet.destroy({ modules: finsweetModules, timeout: 500 });
+    //       }).catch(function () {});
+    //     }
+    //
+    //     await traceAsync('projects finsweet init', function () {
+    //       return MBC.features.finsweet.init(container, { modules: finsweetModules, label: 'projects' });
+    //     }).catch(function () {});
+    //
+    //     // Wait for Finsweet to render its filter/pagination DOM before binding
+    //     var waitForLayout = MBC.core && MBC.core.utils && MBC.core.utils.waitForLayout;
+    //     if (typeof waitForLayout === 'function') {
+    //       await traceAsync('projects post-finsweet layout settle', function () {
+    //         return waitForLayout();
+    //       });
+    //     }
+    //
+    //     if (MBC.features.finsweet && typeof MBC.features.finsweet.inspect === 'function') {
+    //       traceSync('projects finsweet inspect after init', function () {
+    //         MBC.features.finsweet.inspect(container, 'projects after init');
+    //       });
+    //     }
+    //
+    //     logProjectsDiagnostics(container, 'after init');
+    //     refreshProjectsBindings('after finsweet');
+    //   }
+    // }
+    // --- end Finsweet disabled ---
 
     if (isProjectsListModuleReady() && queuedRestartReason) {
       var initialQueuedReason = queuedRestartReason;
