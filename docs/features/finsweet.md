@@ -90,8 +90,8 @@ Browser ES module caching prevents re-execution even if script tags are re-appen
 - 'filter' and 'slider' are not separate modules - they're features of the 'list' module
 - When requesting filter or slider, the code actually requests and restarts the list module
 
-### Busy Flag
-The `fsBusy` flag prevents concurrent initialization attempts. If Finsweet is already initializing, new init calls are skipped to prevent race conditions.
+### Task Queue Serialization
+Finsweet operations are serialized through a shared async task chain. Init, restart, and destroy calls queue in order so route transitions cannot run overlapping Finsweet list mutations.
 
 ## Usage Pattern
 

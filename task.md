@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-28 14:50:59Z
+Last updated: 2026-04-28 15:23:11Z
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,16 @@ Last updated: 2026-04-28 14:50:59Z
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### investigating - restore projects main-instance sync and route-enter list readiness guards
+- Date: 2026-04-28 15:23:11Z
+- Branch: horizontal-scroll-debug-logs
+- Changes:
+  - Restored Projects-side main list instance wiring so external `fs-list-element="filters"` and `fs-list-element="scroll-anchor"` are stamped to the active list instance before Finsweet init
+  - Hardened Projects route-enter list detection and restart sequencing by queuing restart requests until the list module is confirmed ready
+  - Added deterministic post-bind horizontal-scroll reflow checkpoint after list-driven DOM updates
+  - Updated Projects and Finsweet docs to match current runtime contracts (task-chain serialization and observer/restart timing)
+- Related to: Projects route enter where filters, pagination, and horizontal-scroll wrap all fail to reinitialize
 
 ### investigating - guard projects mount/init and serialize Finsweet route work
 - Date: 2026-04-28 14:50:59Z
