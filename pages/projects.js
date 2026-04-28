@@ -220,7 +220,6 @@
     var staggerHoverCleanup = null;
     var didInitialBindings = false;
     var isUnmounted = false;
-    var projectsListReady = false;
     var restartInFlight = null;
     var queuedRestartReason = '';
     var traceAsync = MBC.core && MBC.core.utils && MBC.core.utils.traceAsync
@@ -320,7 +319,7 @@
 
       var restartReason = String(reason || 'update');
 
-      if (!projectsListReady || !isProjectsListModuleReady()) {
+      if (!isProjectsListModuleReady()) {
         queuedRestartReason = restartReason;
         return Promise.resolve();
       }
@@ -409,19 +408,9 @@
       var finsweetModules = detectProjectsFinsweetModules(container);
 
       if (finsweetModules.length) {
-        await traceAsync('projects finsweet reset', function () {
-          if (!MBC.features.finsweet || typeof MBC.features.finsweet.destroy !== 'function') {
-            return Promise.resolve();
-          }
-
-          return MBC.features.finsweet.destroy({ modules: ['list'], timeout: 300 });
-        }).catch(function () {});
-
         await traceAsync('projects finsweet init', function () {
           return MBC.features.finsweet.init(container, { modules: finsweetModules, label: 'projects' });
         }).catch(function () {});
-
-        projectsListReady = isProjectsListModuleReady();
 
         if (MBC.features.finsweet && typeof MBC.features.finsweet.inspect === 'function') {
           traceSync('projects finsweet inspect after init', function () {
@@ -434,7 +423,7 @@
       }
     }
 
-    if (projectsListReady && queuedRestartReason) {
+    if (isProjectsListModuleReady() && queuedRestartReason) {
       var initialQueuedReason = queuedRestartReason;
       queuedRestartReason = '';
       restartProjectsList(initialQueuedReason + ' initial queued');
