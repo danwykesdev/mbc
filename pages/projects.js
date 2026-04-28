@@ -316,9 +316,13 @@
     }
 
     function restartProjectsList(reason) {
+      // --- Finsweet disabled ---
+      return Promise.resolve();
+      /*
       if (!MBC.features.finsweet || typeof MBC.features.finsweet.restart !== 'function') {
         return Promise.resolve();
       }
+      */
 
       if (isUnmounted) {
         return Promise.resolve();
