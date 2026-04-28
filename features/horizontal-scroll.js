@@ -195,12 +195,15 @@
     var lastWrapScrollWidth = 0;
     var lastPanelCount = 0;
     var suppressAutoReflow = ScrollTrigger.isTouch === 1 || window.innerWidth <= 991;
+    var hasResizeObserver = typeof ResizeObserver !== 'undefined';
+    var useDelayedReflowFallback = !suppressAutoReflow && !hasResizeObserver;
     var scrollSampleRaf = null;
     var lastScrollSample = null;
     var lastLoggedDirection = 0;
 
     debugLog('[MBC HorizontalScroll] auto reflow mode', {
       suppressAutoReflow: suppressAutoReflow,
+      useDelayedReflowFallback: useDelayedReflowFallback,
       isTouch: ScrollTrigger.isTouch,
       windowInnerWidth: window.innerWidth
     });
@@ -520,15 +523,31 @@
     }
 
     function scheduleDelayedReflow(delay) {
-      if (cleanedUp || suppressAutoReflow) return;
+      if (cleanedUp || !useDelayedReflowFallback) {
+        return;
+      }
 
       if (delayedReflowTimer) {
         clearTimeout(delayedReflowTimer);
       }
 
       delayedReflowTimer = setTimeout(function () {
+        var liveWrap;
+        var livePanels;
+
         delayedReflowTimer = null;
         if (cleanedUp) return;
+
+        liveWrap = container.querySelector('[data-horizontal-scroll-wrap]');
+        livePanels = liveWrap ? gsap.utils.toArray('[data-horizontal-scroll-panel]', liveWrap) : [];
+
+        if (!shouldReflow(liveWrap, livePanels)) {
+          debugLog('[MBC HorizontalScroll] delayed reflow skipped', {
+            reason: 'no layout change detected'
+          });
+          return;
+        }
+
         reflow();
       }, delay);
     }
@@ -565,7 +584,7 @@
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('load', onWindowLoad, { once: true });
 
-    if (!suppressAutoReflow && typeof ResizeObserver !== 'undefined') {
+    if (!suppressAutoReflow && hasResizeObserver) {
       resizeObserver = new ResizeObserver(function () {
         if (cleanedUp) return;
         var liveWrap = container.querySelector('[data-horizontal-scroll-wrap]');
