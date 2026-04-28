@@ -441,6 +441,18 @@
           }).catch(function () {});
         }
 
+        // Fix user HTML mistake: fs-list-element="list" should NOT be on the filters
+        var filterWrappers = container.querySelectorAll('.cms__filters');
+        Array.from(filterWrappers).forEach(function(wrapper) {
+          if (wrapper.getAttribute('fs-list-element') === 'list') {
+            wrapper.removeAttribute('fs-list-element');
+          }
+          var childLists = wrapper.querySelectorAll('[fs-list-element="list"]');
+          Array.from(childLists).forEach(function(child) {
+            child.removeAttribute('fs-list-element');
+          });
+        });
+
         await traceAsync('projects finsweet init', function () {
           return MBC.features.finsweet.init(container, { modules: finsweetModules, label: 'projects' });
         }).catch(function () {});
