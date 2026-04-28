@@ -58,6 +58,10 @@
     ? (localBaseUrl || ('http://localhost:' + localPort))
     : resolveProductionBasePath(entryScriptSrc);
 
+  if (typeof window.MBC_DEBUG !== 'boolean') {
+    window.MBC_DEBUG = true;
+  }
+
   // Set module base path based on environment
   window.MBC.loader.setBasePath(resolvedBasePath);
 

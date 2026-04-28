@@ -36,6 +36,7 @@ These are the main files to inspect before changing behavior:
 - `main.js`
   - main runtime entry
   - sets environment/base path
+  - defaults shared `[MBC Trace]` logging on unless `window.MBC_DEBUG = false` is set before boot
   - configures Barba hooks and page enter/leave behavior
   - resolves transition nav state
   - binds shared features after mount

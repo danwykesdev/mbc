@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-28 15:23:11Z
+Last updated: 2026-04-28 16:45:00Z
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,15 @@ Last updated: 2026-04-28 15:23:11Z
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### investigating - re-enable shared runtime trace logs for projects route debugging
+- Date: 2026-04-28 16:45:00Z
+- Branch: horizontal-scroll-debug-logs
+- Changes:
+  - Defaulted `window.MBC_DEBUG` to `true` in `main.js` so existing loader, lifecycle, utils, and Finsweet `[MBC Trace]` instrumentation emits on page load again
+  - Rebuilt `dist/mbc.runtime.js` so the active bundled runtime includes the trace-default change
+  - Documented that shared trace logs are now on by default and can be suppressed with `window.MBC_DEBUG = false` before runtime boot
+- Related to: Capturing route-enter diagnostics for projects horizontal scroll, filters, and Finsweet readiness failures
 
 ### investigating - restore projects main-instance sync and route-enter list readiness guards
 - Date: 2026-04-28 15:23:11Z
