@@ -13,6 +13,7 @@ This is the page module for the Projects page. It handles Finsweet list/filter i
 - Supports Finsweet's official load modes only: `more`, `all`, `infinite`, and `pagination`
 - Re-syncs layout-sensitive features after Finsweet list updates
 - Destroys and re-initializes the list on mount to reduce stale SPA state
+- Queues restart requests until the list module is confirmed ready on route enter
 - Re-runs the list after delayed layout settling and tab changes
 
 ### Custom Filter Bridge
@@ -51,6 +52,7 @@ This is the page module for the Projects page. It handles Finsweet list/filter i
 - Animate filter items when tab activates
 - Rebind horizontal scroll and stagger hover
 - Refresh Webflow IX and ScrollTrigger
+- Activates the tab observer after initial Projects list init to avoid early restart races during mount
 
 ### Search Functionality
 - Clears search input and triggers a new search pass on close button click

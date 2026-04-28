@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-26 14:30:00Z
+Last updated: 2026-04-28 15:23:11Z
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,27 @@ Last updated: 2026-04-26 14:30:00Z
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### investigating - restore projects main-instance sync and route-enter list readiness guards
+- Date: 2026-04-28 15:23:11Z
+- Branch: horizontal-scroll-debug-logs
+- Changes:
+  - Restored Projects-side main list instance wiring so external `fs-list-element="filters"` and `fs-list-element="scroll-anchor"` are stamped to the active list instance before Finsweet init
+  - Hardened Projects route-enter list detection and restart sequencing by queuing restart requests until the list module is confirmed ready
+  - Added deterministic post-bind horizontal-scroll reflow checkpoint after list-driven DOM updates
+  - Updated Projects and Finsweet docs to match current runtime contracts (task-chain serialization and observer/restart timing)
+- Related to: Projects route enter where filters, pagination, and horizontal-scroll wrap all fail to reinitialize
+
+### investigating - guard projects mount/init and serialize Finsweet route work
+- Date: 2026-04-28 14:50:59Z
+- Branch: horizontal-scroll-debug-logs
+- Changes:
+  - Added a projects mount guard keyed by lifecycle navigation token + container to prevent duplicate same-route mount work
+  - Stopped forcing horizontal-scroll teardown before every projects rebind so repeated list refreshes can reuse/reflow the active instance instead of recreating triggers
+  - Serialized Finsweet init/restart/destroy operations in `features/finsweet.js` to avoid home deferred init and projects init collisions during transitions
+  - Added extra container presence checks in home deferred finalize flow so stale home async work does not run tabs/Finsweet after navigating away
+  - Rebuilt `dist/mbc.runtime.js`
+- Related to: Multiple `[MBC HorizontalScroll Debug]` init cycles on projects and missing filters/list behavior on home -> projects navigation
 
 ### 6e4fdba - stabilize touch horizontal scroll reflows
 - Date: 2026-04-16 23:06:00Z

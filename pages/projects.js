@@ -85,13 +85,19 @@
 
   var PROJECTS_LIST_LOAD_MODES = ['more', 'all', 'infinite', 'pagination'];
 
+  function resolveProjectsListRoot(container) {
+    return queryOne(container, '[fs-list-element="list"][fs-list-instance="main"]', true)
+      || queryOne(container, '[fs-list-instance="main"][fs-list-element="list"]', true)
+      || queryOne(container, '[fs-list-element="list"]', true);
+  }
+
   function normalizeProjectsListLoadMode(value) {
     var mode = String(value || '').toLowerCase().trim();
     return PROJECTS_LIST_LOAD_MODES.indexOf(mode) !== -1 ? mode : 'pagination';
   }
 
-  function applyProjectsListLoadMode(container) {
-    var list = queryOne(container, '[fs-list-element="list"]', false);
+  function applyProjectsListLoadMode(container, listRoot) {
+    var list = listRoot || resolveProjectsListRoot(container);
     if (!list) return 'pagination';
 
     var requestedMode = container.getAttribute('data-projects-list-load')
@@ -102,6 +108,56 @@
     list.setAttribute('fs-list-load', normalizedMode);
 
     return normalizedMode;
+  }
+
+  function syncProjectsMainListInstance(container, listRoot) {
+    var list = listRoot || resolveProjectsListRoot(container);
+    if (!list) return null;
+
+    var instanceName = list.getAttribute('fs-list-instance') || 'main';
+    var filtersForm = queryOne(container, '[fs-list-element="filters"]', true);
+    var scrollAnchor = queryOne(container, '[fs-list-element="scroll-anchor"]', true);
+
+    list.setAttribute('fs-list-instance', instanceName);
+
+    if (filtersForm) {
+      filtersForm.setAttribute('fs-list-instance', instanceName);
+    }
+
+    if (scrollAnchor) {
+      scrollAnchor.setAttribute('fs-list-instance', instanceName);
+    }
+
+    return {
+      instanceName: instanceName,
+      hasFiltersForm: !!filtersForm,
+      hasScrollAnchor: !!scrollAnchor
+    };
+  }
+
+  function detectProjectsFinsweetModules(container) {
+    if (!MBC.features.finsweet || typeof MBC.features.finsweet.detectModules !== 'function') {
+      return ['list', 'filter'];
+    }
+
+    var allowed = { list: true, filter: true, tabs: true };
+    var modules = [];
+
+    MBC.features.finsweet.detectModules(container).forEach(function (moduleName) {
+      if (allowed[moduleName] && modules.indexOf(moduleName) === -1) {
+        modules.push(moduleName);
+      }
+    });
+
+    if (!modules.length) {
+      MBC.features.finsweet.detectModules(document).forEach(function (moduleName) {
+        if (allowed[moduleName] && modules.indexOf(moduleName) === -1) {
+          modules.push(moduleName);
+        }
+      });
+    }
+
+    return modules.length ? modules : ['list', 'filter'];
   }
 
   function logProjectsDiagnostics(container, label) {
@@ -141,11 +197,32 @@
     });
   }
 
+  var activeProjectsMountToken = null;
+  var activeProjectsMountContainer = null;
+
   async function mount(ctx) {
     var container = ctx.container;
+    var mountToken = typeof ctx.token === 'number' ? ctx.token : null;
+
+    if (
+      mountToken !== null &&
+      activeProjectsMountToken === mountToken &&
+      activeProjectsMountContainer === container
+    ) {
+      return function cleanup() {};
+    }
+
+    activeProjectsMountToken = mountToken;
+    activeProjectsMountContainer = container;
+
     var cleanups = [];
     var horizontalScrollCleanup = null;
     var staggerHoverCleanup = null;
+    var didInitialBindings = false;
+    var isUnmounted = false;
+    var projectsListReady = false;
+    var restartInFlight = null;
+    var queuedRestartReason = '';
     var traceAsync = MBC.core && MBC.core.utils && MBC.core.utils.traceAsync
       ? MBC.core.utils.traceAsync
       : function (label, promiseFactory) { return Promise.resolve().then(promiseFactory); };
@@ -156,11 +233,6 @@
     function bindHorizontalScroll(label) {
       if (!MBC.features.horizontalScroll || typeof MBC.features.horizontalScroll.init !== 'function') {
         return;
-      }
-
-      if (typeof horizontalScrollCleanup === 'function') {
-        try { horizontalScrollCleanup(); } catch (_) {}
-        horizontalScrollCleanup = null;
       }
 
       var nextCleanup = traceSync(label || 'projects horizontalScroll.init', function () {
@@ -192,6 +264,11 @@
     }
 
     function refreshProjectsBindings(reason) {
+      if (isUnmounted) {
+        return;
+      }
+
+      didInitialBindings = true;
       applyProjectsCardBottomInset(container);
       bindHorizontalScroll('projects horizontalScroll.init ' + reason);
       bindStaggerHover('projects staggerHover.init ' + reason);
@@ -203,13 +280,22 @@
       if (typeof ScrollTrigger !== 'undefined') {
         ScrollTrigger.refresh(true);
       }
+
+      if (MBC.features.horizontalScroll && typeof MBC.features.horizontalScroll.reflow === 'function') {
+        setTimeout(function () {
+          if (isUnmounted) return;
+          MBC.features.horizontalScroll.reflow();
+        }, 60);
+      }
     }
 
-    function restartProjectsList(reason) {
-      if (!MBC.features.finsweet || typeof MBC.features.finsweet.restart !== 'function') {
-        return Promise.resolve();
-      }
+    function isProjectsListModuleReady() {
+      var fs = window.FinsweetAttributes;
+      var list = fs && fs.modules ? fs.modules.list : null;
+      return !!(list && typeof list.restart === 'function');
+    }
 
+    function runProjectsListRestart(reason) {
       return traceAsync('projects finsweet restart ' + reason, function () {
         return MBC.features.finsweet.restart(container, { modules: ['list'] });
       }).then(function () {
@@ -223,7 +309,46 @@
       }).catch(function () {});
     }
 
-    var projectsListLoadMode = applyProjectsListLoadMode(container);
+    function restartProjectsList(reason) {
+      if (!MBC.features.finsweet || typeof MBC.features.finsweet.restart !== 'function') {
+        return Promise.resolve();
+      }
+
+      if (isUnmounted) {
+        return Promise.resolve();
+      }
+
+      var restartReason = String(reason || 'update');
+
+      if (!projectsListReady || !isProjectsListModuleReady()) {
+        queuedRestartReason = restartReason;
+        return Promise.resolve();
+      }
+
+      if (restartInFlight) {
+        queuedRestartReason = restartReason;
+        return restartInFlight;
+      }
+
+      restartInFlight = runProjectsListRestart(restartReason).finally(function () {
+        restartInFlight = null;
+
+        if (isUnmounted || !queuedRestartReason) {
+          queuedRestartReason = '';
+          return;
+        }
+
+        var followUpReason = queuedRestartReason;
+        queuedRestartReason = '';
+        restartProjectsList(followUpReason + ' queued');
+      });
+
+      return restartInFlight;
+    }
+
+    var listRoot = resolveProjectsListRoot(container);
+    var projectsListLoadMode = applyProjectsListLoadMode(container, listRoot);
+    syncProjectsMainListInstance(container, listRoot);
 
     if (MBC.features.nav) {
       MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: true });
@@ -281,11 +406,7 @@
     }
 
     if (MBC.features.finsweet && typeof MBC.features.finsweet.init === 'function') {
-      var finsweetModules = typeof MBC.features.finsweet.detectModules === 'function'
-        ? MBC.features.finsweet.detectModules(container).filter(function (moduleName) {
-            return moduleName !== 'modal' && moduleName !== 'slider';
-          })
-        : ['list', 'filter'];
+      var finsweetModules = detectProjectsFinsweetModules(container);
 
       if (finsweetModules.length) {
         await traceAsync('projects finsweet reset', function () {
@@ -300,6 +421,8 @@
           return MBC.features.finsweet.init(container, { modules: finsweetModules, label: 'projects' });
         }).catch(function () {});
 
+        projectsListReady = isProjectsListModuleReady();
+
         if (MBC.features.finsweet && typeof MBC.features.finsweet.inspect === 'function') {
           traceSync('projects finsweet inspect after init', function () {
             MBC.features.finsweet.inspect(container, 'projects after init');
@@ -311,11 +434,14 @@
       }
     }
 
-    applyProjectsCardBottomInset(container);
-    bindStaggerHover('projects staggerHover.init final');
+    if (projectsListReady && queuedRestartReason) {
+      var initialQueuedReason = queuedRestartReason;
+      queuedRestartReason = '';
+      restartProjectsList(initialQueuedReason + ' initial queued');
+    }
 
-    if (typeof ScrollTrigger !== 'undefined') {
-      ScrollTrigger.refresh(true);
+    if (!didInitialBindings) {
+      refreshProjectsBindings('final');
     }
 
     var tabPanes = container.querySelectorAll('.w-tab-pane');
@@ -397,6 +523,17 @@
     });
 
     return function cleanup() {
+      isUnmounted = true;
+      queuedRestartReason = '';
+
+      if (
+        activeProjectsMountToken === mountToken &&
+        activeProjectsMountContainer === container
+      ) {
+        activeProjectsMountToken = null;
+        activeProjectsMountContainer = null;
+      }
+
       if (typeof horizontalScrollCleanup === 'function') {
         try { horizontalScrollCleanup(); } catch (_) {}
         horizontalScrollCleanup = null;
