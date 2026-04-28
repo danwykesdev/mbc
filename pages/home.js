@@ -169,12 +169,16 @@
       // Videos and Finsweet init AFTER refreshUI so listeners aren't clobbered
       await initVideosAfterHero();
 
+      if (!document.body.contains(container)) return;
+
       if (MBC.features.tabs) {
         var tabsCleanup = MBC.features.tabs.init(container);
         if (typeof tabsCleanup === 'function') {
           cleanups.push(tabsCleanup);
         }
       }
+
+      if (!document.body.contains(container)) return;
 
       if (MBC.features.finsweet) {
         await MBC.features.finsweet.init(container, { modules: ['modal'] });

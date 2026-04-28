@@ -9,7 +9,18 @@
   MBC.features = MBC.features || {};
 
   var FINSWEET_MODULES = ['list', 'modal', 'slider', 'filter'];
-  var fsBusy = false;
+  var fsTaskChain = Promise.resolve();
+
+  function runFinsweetTask(taskFactory) {
+    var task = fsTaskChain.then(function () {
+      return taskFactory();
+    });
+
+    // Keep the queue alive even if a task fails.
+    fsTaskChain = task.catch(function () {});
+
+    return task;
+  }
 
   function shouldTrace() {
     return window.MBC_DEBUG === true;
@@ -274,72 +285,62 @@
     var neededModules = resolveModules(container, options.modules);
     if (!neededModules.length) return;
 
-    inspect(container, options.label || 'init');
+    return runFinsweetTask(async function () {
+      inspect(container, options.label || 'init');
 
-    // Modal-only: use standalone scripts (not the full FS library)
-    var isModalOnly = neededModules.length === 1 && neededModules[0] === 'modal';
+      // Modal-only: use standalone scripts (not the full FS library)
+      var isModalOnly = neededModules.length === 1 && neededModules[0] === 'modal';
 
-    if (isModalOnly) {
-      // Standalone modal self-initializes — just re-inject for fresh DOM
-      await traceAsync('finsweet reinject standalone modal', function () {
-        return reinjectStandaloneModal();
-      });
-      return;
-    }
-
-    // Full FS library path (list, slider, filter, etc.)
-    if (fsBusy) {
-      console.log('[MBC] FS init skipped - already busy');
-      return;
-    }
-
-    fsBusy = true;
-
-    try {
-      // Wait for Finsweet to be available
-      var fs = await traceAsync('finsweet waitForFinsweet', function () {
-        return waitForFinsweet(3000);
-      });
-
-      if (!fs || typeof fs.load !== 'function') {
-        console.warn('[MBC] Finsweet Attributes not available');
-        fsBusy = false;
+      if (isModalOnly) {
+        // Standalone modal self-initializes — just re-inject for fresh DOM
+        await traceAsync('finsweet reinject standalone modal', function () {
+          return reinjectStandaloneModal();
+        });
         return;
       }
 
-      // Ensure modules object exists
-      if (!fs.modules) fs.modules = {};
-
-      // Restart each needed module
-      for (var i = 0; i < neededModules.length; i++) {
-        var moduleName = neededModules[i];
-        if (moduleName === 'modal') continue; // handled by standalone
-        if (FINSWEET_MODULES.indexOf(moduleName) === -1) continue;
-
-        await traceAsync('finsweet restart ' + moduleName, function () {
-          return restartModule(fs, moduleName, 2000);
+      try {
+        // Wait for Finsweet to be available
+        var fs = await traceAsync('finsweet waitForFinsweet', function () {
+          return waitForFinsweet(3000);
         });
-      }
 
-      // Wait for things to settle
-      await traceAsync('finsweet settle wait 100ms', function () {
-        return wait(100);
-      });
+        if (!fs || typeof fs.load !== 'function') {
+          console.warn('[MBC] Finsweet Attributes not available');
+          return;
+        }
 
-      if (fs.modules && fs.modules.list) {
-        console.log('[MBC] Finsweet list controls ready', {
-          hasRestart: typeof fs.modules.list.restart === 'function',
-          hasDestroy: typeof fs.modules.list.destroy === 'function',
-          version: fs.modules.list.version || null,
-          processSize: fs.process && typeof fs.process.size === 'number' ? fs.process.size : null
+        // Ensure modules object exists
+        if (!fs.modules) fs.modules = {};
+
+        // Restart each needed module
+        for (var i = 0; i < neededModules.length; i++) {
+          var moduleName = neededModules[i];
+          if (moduleName === 'modal') continue; // handled by standalone
+          if (FINSWEET_MODULES.indexOf(moduleName) === -1) continue;
+
+          await traceAsync('finsweet restart ' + moduleName, function () {
+            return restartModule(fs, moduleName, 2000);
+          });
+        }
+
+        // Wait for things to settle
+        await traceAsync('finsweet settle wait 100ms', function () {
+          return wait(100);
         });
-      }
 
-    } catch (e) {
-      console.error('[MBC] Finsweet init failed:', e);
-    } finally {
-      fsBusy = false;
-    }
+        if (fs.modules && fs.modules.list) {
+          console.log('[MBC] Finsweet list controls ready', {
+            hasRestart: typeof fs.modules.list.restart === 'function',
+            hasDestroy: typeof fs.modules.list.destroy === 'function',
+            version: fs.modules.list.version || null,
+            processSize: fs.process && typeof fs.process.size === 'number' ? fs.process.size : null
+          });
+        }
+      } catch (e) {
+        console.error('[MBC] Finsweet init failed:', e);
+      }
+    });
   }
 
   async function restartFinsweet(container, options) {
@@ -348,42 +349,46 @@
     var neededModules = resolveModules(container || document, options.modules);
     if (!neededModules.length) return;
 
-    var fs = await waitForFinsweet(3000);
-    if (!fs) return;
-    if (!fs.modules) fs.modules = {};
+    return runFinsweetTask(async function () {
+      var fs = await waitForFinsweet(3000);
+      if (!fs) return;
+      if (!fs.modules) fs.modules = {};
 
-    for (var i = 0; i < neededModules.length; i++) {
-      var moduleName = neededModules[i];
-      if (moduleName === 'modal') continue;
-      await restartModule(fs, moduleName, 2000);
-    }
+      for (var i = 0; i < neededModules.length; i++) {
+        var moduleName = neededModules[i];
+        if (moduleName === 'modal') continue;
+        await restartModule(fs, moduleName, 2000);
+      }
+    });
   }
 
   async function destroyFinsweet(options) {
     options = options || {};
 
-    var fs = await waitForFinsweet(options.timeout || 800);
-    if (!fs || !fs.modules) return;
+    return runFinsweetTask(async function () {
+      var fs = await waitForFinsweet(options.timeout || 800);
+      if (!fs || !fs.modules) return;
 
-    var requestedModules = options.modules && options.modules.length ? options.modules.slice() : Object.keys(fs.modules);
-    var modulesToDestroy = [];
+      var requestedModules = options.modules && options.modules.length ? options.modules.slice() : Object.keys(fs.modules);
+      var modulesToDestroy = [];
 
-    requestedModules.forEach(function (moduleName) {
-      if (moduleName === 'filter' || moduleName === 'slider') {
-        moduleName = 'list';
-      }
+      requestedModules.forEach(function (moduleName) {
+        if (moduleName === 'filter' || moduleName === 'slider') {
+          moduleName = 'list';
+        }
 
-      if (moduleName === 'tabs') {
-        moduleName = 'list';
-      }
-      if (modulesToDestroy.indexOf(moduleName) === -1) {
-        modulesToDestroy.push(moduleName);
+        if (moduleName === 'tabs') {
+          moduleName = 'list';
+        }
+        if (modulesToDestroy.indexOf(moduleName) === -1) {
+          modulesToDestroy.push(moduleName);
+        }
+      });
+
+      for (var i = 0; i < modulesToDestroy.length; i++) {
+        await destroyModule(fs, modulesToDestroy[i]);
       }
     });
-
-    for (var i = 0; i < modulesToDestroy.length; i++) {
-      await destroyModule(fs, modulesToDestroy[i]);
-    }
   }
 
   /**

@@ -141,11 +141,31 @@
     });
   }
 
+  var activeProjectsMountToken = null;
+  var activeProjectsMountContainer = null;
+
   async function mount(ctx) {
     var container = ctx.container;
+    var mountToken = typeof ctx.token === 'number' ? ctx.token : null;
+
+    if (
+      mountToken !== null &&
+      activeProjectsMountToken === mountToken &&
+      activeProjectsMountContainer === container
+    ) {
+      return function cleanup() {};
+    }
+
+    activeProjectsMountToken = mountToken;
+    activeProjectsMountContainer = container;
+
     var cleanups = [];
     var horizontalScrollCleanup = null;
     var staggerHoverCleanup = null;
+    var didInitialBindings = false;
+    var isUnmounted = false;
+    var restartInFlight = null;
+    var queuedRestartReason = '';
     var traceAsync = MBC.core && MBC.core.utils && MBC.core.utils.traceAsync
       ? MBC.core.utils.traceAsync
       : function (label, promiseFactory) { return Promise.resolve().then(promiseFactory); };
@@ -156,11 +176,6 @@
     function bindHorizontalScroll(label) {
       if (!MBC.features.horizontalScroll || typeof MBC.features.horizontalScroll.init !== 'function') {
         return;
-      }
-
-      if (typeof horizontalScrollCleanup === 'function') {
-        try { horizontalScrollCleanup(); } catch (_) {}
-        horizontalScrollCleanup = null;
       }
 
       var nextCleanup = traceSync(label || 'projects horizontalScroll.init', function () {
@@ -192,6 +207,11 @@
     }
 
     function refreshProjectsBindings(reason) {
+      if (isUnmounted) {
+        return;
+      }
+
+      didInitialBindings = true;
       applyProjectsCardBottomInset(container);
       bindHorizontalScroll('projects horizontalScroll.init ' + reason);
       bindStaggerHover('projects staggerHover.init ' + reason);
@@ -205,11 +225,7 @@
       }
     }
 
-    function restartProjectsList(reason) {
-      if (!MBC.features.finsweet || typeof MBC.features.finsweet.restart !== 'function') {
-        return Promise.resolve();
-      }
-
+    function runProjectsListRestart(reason) {
       return traceAsync('projects finsweet restart ' + reason, function () {
         return MBC.features.finsweet.restart(container, { modules: ['list'] });
       }).then(function () {
@@ -221,6 +237,38 @@
         logProjectsDiagnostics(container, reason);
         refreshProjectsBindings(reason);
       }).catch(function () {});
+    }
+
+    function restartProjectsList(reason) {
+      if (!MBC.features.finsweet || typeof MBC.features.finsweet.restart !== 'function') {
+        return Promise.resolve();
+      }
+
+      if (isUnmounted) {
+        return Promise.resolve();
+      }
+
+      var restartReason = String(reason || 'update');
+
+      if (restartInFlight) {
+        queuedRestartReason = restartReason;
+        return restartInFlight;
+      }
+
+      restartInFlight = runProjectsListRestart(restartReason).finally(function () {
+        restartInFlight = null;
+
+        if (isUnmounted || !queuedRestartReason) {
+          queuedRestartReason = '';
+          return;
+        }
+
+        var followUpReason = queuedRestartReason;
+        queuedRestartReason = '';
+        restartProjectsList(followUpReason + ' queued');
+      });
+
+      return restartInFlight;
     }
 
     var projectsListLoadMode = applyProjectsListLoadMode(container);
@@ -311,11 +359,8 @@
       }
     }
 
-    applyProjectsCardBottomInset(container);
-    bindStaggerHover('projects staggerHover.init final');
-
-    if (typeof ScrollTrigger !== 'undefined') {
-      ScrollTrigger.refresh(true);
+    if (!didInitialBindings) {
+      refreshProjectsBindings('final');
     }
 
     var tabPanes = container.querySelectorAll('.w-tab-pane');
@@ -397,6 +442,17 @@
     });
 
     return function cleanup() {
+      isUnmounted = true;
+      queuedRestartReason = '';
+
+      if (
+        activeProjectsMountToken === mountToken &&
+        activeProjectsMountContainer === container
+      ) {
+        activeProjectsMountToken = null;
+        activeProjectsMountContainer = null;
+      }
+
       if (typeof horizontalScrollCleanup === 'function') {
         try { horizontalScrollCleanup(); } catch (_) {}
         horizontalScrollCleanup = null;

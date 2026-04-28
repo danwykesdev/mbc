@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-26 14:30:00Z
+Last updated: 2026-04-28 14:50:59Z
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,17 @@ Last updated: 2026-04-26 14:30:00Z
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### investigating - guard projects mount/init and serialize Finsweet route work
+- Date: 2026-04-28 14:50:59Z
+- Branch: horizontal-scroll-debug-logs
+- Changes:
+  - Added a projects mount guard keyed by lifecycle navigation token + container to prevent duplicate same-route mount work
+  - Stopped forcing horizontal-scroll teardown before every projects rebind so repeated list refreshes can reuse/reflow the active instance instead of recreating triggers
+  - Serialized Finsweet init/restart/destroy operations in `features/finsweet.js` to avoid home deferred init and projects init collisions during transitions
+  - Added extra container presence checks in home deferred finalize flow so stale home async work does not run tabs/Finsweet after navigating away
+  - Rebuilt `dist/mbc.runtime.js`
+- Related to: Multiple `[MBC HorizontalScroll Debug]` init cycles on projects and missing filters/list behavior on home -> projects navigation
 
 ### 6e4fdba - stabilize touch horizontal scroll reflows
 - Date: 2026-04-16 23:06:00Z
