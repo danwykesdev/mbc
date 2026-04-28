@@ -371,7 +371,7 @@
     // 3. Detect external script needs
     var needsFinsweetModal = hasDomFeature(container, '[fs-modal-element]');
     var needsVimeo = hasDomFeature(container, '#videoLoad, #video, [data-video], [data-vimeo-id], [data-modal-video]');
-    var needsFinsweetAttributes = normalizedNamespace !== 'projects' && hasDomFeature(container, '[fs-list-element], [fs-slider-element], [fs-filter-element], [fs-modal-element]');
+    var needsFinsweetAttributes = hasDomFeature(container, '[fs-list-element], [fs-slider-element], [fs-filter-element], [fs-modal-element]');
     var needsFinsweet = needsFinsweetModal || needsFinsweetAttributes;
 
     // 4. Collect all modules to load
