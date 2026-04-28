@@ -312,7 +312,6 @@
     }
 
     applyProjectsCardBottomInset(container);
-    bindHorizontalScroll('projects horizontalScroll.init final');
     bindStaggerHover('projects staggerHover.init final');
 
     if (typeof ScrollTrigger !== 'undefined') {
@@ -372,7 +371,6 @@
 
     var reflowTimeout = setTimeout(function () {
       logProjectsDiagnostics(container, 'delayed pre-restart');
-      restartProjectsList('delayed');
       if (MBC.features.horizontalScroll && typeof MBC.features.horizontalScroll.reflow === 'function') {
         MBC.features.horizontalScroll.reflow();
       }

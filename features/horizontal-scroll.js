@@ -307,7 +307,8 @@
       if (window.innerWidth !== lastWindowWidth) should = true;
       if (panels.length !== lastPanelCount) should = true;
       if (Math.abs(wrap.clientWidth - lastWrapWidth) > 1) should = true;
-      if (Math.abs(wrap.scrollWidth - lastWrapScrollWidth) > 1) should = true;
+      // scrollWidth is intentionally excluded: GSAP pin-spacer mutations change scrollWidth
+      // after every trigger creation without any real layout change, causing spurious reflows.
       debugLog('[MBC HorizontalScroll] shouldReflow', {
         should: should,
         lastWindowWidth: lastWindowWidth,
@@ -597,7 +598,6 @@
 
     reflow();
     sampleScrollState('init', true);
-    scheduleDelayedReflow(700);
     scheduleDelayedReflow(2000);
 
     var api = {
