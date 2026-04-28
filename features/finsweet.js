@@ -8,7 +8,7 @@
 
   MBC.features = MBC.features || {};
 
-  var FINSWEET_MODULES = ['list', 'modal', 'slider', 'filter'];
+  var FINSWEET_MODULES = ['cmsload', 'modal', 'slider', 'cmsfilter', 'tabs', 'list', 'filter'];
   var fsTaskChain = Promise.resolve();
 
   function runFinsweetTask(taskFactory) {
@@ -67,14 +67,14 @@
     var start = performance.now();
 
     while (performance.now() - start < timeout) {
-      var fs = window.FinsweetAttributes;
-      if (fs && typeof fs === 'object' && typeof fs.load === 'function') {
+      var fs = window.FinsweetAttributes || window.fsAttributes;
+      if (fs && typeof fs === 'object') {
         return fs;
       }
       await wait(50);
     }
 
-    return window.FinsweetAttributes || null;
+    return window.FinsweetAttributes || window.fsAttributes || null;
   }
 
   /**
@@ -84,7 +84,8 @@
     var modules = [];
 
     if (container.querySelector('[fs-list-element]')) {
-      modules.push('list');
+      modules.push('cmsload'); // V2 API uses cmsload for list/pagination
+      modules.push('list'); // keep for backward compat
     }
     if (container.querySelector('[fs-list-element="tabs"], [fs-list-element="tab-link"]')) {
       modules.push('tabs');
@@ -96,7 +97,8 @@
       modules.push('slider');
     }
     if (container.querySelector('[fs-filter-element]')) {
-      modules.push('filter');
+      modules.push('cmsfilter'); // V2 API uses cmsfilter for filtering
+      modules.push('filter'); // keep for backward compat
     }
 
     return modules;
@@ -178,38 +180,27 @@
   }
 
   /**
-   * Restart a specific FS module
+   * Restart a specific FS module using Finsweet V2 API
    */
   async function restartModule(fs, moduleName, maxWait) {
     maxWait = maxWait || 2000;
 
-    // Wait for module to finish loading if in progress
-    if (fs.modules[moduleName]?.loading) {
-      try {
-        await Promise.race([fs.modules[moduleName].loading, wait(maxWait)]);
-      } catch (_) {}
-    }
+    // Use Finsweet V2 API (.init() is available on the module namespace)
+    var target = fs[moduleName] || (fs.modules && fs.modules[moduleName]);
 
-    // Always load to re-scan the document for new Barba container elements
-    if (typeof fs.load === 'function') {
+    if (target && typeof target.init === 'function') {
       try {
-        await Promise.race([fs.load(moduleName), wait(maxWait)]);
+        await Promise.resolve(target.init());
       } catch (e) {
-        console.warn('[MBC] FS load(' + moduleName + ') failed:', e);
+        console.warn('[MBC] FS ' + moduleName + ' init failed:', e);
       }
+      return;
     }
 
-    // Wait again after load
-    if (fs.modules[moduleName]?.loading) {
+    // Fallback to legacy restart if available
+    if (target && typeof target.restart === 'function') {
       try {
-        await Promise.race([fs.modules[moduleName].loading, wait(maxWait)]);
-      } catch (_) {}
-    }
-
-    // Restart the module
-    if (typeof fs.modules[moduleName]?.restart === 'function') {
-      try {
-        await Promise.resolve(fs.modules[moduleName].restart());
+        await Promise.resolve(target.restart());
       } catch (e) {
         console.warn('[MBC] FS ' + moduleName + ' restart failed:', e);
       }
@@ -217,13 +208,15 @@
   }
 
   async function destroyModule(fs, moduleName) {
-    if (!fs || !fs.modules || !fs.modules[moduleName]) {
+    var target = fs[moduleName] || (fs.modules && fs.modules[moduleName]);
+
+    if (!target) {
       return;
     }
 
-    if (typeof fs.modules[moduleName].destroy === 'function') {
+    if (typeof target.destroy === 'function') {
       try {
-        await Promise.resolve(fs.modules[moduleName].destroy());
+        await Promise.resolve(target.destroy());
       } catch (e) {
         console.warn('[MBC] FS ' + moduleName + ' destroy failed:', e);
       }

@@ -596,9 +596,10 @@
     var link = e.target && e.target.closest ? e.target.closest('a') : null;
     if (!link) return;
 
-    // Webflow tab links have href="#..." that scrolls to top — prevent default
+    // Allow Webflow tab links to function natively, which Finsweet may rely on.
+    // If scroll jumping is an issue, it should be solved via CSS scroll-behavior
+    // or by mutating the href directly rather than preventing the click event.
     if (link.classList.contains('w-tab-link') || link.hasAttribute('data-w-tab')) {
-      e.preventDefault();
       return;
     }
 

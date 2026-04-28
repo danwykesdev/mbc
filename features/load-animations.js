@@ -76,7 +76,7 @@
           x: 0,
           duration: 0.35,
           ease: 'power2.out',
-          clearProps: 'transform,opacity,visibility'
+          clearProps: 'opacity,visibility'
         });
 
         activeObserver.unobserve(el);
@@ -121,7 +121,7 @@
           x: 0,
           duration: 0.6,
           ease: 'power2.out',
-          clearProps: 'transform,opacity,visibility'
+          clearProps: 'opacity,visibility' // Do not clear transform, as it conflicts with ScrollTrigger pinning
         });
 
         activeObserver.unobserve(el);
@@ -205,7 +205,7 @@
         x: 0,
         duration: 0.32,
         stagger: 0.08,
-        clearProps: 'transform,opacity,visibility'
+        clearProps: 'opacity,visibility'
       }, 0);
     }
 
@@ -216,7 +216,7 @@
         x: 0,
         duration: 0.5,
         stagger: 0.05,
-        clearProps: 'transform,opacity,visibility'
+        clearProps: 'opacity,visibility'
       }, navItems.length ? 0.08 : isFirstLoad ? 0.1 : 0);
     }
 
