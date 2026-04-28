@@ -9,6 +9,12 @@ Last updated: 2026-04-28 20:05:00Z
 
 ## Commit History
 
+### d0006f9 - Explicitly remove Finsweet scroll anchors to prevent scrolling to top on filter tab clicks
+- Date: 2026-04-28 21:05:00Z
+- Changes:
+  - Removed logic that dynamically injected fs-list-instance to scroll anchors.
+  - Added explicit removal of fs-list-element="scroll-anchor" and related attributes from the DOM before Finsweet initializes to guarantee it cannot scroll the page upon filter interaction.
+
 ### be39060 - Add explicit image load listeners to horizontal scroll to catch layout shifts on SPA navigation
 - Date: 2026-04-28 21:02:00Z
 - Changes:

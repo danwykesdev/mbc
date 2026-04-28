@@ -83,59 +83,7 @@
     return el;
   }
 
-  var PROJECTS_LIST_LOAD_MODES = ['more', 'all', 'infinite', 'pagination'];
 
-  function resolveProjectsListRoot(container) {
-    return queryOne(container, '[fs-list-element="list"][fs-list-instance="main"]', true)
-      || queryOne(container, '[fs-list-instance="main"][fs-list-element="list"]', true)
-      || queryOne(container, '[fs-list-element="list"]', true);
-  }
-
-  function normalizeProjectsListLoadMode(value) {
-    var mode = String(value || '').toLowerCase().trim();
-    return PROJECTS_LIST_LOAD_MODES.indexOf(mode) !== -1 ? mode : 'pagination';
-  }
-
-  function applyProjectsListLoadMode(container, listRoot) {
-    var list = listRoot || resolveProjectsListRoot(container);
-    if (!list) return 'pagination';
-
-    var requestedMode = container.getAttribute('data-projects-list-load')
-      || container.getAttribute('data-list-load')
-      || 'pagination';
-    var normalizedMode = normalizeProjectsListLoadMode(requestedMode);
-
-    list.setAttribute('fs-list-load', normalizedMode);
-
-    return normalizedMode;
-  }
-
-  function syncProjectsMainListInstance(container, listRoot) {
-    var list = listRoot || resolveProjectsListRoot(container);
-    if (!list) return null;
-
-    var instanceName = list.getAttribute('fs-list-instance') || 'main';
-    var filtersForm = queryOne(container, '[fs-list-element="filters"]', true);
-
-    list.setAttribute('fs-list-instance', instanceName);
-
-    if (filtersForm) {
-      filtersForm.setAttribute('fs-list-instance', instanceName);
-    }
-
-    // Explicitly destroy scroll anchors to prevent Finsweet from jumping to top on filter tab click
-    var anchors = container.querySelectorAll('[fs-list-element="scroll-anchor"], [fs-list-element="scroll-anchor-filter"], [fs-cmsfilter-element="scroll-anchor"]');
-    Array.from(anchors).forEach(function(anchor) {
-      anchor.removeAttribute('fs-list-element');
-      anchor.removeAttribute('fs-cmsfilter-element');
-    });
-
-    return {
-      instanceName: instanceName,
-      hasFiltersForm: !!filtersForm,
-      hasScrollAnchor: false
-    };
-  }
 
   function detectProjectsFinsweetModules(container) {
     if (!MBC.features.finsweet || typeof MBC.features.finsweet.detectModules !== 'function') {
@@ -347,13 +295,7 @@
       return restartInFlight;
     }
 
-    var listRoot = resolveProjectsListRoot(container);
-    var projectsListLoadMode = applyProjectsListLoadMode(container, listRoot);
-    var projectsBindingState = syncProjectsMainListInstance(container, listRoot);
 
-    if (projectsBindingState && typeof console !== 'undefined') {
-      console.log('[MBC] Projects list binding state', projectsBindingState);
-    }
 
     if (MBC.features.nav) {
       MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: true });
@@ -439,6 +381,13 @@
           Array.from(childLists).forEach(function(child) {
             child.removeAttribute('fs-list-element');
           });
+        });
+
+        // Explicitly destroy scroll anchors to prevent Finsweet from jumping to top on filter tab click
+        var anchors = container.querySelectorAll('[fs-list-element="scroll-anchor"], [fs-list-element="scroll-anchor-filter"], [fs-cmsfilter-element="scroll-anchor"]');
+        Array.from(anchors).forEach(function(anchor) {
+          anchor.removeAttribute('fs-list-element');
+          anchor.removeAttribute('fs-cmsfilter-element');
         });
 
         await traceAsync('projects finsweet init', function () {
