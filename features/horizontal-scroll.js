@@ -656,6 +656,22 @@
     scheduleDelayedReflow(600);
     scheduleDelayedReflow(2000);
 
+    // Also explicitly watch for images loading inside the horizontal scroll
+    var observedWrap = container.querySelector('[data-horizontal-scroll-wrap]');
+    if (observedWrap) {
+      var imgs = observedWrap.querySelectorAll('img');
+      Array.from(imgs).forEach(function(img) {
+        if (!img.complete) {
+          img.addEventListener('load', function() {
+            if (!cleanedUp) {
+              debugLog('[MBC HorizontalScroll] Image loaded, triggering reflow');
+              scheduleDelayedReflow(50);
+            }
+          }, { once: true });
+        }
+      });
+    }
+
     var api = {
       reflow: reflow,
       cleanup: cleanup

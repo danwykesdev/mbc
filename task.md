@@ -9,6 +9,28 @@ Last updated: 2026-04-28 20:05:00Z
 
 ## Commit History
 
+### d357926 - Fix typo in projects.js applyProjectsListLoadMode function call
+- Date: 2026-04-28 20:59:00Z
+- Changes:
+  - Fixed typo where syncProjectsListLoadMode was incorrectly called instead of applyProjectsListLoadMode.
+
+### ac259f5 - Fix horizontal scroll reflow calculation on SPA load and restore fs-list-load pagination setup
+- Date: 2026-04-28 20:55:00Z
+- Changes:
+  - Added MutationObserver to horizontal-scroll.js to accurately detect when Finsweet async appends DOM nodes.
+  - Updated shouldReflow to calculate offsetWidth sum to correctly trigger reflows.
+  - Uncommented projectsListLoadMode blocks in projects.js so fs-list-load="all" executes before Finsweet initialization.
+
+### fa2702a - Strip invalid fs-list-element from filter containers to prevent Finsweet CMS Filter from emptying them
+- Date: 2026-04-28 20:42:00Z
+- Changes:
+  - Stripped fs-list-element="list" attributes from filter wrappers (.cms__filters) to stop Finsweet's Virtual DOM from thinking the radio buttons are the target list and emptying them.
+
+### 1f0c5b5 - Stop Webflow native form from hiding Finsweet CMS filter forms
+- Date: 2026-04-28 20:36:00Z
+- Changes:
+  - Attached e.stopPropagation() listener to filter forms on projects page so Webflow's delegated document submit listener ignores it, preventing native AJAX hiding of the form container.
+
 ### fixed - fix projects SPA navigation (horizontal scroll, filters, pagination) and scroll smoothness
 - Date: 2026-04-28 20:05:00Z
 - Branch: main
