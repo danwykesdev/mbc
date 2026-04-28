@@ -353,7 +353,7 @@
     }
 
     var listRoot = resolveProjectsListRoot(container);
-    var projectsListLoadMode = syncProjectsListLoadMode(container, listRoot);
+    var projectsListLoadMode = applyProjectsListLoadMode(container, listRoot);
     var projectsBindingState = syncProjectsMainListInstance(container, listRoot);
 
     if (projectsBindingState && typeof console !== 'undefined') {
