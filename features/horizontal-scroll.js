@@ -51,6 +51,102 @@
     };
   }
 
+  function getElementSummary(element) {
+    if (!element) {
+      return null;
+    }
+
+    var rect = typeof element.getBoundingClientRect === 'function'
+      ? element.getBoundingClientRect()
+      : null;
+    var classes = typeof element.className === 'string'
+      ? element.className
+      : (element.className && typeof element.className.baseVal === 'string' ? element.className.baseVal : '');
+
+    return {
+      tagName: element.tagName || null,
+      id: element.id || null,
+      className: classes || null,
+      dataThemeSection: typeof element.getAttribute === 'function' ? element.getAttribute('data-theme-section') : null,
+      rect: rect ? {
+        top: Math.round(rect.top),
+        bottom: Math.round(rect.bottom),
+        left: Math.round(rect.left),
+        right: Math.round(rect.right),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height)
+      } : null
+    };
+  }
+
+  function findVideoSectionAnchor(wrap, container) {
+    var candidate = null;
+    var pointer = wrap && wrap.parentNode && wrap.parentNode.classList && wrap.parentNode.classList.contains('pin-spacer')
+      ? wrap.parentNode.previousElementSibling
+      : wrap ? wrap.previousElementSibling : null;
+
+    while (pointer) {
+      if (
+        (pointer.matches && pointer.matches('.is-video, section.is-video, [data-theme-section]')) ||
+        (pointer.classList && pointer.classList.contains('is-video'))
+      ) {
+        candidate = pointer;
+        break;
+      }
+
+      pointer = pointer.previousElementSibling;
+    }
+
+    if (!candidate && container && container.querySelector) {
+      candidate = container.querySelector('.is-video, section.is-video');
+    }
+
+    return candidate;
+  }
+
+  function collectSectionDebugSnapshot(container, wrap, trigger, reason) {
+    var spacer = wrap && wrap.parentNode && wrap.parentNode.classList && wrap.parentNode.classList.contains('pin-spacer')
+      ? wrap.parentNode
+      : null;
+    var videoSection = findVideoSectionAnchor(wrap, container);
+    var videoRect = videoSection && typeof videoSection.getBoundingClientRect === 'function'
+      ? videoSection.getBoundingClientRect()
+      : null;
+    var spacerRect = spacer && typeof spacer.getBoundingClientRect === 'function'
+      ? spacer.getBoundingClientRect()
+      : null;
+    var wrapRect = wrap && typeof wrap.getBoundingClientRect === 'function'
+      ? wrap.getBoundingClientRect()
+      : null;
+
+    return {
+      reason: reason || null,
+      scrollY: Math.round(window.scrollY || window.pageYOffset || 0),
+      viewportHeight: window.innerHeight,
+      trigger: trigger ? {
+        isActive: !!trigger.isActive,
+        progress: typeof trigger.progress === 'number' ? Number(trigger.progress.toFixed(4)) : null,
+        direction: trigger.direction || null,
+        start: typeof trigger.start === 'number' ? Math.round(trigger.start) : trigger.start || null,
+        end: typeof trigger.end === 'number' ? Math.round(trigger.end) : trigger.end || null,
+        pinType: trigger.pinType || null
+      } : null,
+      spacer: getElementSummary(spacer),
+      wrap: getElementSummary(wrap),
+      videoSection: getElementSummary(videoSection),
+      relationships: {
+        videoBottomToSpacerTop: videoRect && spacerRect ? Math.round(spacerRect.top - videoRect.bottom) : null,
+        videoBottomToWrapTop: videoRect && wrapRect ? Math.round(wrapRect.top - videoRect.bottom) : null,
+        spacerTopToWrapTop: spacerRect && wrapRect ? Math.round(wrapRect.top - spacerRect.top) : null
+      },
+      pinSpacerMetrics: getPinSpacerMetrics(wrap)
+    };
+  }
+
+  function logSectionDebugSnapshot(container, wrap, trigger, reason) {
+    debugLog('[MBC HorizontalScroll] section snapshot', collectSectionDebugSnapshot(container, wrap, trigger, reason));
+  }
+
   function killTriggerById(id) {
     if (typeof ScrollTrigger === 'undefined') return;
 
@@ -99,6 +195,9 @@
     var lastWrapScrollWidth = 0;
     var lastPanelCount = 0;
     var suppressAutoReflow = ScrollTrigger.isTouch === 1 || window.innerWidth <= 991;
+    var scrollSampleRaf = null;
+    var lastScrollSample = null;
+    var lastLoggedDirection = 0;
 
     debugLog('[MBC HorizontalScroll] auto reflow mode', {
       suppressAutoReflow: suppressAutoReflow,
@@ -128,6 +227,45 @@
 
       clearPanelTransforms(liveWrap);
       tween = null;
+    }
+
+    function shouldLogScrollSample(snapshot, force) {
+      if (!snapshot) return false;
+      if (force || !lastScrollSample) return true;
+
+      var trigger = snapshot.trigger || {};
+      var lastTrigger = lastScrollSample.trigger || {};
+      var relationships = snapshot.relationships || {};
+      var lastRelationships = lastScrollSample.relationships || {};
+
+      if (trigger.isActive !== lastTrigger.isActive) return true;
+      if (Math.abs((trigger.progress || 0) - (lastTrigger.progress || 0)) >= 0.08) return true;
+      if (Math.abs((relationships.videoBottomToSpacerTop || 0) - (lastRelationships.videoBottomToSpacerTop || 0)) >= 24) return true;
+      if (Math.abs((relationships.videoBottomToWrapTop || 0) - (lastRelationships.videoBottomToWrapTop || 0)) >= 24) return true;
+
+      return false;
+    }
+
+    function sampleScrollState(reason, force) {
+      var liveWrap = container.querySelector('[data-horizontal-scroll-wrap]');
+      var trigger = typeof ScrollTrigger !== 'undefined' ? ScrollTrigger.getById('horizontal-pin') : null;
+      var snapshot = collectSectionDebugSnapshot(container, liveWrap, trigger, reason);
+
+      if (!shouldLogScrollSample(snapshot, force)) {
+        return;
+      }
+
+      lastScrollSample = snapshot;
+      debugLog('[MBC HorizontalScroll] scroll sample', snapshot);
+    }
+
+    function scheduleScrollSample(reason, force) {
+      if (cleanedUp || scrollSampleRaf) return;
+
+      scrollSampleRaf = requestAnimationFrame(function () {
+        scrollSampleRaf = null;
+        sampleScrollState(reason, force);
+      });
     }
 
     function calculateDistance(wrap, panels, viewportWidth, gap) {
@@ -215,6 +353,7 @@
         scrollTriggerActive: !!ScrollTrigger.getById('horizontal-pin'),
         pinSpacer: getPinSpacerMetrics(wrap)
       });
+      logSectionDebugSnapshot(container, wrap, ScrollTrigger.getById('horizontal-pin'), 'createOrRefreshTrigger:start');
 
       clearPanelTransforms(wrap);
 
@@ -289,6 +428,32 @@
           pinSpacing: true,
           anticipatePin: 1,
           invalidateOnRefresh: true,
+          onUpdate: function () {
+            if (this.direction && this.direction !== lastLoggedDirection) {
+              lastLoggedDirection = this.direction;
+              logSectionDebugSnapshot(container, wrap, this, this.direction > 0 ? 'direction:down' : 'direction:up');
+              return;
+            }
+
+            if (this.isActive || this.progress < 0.02 || this.progress > 0.98) {
+              scheduleScrollSample('onUpdate', false);
+            }
+          },
+          onToggle: function () {
+            logSectionDebugSnapshot(container, wrap, this, this.isActive ? 'toggle:active' : 'toggle:inactive');
+          },
+          onEnter: function () {
+            logSectionDebugSnapshot(container, wrap, this, 'enter');
+          },
+          onLeave: function () {
+            logSectionDebugSnapshot(container, wrap, this, 'leave');
+          },
+          onEnterBack: function () {
+            logSectionDebugSnapshot(container, wrap, this, 'enterBack');
+          },
+          onLeaveBack: function () {
+            logSectionDebugSnapshot(container, wrap, this, 'leaveBack');
+          },
           onRefresh: function () {
             debugLog('[MBC HorizontalScroll] ScrollTrigger onRefresh', {
               progress: this.progress,
@@ -298,6 +463,7 @@
               trigger: this.trigger && this.trigger.tagName,
               pinSpacer: getPinSpacerMetrics(wrap)
             });
+            logSectionDebugSnapshot(container, wrap, this, 'refresh');
           }
         }
       });
@@ -310,6 +476,7 @@
       });
 
       ScrollTrigger.refresh(true);
+      sampleScrollState('post-refresh', true);
 
       // Re-snapshot after refresh so the ResizeObserver baseline matches the settled layout
       syncMeasurements(container.querySelector('[data-horizontal-scroll-wrap]') || wrap, panels);
@@ -377,6 +544,10 @@
       });
     };
 
+    var onScroll = function () {
+      scheduleScrollSample('window-scroll', false);
+    };
+
     var onWindowLoad = function () {
       if (suppressAutoReflow) {
         debugLog('[MBC HorizontalScroll] skipping load reflow', {
@@ -390,6 +561,7 @@
     };
 
     window.addEventListener('resize', onResize, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('load', onWindowLoad, { once: true });
 
     if (!suppressAutoReflow && typeof ResizeObserver !== 'undefined') {
@@ -424,6 +596,7 @@
     }
 
     reflow();
+    sampleScrollState('init', true);
     scheduleDelayedReflow(700);
     scheduleDelayedReflow(2000);
 
@@ -452,12 +625,18 @@
         resizeRaf = null;
       }
 
+      if (scrollSampleRaf) {
+        cancelAnimationFrame(scrollSampleRaf);
+        scrollSampleRaf = null;
+      }
+
       if (resizeObserver) {
         resizeObserver.disconnect();
         resizeObserver = null;
       }
 
       window.removeEventListener('resize', onResize);
+      window.removeEventListener('scroll', onScroll);
       window.removeEventListener('load', onWindowLoad);
 
       clearTween();
