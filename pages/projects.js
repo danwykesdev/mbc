@@ -352,76 +352,79 @@
       return restartInFlight;
     }
 
-    var listRoot = resolveProjectsListRoot(container);
-    var projectsListLoadMode = applyProjectsListLoadMode(container, listRoot);
-    var projectsBindingState = syncProjectsMainListInstance(container, listRoot);
-
-    if (projectsBindingState) {
-      console.log('[MBC] Projects list binding state', projectsBindingState);
-    }
+    // --- Finsweet list setup disabled while debugging horizontal scroll ---
+    // var listRoot = resolveProjectsListRoot(container);
+    // var projectsListLoadMode = applyProjectsListLoadMode(container, listRoot);
+    // var projectsBindingState = syncProjectsMainListInstance(container, listRoot);
+    //
+    // if (projectsBindingState) {
+    //   console.log('[MBC] Projects list binding state', projectsBindingState);
+    // }
 
     if (MBC.features.nav) {
       MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: true });
     }
 
-    var onProjectsClick = function (event) {
-      var target = event.target;
-      if (!(target instanceof Element)) return;
+    // --- Filter/pagination click bridge disabled while FS is off ---
+    // var onProjectsClick = function (event) {
+    //   var target = event.target;
+    //   if (!(target instanceof Element)) return;
+    //
+    //   if (projectsListLoadMode === 'pagination') {
+    //     var paginationTrigger = target.closest('[data-pagination="next"], [data-pagination="prev"]');
+    //     if (paginationTrigger && container.contains(paginationTrigger)) {
+    //       var direction = paginationTrigger.getAttribute('data-pagination');
+    //       var paginationTarget = direction === 'prev'
+    //         ? queryOne(container, '[data-pagination-prev], [fs-list-element="pagination-previous"]', true)
+    //         : queryOne(container, '[data-pagination-next], [fs-list-element="pagination-next"]', true);
+    //
+    //       if (paginationTarget) {
+    //         event.preventDefault();
+    //         paginationTarget.click();
+    //         setTimeout(function () {
+    //           restartProjectsList('pagination ' + direction);
+    //         }, 30);
+    //       }
+    //
+    //       return;
+    //     }
+    //   }
+    //
+    //   var item = target.closest('.filters__item');
+    //   if (!item || !container.contains(item)) return;
+    //   if (isNativeFormControl(target)) return;
+    //
+    //   if (typeof event.preventDefault === 'function') {
+    //     event.preventDefault();
+    //   }
+    //
+    //   if (typeof event.stopPropagation === 'function') {
+    //     event.stopPropagation();
+    //   }
+    //
+    //   var input = findProjectsFilterInput(item);
+    //   if (!input) return;
+    //
+    //   triggerProjectsFilterInput(input);
+    //
+    //   setTimeout(function () {
+    //     restartProjectsList('filter click');
+    //   }, 30);
+    // };
+    //
+    // container.addEventListener('click', onProjectsClick);
+    // cleanups.push(function () {
+    //   container.removeEventListener('click', onProjectsClick);
+    // });
+    // --- end filter/pagination click bridge disabled ---
 
-      if (projectsListLoadMode === 'pagination') {
-        var paginationTrigger = target.closest('[data-pagination="next"], [data-pagination="prev"]');
-        if (paginationTrigger && container.contains(paginationTrigger)) {
-          var direction = paginationTrigger.getAttribute('data-pagination');
-          var paginationTarget = direction === 'prev'
-            ? queryOne(container, '[data-pagination-prev], [fs-list-element="pagination-previous"]', true)
-            : queryOne(container, '[data-pagination-next], [fs-list-element="pagination-next"]', true);
+    // logProjectsDiagnostics(container, 'before init');
 
-          if (paginationTarget) {
-            event.preventDefault();
-            paginationTarget.click();
-            setTimeout(function () {
-              restartProjectsList('pagination ' + direction);
-            }, 30);
-          }
-
-          return;
-        }
-      }
-
-      var item = target.closest('.filters__item');
-      if (!item || !container.contains(item)) return;
-      if (isNativeFormControl(target)) return;
-
-      if (typeof event.preventDefault === 'function') {
-        event.preventDefault();
-      }
-
-      if (typeof event.stopPropagation === 'function') {
-        event.stopPropagation();
-      }
-
-      var input = findProjectsFilterInput(item);
-      if (!input) return;
-
-      triggerProjectsFilterInput(input);
-
-      setTimeout(function () {
-        restartProjectsList('filter click');
-      }, 30);
-    };
-
-    container.addEventListener('click', onProjectsClick);
-    cleanups.push(function () {
-      container.removeEventListener('click', onProjectsClick);
-    });
-
-    logProjectsDiagnostics(container, 'before init');
-
-    if (MBC.features.finsweet && typeof MBC.features.finsweet.inspect === 'function') {
-      traceSync('projects finsweet inspect before init', function () {
-        MBC.features.finsweet.inspect(container, 'projects before init');
-      });
-    }
+    // if (MBC.features.finsweet && typeof MBC.features.finsweet.inspect === 'function') {
+    //   traceSync('projects finsweet inspect before init', function () {
+    //     MBC.features.finsweet.inspect(container, 'projects before init');
+    //   });
+    // }
 
     // --- Finsweet disabled while debugging horizontal scroll SPA init ---
     // if (MBC.features.finsweet && typeof MBC.features.finsweet.init === 'function') {
@@ -459,11 +462,11 @@
     // }
     // --- end Finsweet disabled ---
 
-    if (isProjectsListModuleReady() && queuedRestartReason) {
-      var initialQueuedReason = queuedRestartReason;
-      queuedRestartReason = '';
-      restartProjectsList(initialQueuedReason + ' initial queued');
-    }
+    // if (isProjectsListModuleReady() && queuedRestartReason) {
+    //   var initialQueuedReason = queuedRestartReason;
+    //   queuedRestartReason = '';
+    //   restartProjectsList(initialQueuedReason + ' initial queued');
+    // }
 
     if (!didInitialBindings) {
       refreshProjectsBindings('final');
@@ -533,11 +536,11 @@
       searchClose.addEventListener('click', onSearchClear);
     }
 
-    cleanups.push(function () {
-      if (MBC.features.finsweet && typeof MBC.features.finsweet.destroy === 'function') {
-        MBC.features.finsweet.destroy({ modules: ['list'], timeout: 300 }).catch(function () {});
-      }
-    });
+    // cleanups.push(function () {
+    //   if (MBC.features.finsweet && typeof MBC.features.finsweet.destroy === 'function') {
+    //     MBC.features.finsweet.destroy({ modules: ['list'], timeout: 300 }).catch(function () {});
+    //   }
+    // });
 
     cleanups.push(function () {
       clearTimeout(observerTimeout);
