@@ -190,8 +190,8 @@
       } catch (_) {}
     }
 
-    // Load module if not loaded
-    if (!fs.modules[moduleName]?.restart && typeof fs.load === 'function') {
+    // Always load to re-scan the document for new Barba container elements
+    if (typeof fs.load === 'function') {
       try {
         await Promise.race([fs.load(moduleName), wait(maxWait)]);
       } catch (e) {

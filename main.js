@@ -461,6 +461,11 @@
       var namespace = data.next.namespace || 'default';
       var container = data.next.container;
 
+      // Clear the position:fixed GSAP set in beforeEnter so mount() runs with correct document layout
+      if (typeof gsap !== 'undefined') {
+        gsap.set(container, { clearProps: 'position,top,left,right' });
+      }
+
       return mountRoute(data, { isFirstLoad: false }).then(function () {
         settleAfterMount(container);
         return pageEnterAnimation(container, isHomeNamespace(namespace));
