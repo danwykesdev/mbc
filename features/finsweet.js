@@ -313,11 +313,16 @@
         // Ensure modules object exists
         if (!fs.modules) fs.modules = {};
 
-        // Restart each needed module
+        // Destroy then restart each needed module to clear stale SPA state
         for (var i = 0; i < neededModules.length; i++) {
           var moduleName = neededModules[i];
           if (moduleName === 'modal') continue; // handled by standalone
           if (FINSWEET_MODULES.indexOf(moduleName) === -1) continue;
+
+          // Destroy first so stale DOM observers from previous Barba container are released
+          await traceAsync('finsweet destroy ' + moduleName, function () {
+            return destroyModule(fs, moduleName);
+          });
 
           await traceAsync('finsweet restart ' + moduleName, function () {
             return restartModule(fs, moduleName, 2000);

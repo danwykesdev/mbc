@@ -168,9 +168,11 @@
       return null;
     }
 
+    // Only reuse if same container AND it's still in the live DOM
     if (
       activeInstance &&
       activeContainer === container &&
+      document.documentElement.contains(container) &&
       typeof activeInstance.reflow === 'function' &&
       typeof activeInstance.cleanup === 'function'
     ) {
@@ -188,13 +190,19 @@
       windowInnerWidth: window.innerWidth,
       windowInnerHeight: window.innerHeight,
       isTouch: ScrollTrigger.isTouch,
-      normalizeScrollActive: !!(typeof ScrollTrigger.normalizeScroll === 'function' && ScrollTrigger.normalizeScroll())
+      normalizeScrollActive: !!(typeof ScrollTrigger.normalizeScroll === 'function' && ScrollTrigger.normalizeScroll()),
+      hadStaleInstance: !!(activeInstance && activeContainer !== container)
     });
 
+    // Always fully clean up any previous instance before creating a new one
     if (activeInstance && typeof activeInstance.cleanup === 'function') {
+      debugLog('init cleanup stale instance');
       activeInstance.cleanup();
+      activeInstance = null;
+      activeContainer = null;
     }
 
+    // Kill any orphaned ScrollTrigger from a previous page
     killTriggerById('horizontal-pin');
 
     var tween = null;
@@ -584,21 +592,8 @@
       scheduleScrollSample('window-scroll', false);
     };
 
-    var onWindowLoad = function () {
-      if (suppressAutoReflow) {
-        debugLog('[MBC HorizontalScroll] skipping load reflow', {
-          suppressAutoReflow: suppressAutoReflow
-        });
-        return;
-      }
-
-      reflow();
-      scheduleDelayedReflow(2000);
-    };
-
     window.addEventListener('resize', onResize, { passive: true });
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('load', onWindowLoad, { once: true });
 
     if (!suppressAutoReflow && hasResizeObserver) {
       resizeObserver = new ResizeObserver(function () {
@@ -633,6 +628,10 @@
 
     reflow();
     sampleScrollState('init', true);
+
+    // Delayed reflow replaces the old window.load listener which never fires on SPA nav.
+    // This ensures the trigger settles after Barba container swap + Finsweet DOM mutations.
+    scheduleDelayedReflow(600);
     scheduleDelayedReflow(2000);
 
     var api = {
@@ -673,7 +672,6 @@
 
       window.removeEventListener('resize', onResize);
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('load', onWindowLoad);
 
       clearTween();
 

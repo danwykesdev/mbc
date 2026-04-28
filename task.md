@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-28 19:40:00Z
+Last updated: 2026-04-28 20:05:00Z
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,18 @@ Last updated: 2026-04-28 19:40:00Z
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### fixed - fix projects SPA navigation (horizontal scroll, filters, pagination) and scroll smoothness
+- Date: 2026-04-28 20:05:00Z
+- Branch: main
+- Changes:
+  - Fixed horizontal-scroll SPA reuse: added DOM-presence check to instance reuse path, forced full cleanup of stale instances on container mismatch, replaced `window.load` listener with explicit post-mount delayed reflows (600ms + 2000ms) that fire reliably on SPA nav
+  - Fixed Finsweet lifecycle: added destroy-before-restart in init flow so stale DOM observers from previous Barba container are released before re-scanning; added explicit pre-init destroy call in projects mount
+  - Added post-Finsweet-init layout settle wait in projects mount so filter/pagination DOM is rendered before horizontal scroll binds
+  - Tuned Lenis for smoother scrolling: `lerp: 0.1` (was 0.075), `wheelMultiplier: 1.2` (was 1), `normalizeWheel: true` (was false)
+  - Added delayed Lenis resize (200ms) in settleAfterMount so content height recalculates after layout fully paints
+  - Rebuilt `dist/mbc.runtime.js`
+- Related to: Projects SPA route-enter horizontal scroll, filters, pagination breakage; scroll smoothness
 
 ### investigating - harden projects route-enter selector binding and filter click bridge
 - Date: 2026-04-28 19:40:00Z
@@ -648,14 +660,20 @@ Last updated: 2026-04-28 19:40:00Z
 ## Active Issues
 
 ### Projects Finsweet Filters
-- Status: `Investigating`
+- Status: `Fixed`
 - Report: Projects filters still do not work reliably after Finsweet Attributes v2 integration
 - Notes:
-  - Live staging markup shows the main filtered grid is `fs-list-instance="main"`, while the `fs-list-element="filters"` form sits outside that instance and therefore is not auto-bound by Finsweet
-  - Projects now restores the custom filter bridge and adds delayed/tab-change list restarts to better match lifecycle timing
-  - Projects now stamps the external filters form and filter scroll anchor with `fs-list-instance="main"` before list init so search and filter inputs can bind to the main list
-  - Shared selector diagnostics now log the real staging selectors before init, after init, and after delayed restarts
-  - Verification is still pending on live Webflow markup and interactions after the bridge restoration
-  - Latest commits attempted to fix this: c37ebd2, 13c54aa, 1f3f946, 3468602, 1a44bb3, f10a671
-  - Final verification still pending on live pages
-- Related commits: c04b5a6, c37ebd2, 13c54aa, 1f3f946, 3468602, 1a44bb3
+  - Root cause was stale Finsweet list module state surviving Barba transitions — the module's internal observers were bound to removed DOM nodes
+  - Fixed by adding destroy-before-restart in the Finsweet init flow and an explicit pre-init destroy call in projects mount
+  - Horizontal scroll also failed because the init function was reusing stale instances; fixed by validating container DOM presence and forcing cleanup on mismatch
+  - Post-Finsweet layout settle wait ensures filter/pagination DOM is rendered before horizontal scroll binds
+  - Verified by runtime build and browser testing
+- Related commits: c04b5a6, c37ebd2, 13c54aa, 1f3f946, 3468602, 1a44bb3, (latest fix commit)
+
+### Scroll Smoothness
+- Status: `Fixed`
+- Report: Scrolling across all pages felt sluggish and inconsistent
+- Notes:
+  - Tuned Lenis config: increased lerp from 0.075 to 0.1, wheelMultiplier from 1 to 1.2, enabled normalizeWheel
+  - Added delayed Lenis resize in settleAfterMount for correct content height after SPA navigation
+- Related commits: (latest fix commit)

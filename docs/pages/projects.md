@@ -104,12 +104,14 @@ Main mount function with Finsweet and tab handling.
 ## Initialization Sequence
 
 1. **Setup**: Set nav state, bind horizontal scroll and stagger hover (early)
-2. **Finsweet Init**: Destroy stale list state, then initialize Finsweet list/filter on projects roots
-3. **Post-Init Sync**: Apply card inset, rebind features, refresh triggers, and log selector diagnostics
-4. **Tab State**: Set initial tab filter states
-5. **Tab Observer**: Set up MutationObserver for tab changes
-6. **Delayed Reflow**: Rebind features after content settles
-7. **Search Handler**: Set up search clear functionality
+2. **Finsweet Destroy**: Destroy stale Finsweet state from previous SPA page visit
+3. **Finsweet Init**: Initialize Finsweet list/filter on projects roots (destroy + restart internally)
+4. **Layout Settle**: Wait for Finsweet to render filter/pagination DOM before binding features
+5. **Post-Init Sync**: Apply card inset, rebind features, refresh triggers, and log selector diagnostics
+6. **Tab State**: Set initial tab filter states
+7. **Tab Observer**: Set up MutationObserver for tab changes
+8. **Delayed Reflow**: Rebind features after content settles
+9. **Search Handler**: Set up search clear functionality
 
 ## Important Notes
 

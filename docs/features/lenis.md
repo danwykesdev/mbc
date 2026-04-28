@@ -11,10 +11,10 @@ This module initializes Lenis smooth scrolling. Lenis provides smooth, momentum-
 - Also stores it on `window.lenis` for external access
 
 ### Configuration
-- `lerp: 0.1` - Linear interpolation factor (lower = smoother)
-- `wheelMultiplier: 0.7` - Reduces scroll speed for better control
+- `lerp: 0.1` - Linear interpolation factor for responsive, smooth scrolling
+- `wheelMultiplier: 1.2` - Slightly boosted wheel response for natural feel
 - `gestureOrientation: "vertical"` - Only vertical gestures
-- `normalizeWheel: false` - Don't normalize wheel events
+- `normalizeWheel: true` - Normalizes wheel events for consistent cross-device behavior
 - `smoothTouch: false` - Disable smooth scrolling on touch devices
 
 ### GSAP Integration
@@ -44,6 +44,9 @@ The GSAP ticker integration is critical. It ensures Lenis updates synchronously 
 
 ### Touch Devices
 Smooth scrolling is disabled on touch devices (`smoothTouch: false`) because touch scrolling is already smooth on mobile devices and adding Lenis can cause conflicts.
+
+### SPA Navigation
+After a Barba page transition, the main.js `settleAfterMount` function calls `lenis.resize()` immediately and again after a 200ms delay. The delayed resize ensures Lenis recalculates content height after the new container's layout has fully painted.
 
 ## Dependencies
 - Lenis library (must be loaded before this module)

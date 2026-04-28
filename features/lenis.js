@@ -9,10 +9,10 @@
     if (typeof Lenis === "undefined") return null;
 
     var lenis = new Lenis({
-      lerp: 0.075,
-      wheelMultiplier: 1,
+      lerp: 0.1,
+      wheelMultiplier: 1.2,
       gestureOrientation: "vertical",
-      normalizeWheel: false,
+      normalizeWheel: true,
       smoothTouch: false
     });
 

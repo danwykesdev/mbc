@@ -54,7 +54,7 @@ Recalculates and recreates the scroll trigger. Called on resize or when layout c
 ## Important Notes
 
 ### Single Instance
-The module maintains a single active instance. If initialized again, it cleans up the previous instance first. This prevents conflicts.
+The module maintains a single active instance. If initialized with a different container (e.g. after a Barba SPA transition), it fully cleans up the previous instance before creating a new one. The reuse path only activates when the same container is passed AND it's still present in the live DOM.
 
 ### Panel Requirements
 - Requires at least 2 panels to create a horizontal scroll effect
@@ -71,7 +71,7 @@ The feature ignores height-only resize churn and only recreates the trigger when
 On touch devices or widths at `<= 991px`, the feature suppresses ResizeObserver-driven and delayed auto-reflows after the initial trigger creation. This avoids repeated trigger recreation while the user is actively scrolling through the pinned section.
 
 ### Delayed Reflow
-The module schedules delayed reflows at 700ms and 2000ms after initialization on desktop layouts. Touch/tablet layouts suppress those automatic reflows and rely on the initial setup plus explicit page-driven `reflow()` calls after Home finishes settling.
+The module schedules delayed reflows at 600ms and 2000ms after initialization. This replaces the old `window.load` listener which only fired on hard loads and never on SPA navigation. Touch/tablet layouts suppress the automatic reflows and rely on the initial setup plus explicit page-driven `reflow()` calls.
 
 ### Trigger ID
 Uses a fixed ID 'horizontal-pin' for the ScrollTrigger. This allows targeted cleanup and prevents conflicts with other triggers.

@@ -311,6 +311,7 @@ Responsible for:
 Key idea:
 
 - projects has late DOM/layout dependencies, so some behavior rebinds after filter, search, pagination, or tab changes; the page module forces `pagination` by default unless a page-level override sets `data-projects-list-load` or `data-list-load`
+- projects explicitly destroys stale Finsweet state before re-init on SPA navigation and waits for layout to settle after Finsweet init before binding horizontal scroll
 
 ### `pages/project-detail.js`
 
@@ -409,6 +410,7 @@ Use it when changing:
 - list destroy / SPA re-entry cleanup behavior
 - modal reinjection flow
 - module detection/restart logic
+- on SPA navigation, the init flow destroys each module before restarting to release stale DOM observers from previous Barba containers
 
 ### `features/horizontal-scroll.js`
 
@@ -423,6 +425,8 @@ Important:
 - horizontal-scroll logs are prefixed with `[MBC HorizontalScroll Debug]` so they stay visible without enabling broader trace output
 - horizontal-scroll diagnostics should log abort reasons and pin-spacer metrics while this iPad issue is under investigation
 - touch/tablet layouts should suppress ResizeObserver and delayed auto-reflows after the trigger is created, otherwise the pinned section can keep resetting instead of progressing
+- on SPA navigation, the init function validates the container is still in the live DOM before reusing an instance; if the container was swapped by Barba, the old instance is fully cleaned up first
+- the old `window.load` listener was replaced with explicit post-mount delayed reflows (600ms + 2000ms) that fire reliably on SPA navigation
 
 ### `features/stagger-hover.js`
 

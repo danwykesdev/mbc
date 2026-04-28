@@ -32,7 +32,8 @@ Two different initialization paths based on what's needed:
 
 #### Full Library Path
 - Uses the full Finsweet Attributes library
-- Loads and restarts list, slider, and filter modules
+- Destroys each module first to release stale DOM observers from previous Barba containers
+- Then loads and restarts list, slider, and filter modules
 - Used on pages with lists, filters, or sliders (projects, zine)
 
 ### Cache-Busting for SPA Transitions

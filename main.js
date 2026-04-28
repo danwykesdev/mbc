@@ -376,6 +376,15 @@
     if (typeof ScrollTrigger !== 'undefined') {
       ScrollTrigger.refresh(true);
     }
+
+    // Secondary delayed resize so Lenis recalculates content height after layout fully settles
+    if (MBC.core.state.lenis && typeof MBC.core.state.lenis.resize === 'function') {
+      setTimeout(function () {
+        if (MBC.core.state.lenis && typeof MBC.core.state.lenis.resize === 'function') {
+          MBC.core.state.lenis.resize();
+        }
+      }, 200);
+    }
   }
 
   function mountRoute(data, opts) {
