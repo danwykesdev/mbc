@@ -10,8 +10,12 @@ When generating code or answering questions in this repository, you must follow 
 - **`core/`**: Infrastructure logic (State, Utilities, Page Registry, Cleanup Stacks, Webflow Manager).
 - **`features/`**: Shared behaviors used across multiple pages (e.g., `finsweet.js`, `horizontal-scroll.js`, `videos.js`, `nav.js`).
 - **`pages/`**: Route-specific modules exporting `webflowTier`, `mount(ctx)`, and `unmount()`.
+- **`debug/`**: Browser-side debug commands for copying and exporting runtime state.
 - **`docs/`**: Detailed documentation for every module. ALWAYS consult this folder first if you need to understand how a specific file works.
 - **`agent.md`**: The master guide for agents. Consult this for high-level architectural understanding.
+
+## Debug
+- [debug/README.md](debug/README.md) - route history export/copy/clear helpers and the flags used to enable runtime diagnostics.
 
 ## What to IGNORE (Extremely Important)
 - **DO NOT** read or modify files in `legacy/`. This folder contains deprecated monolith code (`script.js`, `app.js`).
