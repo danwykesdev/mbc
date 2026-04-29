@@ -38,6 +38,17 @@
   async function unmountCurrent(token) {
     var state = MBC.core.state;
     var utils = MBC.core.utils;
+    var routeDebug = utils && typeof utils.logRouteState === "function" ? utils.logRouteState : null;
+    var currentNamespace = state.currentNamespace || "default";
+    var currentContainer = state.currentContainer || document;
+
+    if (routeDebug) {
+      routeDebug("lifecycle unmount start " + currentNamespace, currentContainer, {
+        phase: "unmount-start",
+        namespace: currentNamespace,
+        previousNamespace: currentNamespace
+      });
+    }
 
     if (state.currentPageModule && typeof state.currentPageModule.unmount === "function") {
       utils.safeCall(function () {
@@ -45,7 +56,23 @@
       }, "page unmount failed");
     }
 
+    if (MBC.features && MBC.features.finsweet && typeof MBC.features.finsweet.destroy === "function") {
+      try {
+        await MBC.features.finsweet.destroy({ timeout: 800 });
+      } catch (err) {
+        console.warn("[MBC] Finsweet destroy on unmount failed", err);
+      }
+    }
+
     MBC.core.cleanup.runPage();
+
+    if (routeDebug) {
+      routeDebug("lifecycle unmount done " + currentNamespace, currentContainer, {
+        phase: "unmount-done",
+        namespace: currentNamespace,
+        previousNamespace: currentNamespace
+      });
+    }
 
     state.currentPageModule = null;
     state.currentNamespace = "";
@@ -56,15 +83,30 @@
     var options = opts || {};
     var state = MBC.core.state;
     var utils = MBC.core.utils;
+    var routeDebug = utils && typeof utils.logRouteState === "function" ? utils.logRouteState : null;
     var registry = MBC.core.registry;
 
     var token = state.nextToken();
+    var previousNamespace = state.currentNamespace || "default";
+    var previousContainer = state.currentContainer || document;
     var namespace = utils.normalizeNamespace(data && data.next ? data.next.namespace : "");
     var container = data && data.next ? data.next.container : document;
     var pageModule = registry.get(namespace);
 
     state.currentNamespace = namespace;
     state.currentContainer = container;
+
+    if (routeDebug) {
+      routeDebug("lifecycle mount start " + namespace, container, {
+        phase: "mount-start",
+        pageNamespace: namespace,
+        namespace: namespace,
+        previousNamespace: previousNamespace,
+        previousContainerNamespace: previousContainer && previousContainer.getAttribute ? previousContainer.getAttribute("data-barba-namespace") || null : null,
+        nextNamespace: namespace,
+        token: token
+      });
+    }
 
     if (!pageModule || typeof pageModule.mount !== "function") {
       console.warn("[MBC] Missing page module for namespace:", namespace);
@@ -107,6 +149,17 @@
 
     if (options.isFirstLoad) {
       state.initialLoadComplete = true;
+    }
+
+    if (routeDebug) {
+      routeDebug("lifecycle mount done " + namespace, container, {
+        phase: "mount-done",
+        pageNamespace: namespace,
+        namespace: namespace,
+        previousNamespace: previousNamespace,
+        nextNamespace: namespace,
+        token: token
+      });
     }
 
     return {

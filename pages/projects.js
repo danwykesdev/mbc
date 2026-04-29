@@ -83,6 +83,103 @@
     return el;
   }
 
+  function countProjectsDynItems(root) {
+    if (!root || typeof root.querySelectorAll !== 'function') {
+      return 0;
+    }
+
+    try {
+      return root.querySelectorAll('.w-dyn-item').length;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function isInvalidProjectsListRoot(node) {
+    if (!node || !(node instanceof Element)) {
+      return true;
+    }
+
+    return !!(
+      node.closest('.cms__filters') ||
+      node.closest('[fs-list-element="filters"]') ||
+      node.closest('form')
+    );
+  }
+
+  function resolveProjectsListRoot(container) {
+    var candidates = Array.from(container.querySelectorAll('[fs-list-element="list"]')).filter(function (node) {
+      return !isInvalidProjectsListRoot(node);
+    });
+
+    if (!candidates.length) {
+      candidates = Array.from(container.querySelectorAll('[fs-list-element="list"]'));
+    }
+
+    if (!candidates.length) {
+      return null;
+    }
+
+    candidates.sort(function (left, right) {
+      var leftIsMain = left.getAttribute('fs-list-instance') === 'main' ? 1 : 0;
+      var rightIsMain = right.getAttribute('fs-list-instance') === 'main' ? 1 : 0;
+
+      if (leftIsMain !== rightIsMain) {
+        return rightIsMain - leftIsMain;
+      }
+
+      return countProjectsDynItems(right) - countProjectsDynItems(left);
+    });
+
+    return candidates[0];
+  }
+
+  function normalizeProjectsListRoot(container) {
+    var listRoot = resolveProjectsListRoot(container);
+    var allListRoots = Array.from(container.querySelectorAll('[fs-list-element="list"]'));
+
+    allListRoots.forEach(function (node) {
+      if (node === listRoot) {
+        return;
+      }
+
+      node.removeAttribute('fs-list-element');
+      if (node.hasAttribute('fs-list-instance')) {
+        node.removeAttribute('fs-list-instance');
+      }
+    });
+
+    if (listRoot) {
+      listRoot.setAttribute('fs-list-element', 'list');
+      listRoot.setAttribute('fs-list-instance', listRoot.getAttribute('fs-list-instance') || 'main');
+    }
+
+    return listRoot;
+  }
+
+  function syncProjectsMainListInstance(container, listRoot) {
+    var list = listRoot || resolveProjectsListRoot(container);
+    if (!list) return null;
+
+    var instanceName = list.getAttribute('fs-list-instance') || 'main';
+    var filtersForm = queryOne(container, '[fs-list-element="filters"]');
+    var scrollAnchor = queryOne(container, '[fs-list-element="scroll-anchor"], [fs-list-element="scroll-anchor-filter"]');
+
+    if (filtersForm) {
+      filtersForm.setAttribute('fs-list-instance', instanceName);
+    }
+
+    if (scrollAnchor) {
+      scrollAnchor.setAttribute('fs-list-instance', instanceName);
+    }
+
+    return {
+      instanceName: instanceName,
+      hasFiltersForm: !!filtersForm,
+      hasScrollAnchor: !!scrollAnchor
+    };
+  }
+
 
 
   function detectProjectsFinsweetModules(container) {
@@ -131,6 +228,31 @@
     return null;
   }
 
+  var PROJECTS_ROUTE_DEBUG_SELECTORS = {
+    listElements: '[fs-list-element]',
+    listItems: '[fs-list-element="item"]',
+    filterElements: '[fs-filter-element]',
+    filterInputs: 'input[fs-list-field], input[fs-list-value], select[fs-list-field], textarea[fs-list-field]',
+    filters: '.filters__item',
+    paginationNext: '[data-pagination-next], [fs-list-element="pagination-next"]',
+    paginationPrev: '[data-pagination-prev], [fs-list-element="pagination-previous"]',
+    dynLists: '.w-dyn-list',
+    dynItems: '.w-dyn-item',
+    paginationButtons: '.w-pagination-next, .w-pagination-previous'
+  };
+
+  function logProjectsRouteState(routeDebug, label, container, meta) {
+    if (typeof routeDebug !== 'function') {
+      return null;
+    }
+
+    return routeDebug(label, container, {
+      phase: meta && meta.phase ? meta.phase : null,
+      namespace: 'projects',
+      selectors: PROJECTS_ROUTE_DEBUG_SELECTORS
+    });
+  }
+
   function applyProjectsCardBottomInset(container) {
     var wrap = container.querySelector('[data-horizontal-scroll-wrap]');
     if (!wrap) return;
@@ -170,6 +292,7 @@
     var staggerHoverCleanup = null;
     var didInitialBindings = false;
     var isUnmounted = false;
+    var projectsListReady = false;
     var restartInFlight = null;
     var queuedRestartReason = '';
     var traceAsync = MBC.core && MBC.core.utils && MBC.core.utils.traceAsync
@@ -178,6 +301,9 @@
     var traceSync = MBC.core && MBC.core.utils && MBC.core.utils.traceSync
       ? MBC.core.utils.traceSync
       : function (_, fn) { return fn(); };
+    var routeDebug = MBC.core && MBC.core.utils && typeof MBC.core.utils.logRouteState === 'function'
+      ? MBC.core.utils.logRouteState
+      : null;
 
     function bindHorizontalScroll(label) {
       if (!MBC.features.horizontalScroll || typeof MBC.features.horizontalScroll.init !== 'function') {
@@ -228,6 +354,14 @@
 
       if (typeof ScrollTrigger !== 'undefined') {
         ScrollTrigger.refresh(true);
+
+        // Add a delayed refresh to handle SPA transitions where the old Barba container
+        // temporarily pushes the new container down, causing wrong ScrollTrigger start positions.
+        setTimeout(function() {
+          if (!isUnmounted && typeof ScrollTrigger !== 'undefined') {
+            ScrollTrigger.refresh(true);
+          }
+        }, 500);
       }
 
       if (MBC.features.horizontalScroll && typeof MBC.features.horizontalScroll.reflow === 'function') {
@@ -236,6 +370,10 @@
           MBC.features.horizontalScroll.reflow();
         }, 60);
       }
+
+      logProjectsRouteState(routeDebug, 'projects after bindings ' + reason, container, {
+        phase: 'projects-after-bindings'
+      });
     }
 
     function isProjectsListModuleReady() {
@@ -269,7 +407,7 @@
 
       var restartReason = String(reason || 'update');
 
-      if (!isProjectsListModuleReady()) {
+      if (!projectsListReady || !isProjectsListModuleReady()) {
         queuedRestartReason = restartReason;
         return Promise.resolve();
       }
@@ -412,27 +550,59 @@
         }
 
         // Fix user HTML mistake: fs-list-element="list" should NOT be on the filters
-        // var filterWrappers = container.querySelectorAll('.cms__filters');
-        // Array.from(filterWrappers).forEach(function(wrapper) {
-        //   if (wrapper.getAttribute('fs-list-element') === 'list') {
-        //     wrapper.removeAttribute('fs-list-element');
-        //   }
-        //   var childLists = wrapper.querySelectorAll('[fs-list-element="list"]');
-        //   Array.from(childLists).forEach(function(child) {
-        //     child.removeAttribute('fs-list-element');
-        //   });
-        // });
+        var filterWrappers = container.querySelectorAll('.cms__filters');
+        Array.from(filterWrappers).forEach(function(wrapper) {
+          if (wrapper.getAttribute('fs-list-element') === 'list') {
+            wrapper.removeAttribute('fs-list-element');
+          }
+          var childLists = wrapper.querySelectorAll('[fs-list-element="list"]');
+          Array.from(childLists).forEach(function(child) {
+            child.removeAttribute('fs-list-element');
+          });
+        });
 
-        // Explicitly destroy scroll anchors to prevent Finsweet from jumping to top on filter tab click
-        // var anchors = container.querySelectorAll('[fs-list-element="scroll-anchor"], [fs-list-element="scroll-anchor-filter"], [fs-cmsfilter-element="scroll-anchor"]');
-        // Array.from(anchors).forEach(function (anchor) {
-        //   anchor.removeAttribute('fs-list-element');
-        //   anchor.removeAttribute('fs-cmsfilter-element');
-        // });
+        var listRoot = normalizeProjectsListRoot(container);
+        syncProjectsMainListInstance(container, listRoot);
+
+        if (routeDebug) {
+          routeDebug('projects finsweet before init', container, {
+            phase: 'projects-finsweet-before-init',
+            namespace: 'projects',
+            selectors: {
+              listElements: '[fs-list-element]',
+              filterElements: '[fs-filter-element]',
+              filterInputs: 'input[fs-list-field], input[fs-list-value], select[fs-list-field], textarea[fs-list-field]',
+              filters: '.filters__item',
+              paginationNext: '[data-pagination-next], [fs-list-element="pagination-next"]',
+              paginationPrev: '[data-pagination-prev], [fs-list-element="pagination-previous"]',
+              dynLists: '.w-dyn-list',
+              dynItems: '.w-dyn-item'
+            }
+          });
+        }
 
         await traceAsync('projects finsweet init', function () {
           return MBC.features.finsweet.init(container, { modules: finsweetModules, label: 'projects' });
         }).catch(function () { });
+
+        if (routeDebug) {
+          routeDebug('projects finsweet after init', container, {
+            phase: 'projects-finsweet-after-init',
+            namespace: 'projects',
+            selectors: {
+              listElements: '[fs-list-element]',
+              filterElements: '[fs-filter-element]',
+              filterInputs: 'input[fs-list-field], input[fs-list-value], select[fs-list-field], textarea[fs-list-field]',
+              filters: '.filters__item',
+              paginationNext: '[data-pagination-next], [fs-list-element="pagination-next"]',
+              paginationPrev: '[data-pagination-prev], [fs-list-element="pagination-previous"]',
+              dynLists: '.w-dyn-list',
+              dynItems: '.w-dyn-item'
+            }
+          });
+        }
+
+        projectsListReady = isProjectsListModuleReady();
 
         // Wait for Finsweet to render its filter/pagination DOM before binding
         var waitForLayout = MBC.core && MBC.core.utils && MBC.core.utils.waitForLayout;
@@ -442,7 +612,23 @@
           });
         }
 
+        if (projectsListReady && queuedRestartReason) {
+          var initialQueuedReason = queuedRestartReason;
+          queuedRestartReason = '';
+          restartProjectsList(initialQueuedReason + ' initial queued');
+        }
+
         refreshProjectsBindings('after finsweet');
+
+        setTimeout(function () {
+          if (isUnmounted) {
+            return;
+          }
+
+          logProjectsRouteState(routeDebug, 'projects delayed settle', container, {
+            phase: 'projects-delayed-settle'
+          });
+        }, 500);
       }
     }
 
@@ -509,7 +695,9 @@
           if (isActive) {
             setTimeout(function () {
               animatePaneFilters(pane);
-              restartProjectsList('tab change');
+              // Note: tab pane switches only reveal filter inputs.
+              // Do NOT call restartProjectsList here — it triggers ScrollTrigger.refresh()
+              // which internally calls window.scrollTo(0, 0) and scrolls the user to top.
             }, 20);
           } else {
             setPaneFiltersInactive(pane);
@@ -582,7 +770,7 @@
   function unmount() { }
 
   var moduleDef = {
-    webflowTier: 'light',
+    webflowTier: 'strong',
     mount: mount,
     unmount: unmount
   };

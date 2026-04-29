@@ -3,10 +3,51 @@
   var MBC = window.MBC;
 
   MBC.core = MBC.core || {};
+  var BODY_PERSISTENT_CLASSES = {
+    'animations-ready': true
+  };
+  var BODY_SYNC_ATTRIBUTES = [
+    'data-theme-section',
+    'data-theme-nav',
+    'data-nav-theme',
+    'data-bg-nav',
+    'data-nav-blur'
+  ];
+
+  function syncBodyState(nextBody) {
+    if (!nextBody || !document.body) return;
+
+    var classes = {};
+
+    Array.from(document.body.classList || []).forEach(function (className) {
+      if (BODY_PERSISTENT_CLASSES[className]) {
+        classes[className] = true;
+      }
+    });
+
+    Array.from(nextBody.classList || []).forEach(function (className) {
+      if (className) {
+        classes[className] = true;
+      }
+    });
+
+    document.body.className = Object.keys(classes).join(' ');
+
+    BODY_SYNC_ATTRIBUTES.forEach(function (attrName) {
+      var attrValue = nextBody.getAttribute(attrName);
+
+      if (attrValue === null || attrValue === undefined || attrValue === '') {
+        document.body.removeAttribute(attrName);
+        return;
+      }
+
+      document.body.setAttribute(attrName, attrValue);
+    });
+  }
 
   /**
-   * Update Webflow page ID from Barba data
-   * This ensures IX2/IX3 targets the correct page config
+   * Update page-level state from Barba data
+   * This keeps Webflow page targeting and body state aligned with the next HTML.
    */
   function updatePageIdFromBarba(data) {
     if (!data || !data.next || !data.next.html) return;
@@ -19,6 +60,8 @@
       if (newPageId) {
         document.documentElement.setAttribute("data-wf-page", newPageId);
       }
+
+      syncBodyState(nextDoc.body);
     } catch (err) {
       console.warn("[MBC] updatePageIdFromBarba failed", err);
     }

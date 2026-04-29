@@ -33,7 +33,8 @@ Two different initialization paths based on what's needed:
 #### Full Library Path
 - Uses the full Finsweet Attributes library
 - Destroys each module first to release stale DOM observers from previous Barba containers
-- Then loads and restarts list, slider, and filter modules
+- Fresh init calls use a load-only path that waits briefly after `load()` before layout rebinds
+- Route-update restarts still reload and restart list, slider, and filter modules
 - Used on pages with lists, filters, or sliders (projects, zine)
 
 ### Cache-Busting for SPA Transitions
@@ -43,15 +44,17 @@ Two different initialization paths based on what's needed:
 - Critical for ensuring modal works after SPA transitions
 
 ### Module Restart
-- `restartModule(fs, moduleName, maxWait)` - safely restarts a Finsweet module
+- `restartModule(fs, moduleName, maxWait, options)` - safely restarts a Finsweet module
 - Waits for module loading to complete
 - Loads module if not already loaded
-- Calls the module's restart method
+- When `options.init === true`, skips the render-only restart after load and adds a short settle wait before returning
+- Calls the module's restart method for non-init refreshes
 - Handles timeouts and errors gracefully
 
 ### Module Destruction
 - `destroyModule(fs, moduleName)` - destroys a Finsweet module
 - Calls the module's destroy method if available
+- Removes the destroyed module from `fs.modules` so SPA route entries cannot inherit a stale live module object
 - Used for cleanup before reinitialization
 
 ### Diagnostic Inspection
@@ -90,6 +93,9 @@ Browser ES module caching prevents re-execution even if script tags are re-appen
 ### Module Mapping
 - 'filter' and 'slider' are not separate modules - they're features of the 'list' module
 - When requesting filter or slider, the code actually requests and restarts the list module
+
+### Destroy Semantics On SPA Routes
+The Finsweet runtime can leave destroyed modules registered in `fs.modules`, which makes the next SPA route start from stale module state instead of a fresh load. This integration explicitly removes destroyed entries from `fs.modules` after teardown so the next init path recreates the module cleanly.
 
 ### Task Queue Serialization
 Finsweet operations are serialized through a shared async task chain. Init, restart, and destroy calls queue in order so route transitions cannot run overlapping Finsweet list mutations.

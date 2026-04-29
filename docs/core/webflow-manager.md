@@ -8,6 +8,7 @@ This module manages Webflow integration for the SPA system. It handles Webflow's
 ### Page ID Updates
 - `updatePageIdFromBarba(data)` - extracts the Webflow page ID from Barba's next page HTML
 - Updates the document's data-wf-page attribute so IX2/IX3 targets the correct page config
+- Also syncs `body` classes and runtime body data attributes from `next.html`, because `body` lives outside the Barba container and is not replaced automatically
 - Critical for ensuring animations work correctly after SPA transitions
 
 ### ScrollTrigger Cleanup
@@ -65,7 +66,7 @@ For minimal updates:
 ## Key Functions
 
 ### `updatePageIdFromBarba(data)`
-Parses the next page HTML from Barba data and extracts the data-wf-page attribute. Updates the current document to match. This ensures Webflow's animation system targets the correct page configuration.
+Parses the next page HTML from Barba data, extracts the data-wf-page attribute, and syncs body state that Barba leaves outside the container swap. This ensures Webflow's animation system targets the correct page configuration while preventing stale body classes/data attributes from leaking across routes.
 
 ### `killScrollTriggers()`
 Iterates through all ScrollTrigger instances and kills them. This prevents scroll-based animations from the previous page interfering with the new page.
@@ -102,4 +103,5 @@ var moduleDef = {
 - "strong" is safest but slowest; "light" is fastest but least thorough
 - IX3 requires the readystatechange trick for reliable SPA behavior
 - Always kill ScrollTriggers before page transitions
+- Barba does not replace `body`, so any page-level body classes or body-scoped data attributes must be synchronized manually from `next.html`
 - The page module's webflowTier property determines which tier to use

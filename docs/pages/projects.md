@@ -8,10 +8,10 @@ This is the page module for the Projects page. It handles Finsweet list/filter i
 ### Finsweet Integration
 - Initializes Finsweet list/filter controls for Projects
 - Supports Finsweet-powered filter buttons, search inputs, and list refresh
+- Normalizes the Projects DOM to one canonical `fs-list-element="list"` root before Finsweet init so duplicate list markers cannot trigger wrapper multiplication on SPA entry
 - Re-attaches the external filters form and filter scroll anchor to the `main` list instance before Finsweet initializes
 - Supports both live scroll-anchor contracts: `fs-list-element="scroll-anchor"` and `fs-list-element="scroll-anchor-filter"`
-- Defaults the list load mode to `pagination` unless a page-level override sets `data-projects-list-load` or `data-list-load`
-- Supports Finsweet's official load modes only: `more`, `all`, `infinite`, and `pagination`
+- Uses the init-safe Finsweet load path on SPA entry so the list can finish its async load sequence before layout rebinds
 - Re-syncs layout-sensitive features after Finsweet list updates
 - Queues restart requests until the list module is confirmed ready on route enter
 - Re-runs the list after delayed layout settling and tab changes
@@ -82,6 +82,7 @@ Main mount function with Finsweet and tab handling.
 - `triggerProjectsFilterInput(input)` - triggers filter change
 - `restartProjectsList(reason)` - restarts the Finsweet list and re-syncs layout bindings
 - `logProjectsDiagnostics(container, label)` - logs key selector counts for debugging
+- `normalizeProjectsListRoot(container)` - chooses one canonical Projects list root and strips duplicate `fs-list-element="list"` markers before Finsweet boots
 - `syncProjectsMainListInstance(container)` - assigns the external filters form and scroll anchor to the `main` Finsweet instance when Webflow renders them outside the list wrapper
 - `applyProjectsCardBottomInset(container)` - applies spacing
 
@@ -105,8 +106,8 @@ Main mount function with Finsweet and tab handling.
 
 1. **Setup**: Set nav state, bind horizontal scroll and stagger hover (early)
 2. **Finsweet Destroy**: Destroy stale Finsweet state from previous SPA page visit
-3. **Finsweet Init**: Initialize Finsweet list/filter on projects roots (destroy + restart internally)
-4. **Layout Settle**: Wait for Finsweet to render filter/pagination DOM before binding features
+3. **Finsweet Init**: Initialize Finsweet list/filter on projects roots (destroy + load-only init internally; restart remains available for later updates)
+4. **Layout Settle**: Wait for Finsweet to render filter/pagination DOM and settle before binding features
 5. **Post-Init Sync**: Apply card inset, rebind features, refresh triggers, and log selector diagnostics
 6. **Tab State**: Set initial tab filter states
 7. **Tab Observer**: Set up MutationObserver for tab changes
@@ -121,9 +122,11 @@ Uses 'light' tier because the Projects page relies more on Finsweet and custom f
 ### Finsweet Root Contract
 The page expects a `main` list instance for the filtered project grid and a standard `fs-list-element="filters"` form for search and filter inputs. If Webflow renders the filters form outside `fs-list-instance="main"`, the page module re-attaches that form and the filter scroll anchor to the `main` instance before Finsweet boots.
 
+If multiple `fs-list-element="list"` nodes are present in the Projects container, the page module picks the canonical list root with the strongest main-list signal and strips the `list` marker from the rest before Finsweet initializes.
+
 The page also supports both live scroll-anchor selector variants on staging and production deploys, so either `fs-list-element="scroll-anchor"` or `fs-list-element="scroll-anchor-filter"` can be used.
 
-The Projects list load mode is set by the page module. It defaults to `fs-list-load="pagination"` and can be overridden with `data-projects-list-load` or `data-list-load` set to one of `more`, `all`, `infinite`, or `pagination`.
+Projects waits for the Finsweet init path to settle before the first horizontal-scroll and ScrollTrigger refresh pass, which keeps the SPA entry contract aligned with the hard-load contract.
 
 ### Custom UI Contract
 If the visible Projects filter or pagination UI does not use native Finsweet attributes directly, the page expects bridgeable wrappers such as `.filters__item` and optional `[data-pagination]` controls.

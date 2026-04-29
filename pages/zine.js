@@ -66,10 +66,29 @@
     var traceSync = MBC.core && MBC.core.utils && MBC.core.utils.traceSync
       ? MBC.core.utils.traceSync
       : function (_, fn) { return fn(); };
+    var routeDebug = MBC.core && MBC.core.utils && typeof MBC.core.utils.logRouteState === 'function'
+      ? MBC.core.utils.logRouteState
+      : null;
 
     if (MBC.features.finsweet && typeof MBC.features.finsweet.inspect === 'function') {
       traceSync('zine finsweet inspect before init', function () {
         MBC.features.finsweet.inspect(container, 'zine before init');
+      });
+    }
+
+    if (routeDebug) {
+      routeDebug('zine before finsweet init', container, {
+        phase: 'zine-finsweet-before-init',
+        namespace: 'zine',
+        selectors: {
+          listElements: '[fs-list-element]',
+          tabsRoots: '[fs-list-element="tabs"]',
+          tabLinks: '[data-w-tab]',
+          paginationNext: '[data-pagination-next], [fs-list-element="pagination-next"]',
+          paginationPrev: '[data-pagination-prev], [fs-list-element="pagination-previous"]',
+          dynLists: '.w-dyn-list',
+          dynItems: '.w-dyn-item'
+        }
       });
     }
 
@@ -87,6 +106,22 @@
           return MBC.features.finsweet.init(container, { modules: finsweetModules, label: 'zine' });
         });
       }
+    }
+
+    if (routeDebug) {
+      routeDebug('zine after finsweet init', container, {
+        phase: 'zine-finsweet-after-init',
+        namespace: 'zine',
+        selectors: {
+          listElements: '[fs-list-element]',
+          tabsRoots: '[fs-list-element="tabs"]',
+          tabLinks: '[data-w-tab]',
+          paginationNext: '[data-pagination-next], [fs-list-element="pagination-next"]',
+          paginationPrev: '[data-pagination-prev], [fs-list-element="pagination-previous"]',
+          dynLists: '.w-dyn-list',
+          dynItems: '.w-dyn-item'
+        }
+      });
     }
 
     await traceAsync('zine waitForListTabs', function () {

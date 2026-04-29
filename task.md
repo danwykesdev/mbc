@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-28 20:05:00Z
+Last updated: 2026-04-29 18:38:00Z
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -9,11 +9,105 @@ Last updated: 2026-04-28 20:05:00Z
 
 ## Commit History
 
+### investigating - clear destroyed Finsweet modules from fs.modules
+- Date: 2026-04-29 18:38:00Z
+- Branch: main
+- Changes:
+  - Updated `features/finsweet.js` so `destroyModule()` removes the destroyed module from `fs.modules` after teardown
+  - Latest route logs showed the failing SPA path entered Projects with `fs.modules.list` already alive before page init, unlike hard load
+  - Kept the canonical Projects list-root normalization in place and rebuilt the runtime
+- Related to: Projects SPA pagination still failing because stale Finsweet list state survives across routes
+
+### investigating - normalize Projects to one canonical Finsweet list root
+- Date: 2026-04-29 18:20:00Z
+- Branch: main
+- Changes:
+  - Updated `pages/projects.js` to resolve the canonical Projects `fs-list-element="list"` root by heuristic instead of taking the first matching node
+  - Stripped duplicate `fs-list-element="list"` markers and stray `fs-list-instance` values from non-canonical nodes before Finsweet init
+  - Moved the pre-init route snapshot to after DOM normalization so the next verification pass shows the effective Finsweet input state
+- Related to: Projects SPA pagination still broken with exploding `w-dyn-list` / `w-dyn-item` counts in route-debug logs
+
+### fixed - make Finsweet init load-only on Projects SPA entry
+- Date: 2026-04-29 17:45:37Z
+- Branch: main
+- Changes:
+  - Changed `features/finsweet.js` fresh-init flow so it skips the render-only `restart()` call after `load()`
+  - Added a short settle wait in the init path so `fs-list-load="all"` can begin before layout rebinds
+  - Kept `restartFinsweet()` behavior unchanged for live filter/tab refreshes
+- Related to: Projects SPA pagination reload bug
+
+### investigating - restore projects main-instance sync for SPA pagination reloads
+- Date: 2026-04-29 16:04:57Z
+- Branch: main
+- Changes:
+  - Restored Projects-side `main` list-instance wiring so external `fs-list-element="filters"` and `fs-list-element="scroll-anchor"` / `scroll-anchor-filter` are stamped to the active list instance before Finsweet init
+  - Re-enabled Projects route-enter list readiness guards so queued restarts can flush once the list module is actually available
+  - Reverted the Finsweet init-path skip-restart behavior so the list can rebuild pagination state on SPA entry again
+- Related to: Projects SPA reload still creating extra `w-dyn-item` wrappers / blank pagination space
+
+### investigating - remove global fallback from projects fs sync
+- Date: 2026-04-29 16:04:57Z
+- Branch: main
+- Changes:
+  - Removed document-wide fallback from Projects list-root resolution so SPA entry cannot stamp stale Finsweet DOM from a previous page
+  - Stopped rewriting the list root's own `fs-list-instance` attribute; only the external filters form and scroll anchor are synchronized now
+  - Keeping the issue open while validating whether the stale CMS wrappers disappear on Home/Zine → Projects transitions
+- Related to: Finsweet pagination leaving extra CMS wrappers after SPA navigation
+
 ### d0006f9 - Explicitly remove Finsweet scroll anchors to prevent scrolling to top on filter tab clicks
 - Date: 2026-04-28 21:05:00Z
 - Changes:
   - Removed logic that dynamically injected fs-list-instance to scroll anchors.
   - Added explicit removal of fs-list-element="scroll-anchor" and related attributes from the DOM before Finsweet initializes to guarantee it cannot scroll the page upon filter interaction.
+
+### investigating - destroy Finsweet on route leave
+- Date: 2026-04-29 16:50:31Z
+- Branch: main
+- Changes:
+  - Added global Finsweet destroy during page unmount so stale list observers and generated wrappers cannot survive into the next route
+  - Current verification target is Home/Zine → Projects, where the leaked `w-dyn-item` wrappers have been observed
+- Related to: Finsweet pagination leaving extra CMS wrappers after SPA navigation
+
+### investigating - restore projects list-load normalization
+- Date: 2026-04-29 16:50:31Z
+- Branch: main
+- Changes:
+  - Restored Projects list-load normalization so the list root is forced into the documented load mode before Finsweet init
+  - The remaining question is whether the correct load mode prevents the extra `w-dyn-item` wrappers on Home/Zine → Projects transitions
+- Related to: Projects pagination leaving extra CMS wrappers after SPA navigation
+
+### investigating - add route-state debug logging for SPA transitions
+- Date: 2026-04-29 17:05:49Z
+- Branch: main
+- Changes:
+  - Added `MBC.core.utils.logRouteState()` to snapshot route-level feature availability, nav/body state, Lenis, Finsweet, and selector counts
+  - Logged lifecycle mount/unmount boundaries plus Projects and Zine Finsweet init boundaries so route logs can show what persists versus what changes
+  - Verified the runtime build still passes after the instrumentation change
+- Related to: Projects pagination SPA reload debugging after the load-mode hypothesis regressed hard-load filtering/pagination
+
+### investigating - remove projects load-mode mutation
+- Date: 2026-04-29 17:05:49Z
+- Branch: main
+- Changes:
+  - Removed the Projects page mutation that rewrote `fs-list-load` during mount so hard-load filter and pagination behavior returns to the pre-debug contract
+  - Kept the route-state logger and Finsweet destroy-on-unmount in place for SPA diagnosis
+- Related to: Hard-load filtering/pagination regression introduced while chasing the SPA reload bug
+
+### investigating - add delayed projects settle snapshots
+- Date: 2026-04-29 17:05:49Z
+- Branch: main
+- Changes:
+  - Added a Projects-specific route debug snapshot after bindings complete and again after a delayed settle window
+  - The goal is to compare the rendered list, pagination controls, and generated CMS wrappers after Finsweet and ScrollTrigger have both settled
+- Related to: Remaining SPA-only Projects pagination mismatch after identical mount-time init logs
+
+### investigating - add explicit page namespace to route snapshots
+- Date: 2026-04-29 17:05:49Z
+- Branch: main
+- Changes:
+  - Added a dedicated `pageNamespace` field to route snapshots so mount logs state the page name explicitly
+  - Populated that field from lifecycle mount start/done so entry traces are easier to read when comparing hard load versus SPA entry
+- Related to: Route-debug readability during Projects mount comparisons
 
 ### be39060 - Add explicit image load listeners to horizontal scroll to catch layout shifts on SPA navigation
 - Date: 2026-04-28 21:02:00Z

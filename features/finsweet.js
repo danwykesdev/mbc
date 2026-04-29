@@ -59,6 +59,44 @@
     });
   }
 
+  function isPromiseLike(value) {
+    return !!(value && typeof value.then === 'function');
+  }
+
+  async function waitForModuleLoading(moduleState, maxWait) {
+    if (!moduleState || !isPromiseLike(moduleState.loading)) {
+      return null;
+    }
+
+    try {
+      return await Promise.race([moduleState.loading, wait(maxWait)]);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async function waitForListPaginationSettled(moduleResult, maxWait) {
+    if (!Array.isArray(moduleResult) || !moduleResult.length) {
+      return false;
+    }
+
+    var pendingLoads = moduleResult.map(function (listInstance) {
+      return listInstance && isPromiseLike(listInstance.loadingPaginatedItems)
+        ? Promise.resolve(listInstance.loadingPaginatedItems).catch(function () {})
+        : null;
+    }).filter(Boolean);
+
+    if (!pendingLoads.length) {
+      return false;
+    }
+
+    try {
+      await Promise.race([Promise.all(pendingLoads), wait(maxWait)]);
+    } catch (_) {}
+
+    return true;
+  }
+
   /**
    * Wait for Finsweet Attributes to be available
    */
@@ -179,34 +217,46 @@
   /**
    * Restart a specific FS module
    */
-  async function restartModule(fs, moduleName, maxWait) {
+  async function restartModule(fs, moduleName, maxWait, options) {
     maxWait = maxWait || 2000;
+    options = options || {};
+    var moduleState = fs.modules[moduleName];
+    var moduleResult = null;
 
     // Wait for module to finish loading if in progress
-    if (fs.modules[moduleName]?.loading) {
-      try {
-        await Promise.race([fs.modules[moduleName].loading, wait(maxWait)]);
-      } catch (_) {}
-    }
+    moduleResult = await waitForModuleLoading(moduleState, maxWait);
 
     // Always load to re-scan the document for new Barba container elements
     if (typeof fs.load === 'function') {
       try {
-        await Promise.race([fs.load(moduleName), wait(maxWait)]);
+        moduleResult = await Promise.race([fs.load(moduleName), wait(maxWait)]);
       } catch (e) {
         console.warn('[MBC] FS load(' + moduleName + ') failed:', e);
       }
     }
 
     // Wait again after load
-    if (fs.modules[moduleName]?.loading) {
-      try {
-        await Promise.race([fs.modules[moduleName].loading, wait(maxWait)]);
-      } catch (_) {}
+    moduleState = fs.modules[moduleName];
+    var loadingResult = await waitForModuleLoading(moduleState, maxWait);
+    if (loadingResult !== null && loadingResult !== undefined) {
+      moduleResult = loadingResult;
+    }
+
+    // fs.modules.list.loading resolves before load="all" finishes fetching paginated pages.
+    // Wait for each list instance's own pagination promise before any downstream layout refresh runs.
+    var waitedForListPagination = false;
+    if (options.init && moduleName === 'list') {
+      waitedForListPagination = await waitForListPaginationSettled(moduleResult, maxWait);
+    }
+
+    if (options.init) {
+      if (!waitedForListPagination) {
+        await wait(150);
+      }
     }
 
     // Restart the module
-    if (typeof fs.modules[moduleName]?.restart === 'function') {
+    if (!options.init && typeof fs.modules[moduleName]?.restart === 'function') {
       try {
         await Promise.resolve(fs.modules[moduleName].restart());
       } catch (e) {
@@ -226,6 +276,14 @@
       } catch (e) {
         console.warn('[MBC] FS ' + moduleName + ' destroy failed:', e);
       }
+    }
+
+    // Finsweet keeps destroyed modules registered in fs.modules, which leaves
+    // SPA route entries starting from a stale live module instead of a fresh load.
+    try {
+      delete fs.modules[moduleName];
+    } catch (_) {
+      fs.modules[moduleName] = undefined;
     }
   }
 
@@ -324,7 +382,7 @@
           });
 
           await traceAsync('finsweet restart ' + moduleName, function () {
-            return restartModule(fs, moduleName, 2000);
+            return restartModule(fs, moduleName, 2000, { init: true });
           });
         }
 

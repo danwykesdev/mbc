@@ -409,9 +409,17 @@
       return loadModulesForRoute(data);
     });
 
-    barba.hooks.afterLeave(function () {
+    barba.hooks.afterLeave(function (data) {
       MBC.core.webflow.killScrollTriggers();
-      return MBC.core.lifecycle.unmountCurrent(MBC.core.state.navToken);
+      return MBC.core.lifecycle.unmountCurrent(MBC.core.state.navToken).then(function () {
+        var currentContainer = data && data.current ? data.current.container : null;
+
+        // Barba can keep both containers in the DOM until the transition fully settles.
+        // Remove the old container here so document-wide re-inits do not scan stale page DOM.
+        if (currentContainer && currentContainer.parentNode) {
+          currentContainer.parentNode.removeChild(currentContainer);
+        }
+      });
     });
 
     barba.hooks.enter(function () {

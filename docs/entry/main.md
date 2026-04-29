@@ -24,6 +24,8 @@ This is the main entry point for the MBC modular runtime system. It bootstraps t
 - Implements page leave/enter animations
 - Manages navigation state (theme, background, blur effects)
 - Handles special cases for home page hero animation
+- Syncs out-of-container page state from `next.html` before mount (`data-wf-page`, `body` classes, and body-scoped runtime data attributes)
+- Explicitly removes the old Barba container in `afterLeave` before the next page mounts, so document-wide reinitializers do not scan stale DOM
 - Prevents unnecessary navigation (external links, anchor links, same-page links)
 
 ### Page Lifecycle Management
@@ -73,3 +75,5 @@ Determines whether Barba should handle a navigation. Returns true for external l
 - Environment detection happens automatically but can be overridden
 - Shared runtime trace logs default to enabled so route-enter diagnostics are available during live debugging; set `window.MBC_DEBUG = false` before the runtime boots to suppress them
 - `ScrollTrigger.config({ ignoreMobileResize: true })` is applied globally to avoid iOS address-bar height changes forcing refreshes during pinned sections
+- Barba does not replace `body`, so `beforeEnter` must synchronize any page-level body state that the runtime depends on
+- Barba may keep both current and next containers in the DOM until transition completion, so any document-wide third-party reinit that runs before cleanup should remove the old container first
