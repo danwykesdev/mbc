@@ -159,7 +159,7 @@
       activeProjectsMountToken === mountToken &&
       activeProjectsMountContainer === container
     ) {
-      return function cleanup() {};
+      return function cleanup() { };
     }
 
     activeProjectsMountToken = mountToken;
@@ -199,7 +199,7 @@
       }
 
       if (typeof staggerHoverCleanup === 'function') {
-        try { staggerHoverCleanup(); } catch (_) {}
+        try { staggerHoverCleanup(); } catch (_) { }
         staggerHoverCleanup = null;
       }
 
@@ -255,7 +255,7 @@
         }
         logProjectsDiagnostics(container, reason);
         refreshProjectsBindings(reason);
-      }).catch(function () {});
+      }).catch(function () { });
     }
 
     function restartProjectsList(reason) {
@@ -300,6 +300,24 @@
     if (MBC.features.nav) {
       MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: true });
     }
+
+    // Prevent Webflow tab links from triggering Barba page transitions or anchor scrolls.
+    // These are <a> tags with href="/projects#w-tabs-..." that Webflow uses for native tabs.
+    var tabLinks = container.querySelectorAll('.w-tab-link');
+    Array.from(tabLinks).forEach(function(link) {
+      link.setAttribute('data-barba-prevent', '');
+    });
+
+    var onTabLinkClick = function(event) {
+      var link = event.target.closest('.w-tab-link');
+      if (link && container.contains(link)) {
+        event.preventDefault();
+      }
+    };
+    container.addEventListener('click', onTabLinkClick);
+    cleanups.push(function() {
+      container.removeEventListener('click', onTabLinkClick);
+    });
     // var onProjectsClick = function (event) {
     //   var target = event.target;
     //   if (!(target instanceof Element)) return;
@@ -368,31 +386,31 @@
         if (typeof MBC.features.finsweet.destroy === 'function') {
           await traceAsync('projects finsweet destroy before init', function () {
             return MBC.features.finsweet.destroy({ modules: finsweetModules, timeout: 500 });
-          }).catch(function () {});
+          }).catch(function () { });
         }
 
         // Fix user HTML mistake: fs-list-element="list" should NOT be on the filters
-        var filterWrappers = container.querySelectorAll('.cms__filters');
-        Array.from(filterWrappers).forEach(function(wrapper) {
-          if (wrapper.getAttribute('fs-list-element') === 'list') {
-            wrapper.removeAttribute('fs-list-element');
-          }
-          var childLists = wrapper.querySelectorAll('[fs-list-element="list"]');
-          Array.from(childLists).forEach(function(child) {
-            child.removeAttribute('fs-list-element');
-          });
-        });
+        // var filterWrappers = container.querySelectorAll('.cms__filters');
+        // Array.from(filterWrappers).forEach(function(wrapper) {
+        //   if (wrapper.getAttribute('fs-list-element') === 'list') {
+        //     wrapper.removeAttribute('fs-list-element');
+        //   }
+        //   var childLists = wrapper.querySelectorAll('[fs-list-element="list"]');
+        //   Array.from(childLists).forEach(function(child) {
+        //     child.removeAttribute('fs-list-element');
+        //   });
+        // });
 
         // Explicitly destroy scroll anchors to prevent Finsweet from jumping to top on filter tab click
-        var anchors = container.querySelectorAll('[fs-list-element="scroll-anchor"], [fs-list-element="scroll-anchor-filter"], [fs-cmsfilter-element="scroll-anchor"]');
-        Array.from(anchors).forEach(function(anchor) {
-          anchor.removeAttribute('fs-list-element');
-          anchor.removeAttribute('fs-cmsfilter-element');
-        });
+        // var anchors = container.querySelectorAll('[fs-list-element="scroll-anchor"], [fs-list-element="scroll-anchor-filter"], [fs-cmsfilter-element="scroll-anchor"]');
+        // Array.from(anchors).forEach(function (anchor) {
+        //   anchor.removeAttribute('fs-list-element');
+        //   anchor.removeAttribute('fs-cmsfilter-element');
+        // });
 
         await traceAsync('projects finsweet init', function () {
           return MBC.features.finsweet.init(container, { modules: finsweetModules, label: 'projects' });
-        }).catch(function () {});
+        }).catch(function () { });
 
         // Wait for Finsweet to render its filter/pagination DOM before binding
         var waitForLayout = MBC.core && MBC.core.utils && MBC.core.utils.waitForLayout;
@@ -419,13 +437,13 @@
     // Prevent Webflow's native form module from hiding Finsweet filter forms
     // Webflow uses event delegation on document, so stopPropagation prevents it
     var filterForms = container.querySelectorAll('form');
-    Array.from(filterForms).forEach(function(form) {
+    Array.from(filterForms).forEach(function (form) {
       if (form.closest('[fs-filter-element="filters"]') || form.hasAttribute('fs-filter-element')) {
-        var preventWebflowSubmit = function(e) {
+        var preventWebflowSubmit = function (e) {
           e.stopPropagation();
         };
         form.addEventListener('submit', preventWebflowSubmit);
-        cleanups.push(function() {
+        cleanups.push(function () {
           form.removeEventListener('submit', preventWebflowSubmit);
         });
       }
@@ -522,25 +540,25 @@
       }
 
       if (typeof horizontalScrollCleanup === 'function') {
-        try { horizontalScrollCleanup(); } catch (_) {}
+        try { horizontalScrollCleanup(); } catch (_) { }
         horizontalScrollCleanup = null;
       }
 
       if (typeof staggerHoverCleanup === 'function') {
-        try { staggerHoverCleanup(); } catch (_) {}
+        try { staggerHoverCleanup(); } catch (_) { }
         staggerHoverCleanup = null;
       }
 
       cleanups.forEach(function (fn) {
         if (typeof fn === 'function') {
-          try { fn(); } catch (_) {}
+          try { fn(); } catch (_) { }
         }
       });
     };
   }
- 
-  function unmount() {}
- 
+
+  function unmount() { }
+
   var moduleDef = {
     webflowTier: 'light',
     mount: mount,
