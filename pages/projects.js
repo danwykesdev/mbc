@@ -301,8 +301,10 @@
       MBC.features.nav.setState({ theme: 'dark', bg: 'solid', blur: true });
     }
 
-    // Prevent Webflow tab links from triggering Barba page transitions or anchor scrolls.
-    // These are <a> tags with href="/projects#w-tabs-..." that Webflow uses for native tabs.
+    // Prevent Webflow tab links from scrolling to top.
+    // Webflow's native tabs JS internally scrolls when switching panes, and the <a> href
+    // contains an anchor (#w-tabs-0-data-w-pane-0) that the browser follows.
+    // We use capture phase to fire BEFORE Webflow and save/restore scroll position.
     var tabLinks = container.querySelectorAll('.w-tab-link');
     Array.from(tabLinks).forEach(function(link) {
       link.setAttribute('data-barba-prevent', '');
@@ -310,13 +312,33 @@
 
     var onTabLinkClick = function(event) {
       var link = event.target.closest('.w-tab-link');
-      if (link && container.contains(link)) {
-        event.preventDefault();
-      }
+      if (!link || !container.contains(link)) return;
+
+      // Save scroll position before Webflow or browser moves it
+      var lenis = MBC.core.state.lenis || window.lenis;
+      var savedY = lenis ? lenis.scroll : (window.scrollY || window.pageYOffset);
+
+      // Restore after Webflow's tab switch completes
+      requestAnimationFrame(function() {
+        if (lenis) {
+          lenis.scrollTo(savedY, { immediate: true });
+        } else {
+          window.scrollTo(0, savedY);
+        }
+        // Double-restore in case Webflow's async tab switch fires late
+        requestAnimationFrame(function() {
+          if (lenis) {
+            lenis.scrollTo(savedY, { immediate: true });
+          } else {
+            window.scrollTo(0, savedY);
+          }
+        });
+      });
     };
-    container.addEventListener('click', onTabLinkClick);
+    // Use capture phase so this fires BEFORE Webflow's tab handler
+    container.addEventListener('click', onTabLinkClick, true);
     cleanups.push(function() {
-      container.removeEventListener('click', onTabLinkClick);
+      container.removeEventListener('click', onTabLinkClick, true);
     });
     // var onProjectsClick = function (event) {
     //   var target = event.target;
