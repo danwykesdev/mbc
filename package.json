@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npm run build:runtime",
     "build:dev": "npm run build:runtime:dev",
-    "build:runtime": "esbuild bundle-runtime-entry.js --bundle --minify --format=iife --target=es2018 \"--banner:js=window.__MBC_BUNDLED_RUNTIME__=true;\" --outfile=dist/mbc.runtime.js",
+    "build:runtime": "esbuild bundle-runtime-entry.js --bundle --minify --format=iife --target=es2018 \"--banner:js=var __mbcConsole=window.console;if(__mbcConsole&&!__mbcConsole.__mbcConsoleFilterInstalled){var __mbcShouldSuppress=function(args){if(!args||!args.length)return false;var first=args[0];return typeof first==='string'&&first.indexOf('[MBC Build]')!==0&&(first.indexOf('[MBC]')===0||first.indexOf('[MBC Trace]')===0||first.indexOf('[MBC Route Debug]')===0||first.indexOf('[MBC HorizontalScroll Debug]')===0);};var __mbcWrap=function(method){var original=__mbcConsole[method];if(typeof original!=='function')return original;return function(){var args=Array.prototype.slice.call(arguments);if(__mbcShouldSuppress(args))return;return original.apply(__mbcConsole,args);};};__mbcConsole.log=__mbcWrap('log');__mbcConsole.warn=__mbcWrap('warn');__mbcConsole.error=__mbcWrap('error');__mbcConsole.__mbcConsoleFilterInstalled=true;}window.__MBC_BUNDLED_RUNTIME__=true;\" --outfile=dist/mbc.runtime.js",
     "build:runtime:dev": "esbuild bundle-runtime-entry.js --bundle --format=iife --sourcemap --target=es2018 \"--banner:js=window.__MBC_BUNDLED_RUNTIME__=true;\" --outfile=dist/mbc.runtime.js"
   },
   "repository": {

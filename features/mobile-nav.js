@@ -21,7 +21,7 @@
 
     if (!menuBtn || !nav || !menuWrapper || !navBottom || !isMobile) return function () {};
 
-    gsap.set(menuWrapper, { autoAlpha: 0, x: -16, pointerEvents: 'none', visibility: 'hidden' });
+    gsap.set(menuWrapper, { autoAlpha: 0, pointerEvents: 'none' });
     gsap.set(navLinks, { autoAlpha: 0, x: -14 });
     gsap.set(navBottom, { width: '0%', zIndex: 999 });
 
@@ -49,9 +49,14 @@
     }
 
     function finishClose() {
+      if (pendingHref && typeof window.__MBC_SHOW_NAV_TRANSITION_COVER === 'function') {
+        window.__MBC_SHOW_NAV_TRANSITION_COVER();
+      }
+
       nav.classList.remove('is-open');
       menuBtn.classList.remove('w--open');
-      gsap.set(menuWrapper, { visibility: 'hidden', pointerEvents: 'none' });
+      gsap.set(menuWrapper, { autoAlpha: 0, pointerEvents: 'none' });
+
       if (window.lenis && typeof window.lenis.start === 'function') {
         window.lenis.start();
       }
@@ -59,11 +64,35 @@
       navigateToPendingHref();
     }
 
-    function runCloseSequence() {
+    var menuTl = gsap.timeline({
+      paused: true,
+      defaults: { duration: 0.45, ease: 'power2.out' },
+      onStart: function () {
+        nav.classList.add('is-open');
+        menuBtn.classList.add('w--open');
+        gsap.set(menuWrapper, { autoAlpha: 1, pointerEvents: 'auto' });
+        if (window.lenis && typeof window.lenis.stop === 'function') {
+          window.lenis.stop();
+        }
+        refreshNavStyles();
+      },
+    });
+
+    menuTl
+      .to(navBottom, { width: '100vw', duration: 0.35 }, 0)
+      .to(navLogo, { autoAlpha: 1, duration: 0.25 }, 0)
+      .to(menuWrapper, { autoAlpha: 1, duration: 0.38 }, 0)
+      .to(navLinks, { autoAlpha: 1, x: 0, stagger: 0.15, duration: 0.5 }, 0);
+
+    function buildCloseTimeline(forceClose) {
+      var closeSpeed = forceClose ? 1.15 : 1;
+
       if (closeTl) {
         closeTl.kill();
+        closeTl = null;
       }
 
+      gsap.killTweensOf([menuWrapper, navLinks, navBottom, navLogo]);
       gsap.set(navLinks, { autoAlpha: 1, x: 0 });
 
       closeTl = gsap.timeline({
@@ -75,45 +104,22 @@
       });
 
       closeTl
-        .to(navLinks, { autoAlpha: 0, x: -14, duration: 0.18, stagger: 0.06 }, 0)
-        .to(navBottom, { width: '0%', duration: 0.32 }, '>-0.02')
-        .to(navLogo, { autoAlpha: 1, x: 0, duration: 0.18 }, '>-0.02')
-        .to(menuWrapper, { autoAlpha: 0, x: -16, duration: 0.22 }, '>-0.02');
+        .to(navLinks, { autoAlpha: 0, x: -14, duration: 0.5, stagger: 0.15 }, 0)
+        .to(navLogo, { autoAlpha: 1, duration: 0.18 }, 0.05)
+        .addLabel('navLinksOut')
+        .to(menuWrapper, { autoAlpha: 0, duration: 0.22, ease: 'power2.in' }, 'navLinksOut+=0.02')
+        .to(navBottom, { width: '0%', duration: 0.25, ease: 'power2.in' }, 'navLinksOut+=0.08');
+
+      closeTl.timeScale(closeSpeed);
     }
-
-    var menuTl = gsap.timeline({
-      paused: true,
-      defaults: { duration: 0.45, ease: 'power2.out' },
-      onStart: function () {
-        nav.classList.add('is-open');
-        menuBtn.classList.add('w--open');
-        gsap.set(menuWrapper, { visibility: 'visible', pointerEvents: 'auto' });
-        if (window.lenis && typeof window.lenis.stop === 'function') {
-          window.lenis.stop();
-        }
-        refreshNavStyles();
-      },
-      onReverseComplete: function () {
-        nav.classList.remove('is-open');
-        menuBtn.classList.remove('w--open');
-        gsap.set(menuWrapper, { visibility: 'hidden', pointerEvents: 'none' });
-        if (window.lenis && typeof window.lenis.start === 'function') {
-          window.lenis.start();
-        }
-        refreshNavStyles();
-        navigateToPendingHref();
-      }
-    });
-
-    menuTl
-      .to(navBottom, { width: '100vw', duration: 0.5 }, 0)
-      .to(navLogo, { autoAlpha: 0.35, x: 8, duration: 0.25 }, 0)
-      .to(menuWrapper, { autoAlpha: 1, x: 0, duration: 0.38 }, 0)
-      .to(navLinks, { autoAlpha: 1, x: 0, stagger: 0.06, duration: 0.42 }, 0);
 
     function openMenu() {
       if (isOpen) return;
       isOpen = true;
+      if (closeTl) {
+        closeTl.kill();
+        closeTl = null;
+      }
       menuTl.timeScale(1).restart();
       refreshNavStyles();
     }
@@ -122,7 +128,7 @@
       if (!isOpen && !forceClose) return false;
       isOpen = false;
       menuTl.pause();
-      runCloseSequence();
+      buildCloseTimeline(forceClose);
       refreshNavStyles();
       return true;
     }
@@ -166,7 +172,7 @@
       event.preventDefault();
       pendingHref = nextUrl.href;
       pendingTarget = link;
-      closeMenu(true);
+      closeMenu(false);
     }
 
     menuBtn.addEventListener('click', onClick);
@@ -180,48 +186,21 @@
       if (force && !didClose) {
         nav.classList.remove('is-open');
         menuBtn.classList.remove('w--open');
-        gsap.set(menuWrapper, { autoAlpha: 0, x: -16, pointerEvents: 'none', visibility: 'hidden' });
         gsap.set(navLinks, { autoAlpha: 0, x: -14 });
+        gsap.set(navLogo, { autoAlpha: 1});        
         gsap.set(navBottom, { width: "0%", zIndex: 999 });
+        gsap.set(menuWrapper, { autoAlpha: 0, pointerEvents: 'none' });        
+        
         isOpen = false;
         if (closeTl) {
           closeTl.kill();
           closeTl = null;
         }
+        menuTl.progress(0).pause();
         if (window.lenis && typeof window.lenis.start === 'function') {
           window.lenis.start();
         }
         refreshNavStyles();
-        // Kill and recreate timeline to ensure clean state for next open
-        menuTl.kill();
-        menuTl = gsap.timeline({
-          paused: true,
-          defaults: { duration: 0.45, ease: 'power2.out' },
-          onStart: function () {
-            nav.classList.add('is-open');
-            menuBtn.classList.add('w--open');
-            gsap.set(menuWrapper, { visibility: 'visible', pointerEvents: 'auto' });
-            if (window.lenis && typeof window.lenis.stop === 'function') {
-              window.lenis.stop();
-            }
-            refreshNavStyles();
-          },
-          onReverseComplete: function () {
-            nav.classList.remove('is-open');
-            menuBtn.classList.remove('w--open');
-            gsap.set(menuWrapper, { visibility: 'hidden', pointerEvents: 'none' });
-            if (window.lenis && typeof window.lenis.start === 'function') {
-              window.lenis.start();
-            }
-            refreshNavStyles();
-            navigateToPendingHref();
-          }
-        });
-        menuTl
-          .to(navBottom, { width: '100vw', duration: 0.5 }, 0)
-          .to(navLogo, { autoAlpha: 0.35, x: 8, duration: 0.25 }, 0)
-          .to(menuWrapper, { autoAlpha: 1, x: 0, duration: 0.38 }, 0)
-          .to(navLinks, { autoAlpha: 1, x: 0, stagger: 0.06, duration: 0.42 }, 0);
       }
     };
     refreshNavStyles();

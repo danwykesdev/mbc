@@ -1,5 +1,11 @@
 window.__MBC_BUNDLED_RUNTIME__ = true;
 
+window.__MBC_BUILD_VERSION__ = 'mobile-nav-transition-cover-white-2026-04-30-11';
+
+if (typeof console !== 'undefined') {
+	console.log('[MBC Build] mobile nav transition cover now uses white to avoid a black flash between pages | version:', window.__MBC_BUILD_VERSION__);
+}
+
 import './loader.js';
 
 import './core/state.js';

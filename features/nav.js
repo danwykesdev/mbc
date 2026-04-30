@@ -39,10 +39,23 @@
   }
 
   function syncMobileMenuBars() {
+    var nav = document.querySelector('.nav');
     var bars = document.querySelectorAll('.nav-menu_btn-bar');
-    if (!bars.length) return;
-
     var isMobile = window.innerWidth <= 991;
+
+    if (nav && nav.style) {
+      if (isMobile) {
+        nav.style.width = '100vw';
+        nav.style.maxWidth = '100vw';
+        nav.style.minWidth = '0';
+      } else {
+        nav.style.width = '';
+        nav.style.maxWidth = '';
+        nav.style.minWidth = '';
+      }
+    }
+
+    if (!bars.length) return;
 
     bars.forEach(function (bar) {
       if (!bar || !bar.style) return;

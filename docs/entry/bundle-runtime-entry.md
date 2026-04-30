@@ -34,3 +34,5 @@ Imports all modules in dependency order:
 - It is not loaded directly in the browser
 - Changes to any module require rebuilding the bundle
 - The bundle must be rebuilt after any JavaScript changes before deploying
+- Temporary debug banners can be added here while tracking an active bug; remove them once the issue is merged to main
+- The production bundle currently installs a temporary console filter so only the build banner is shown while the home animation bug is being debugged

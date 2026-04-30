@@ -26,7 +26,7 @@ This module handles the hero animation on the home page. It uses GSAP with match
 
 #### Mobile
 - Image panels follow the same centered grid flow as tablet, with tighter spacing
-- Panels resize to square cards and finish 4rem lower than the centered start within the header parent
+- Panels start centered and settle 4rem down into their final position within the header parent
 - Navigation behavior similar to desktop
 
 ### State Management

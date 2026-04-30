@@ -184,24 +184,6 @@
 
         masterTl.addLabel('syncReveal', '-=0.4');
 
-        if (isMobile && containers.length) {
-          masterTl.to(containers[0].parentNode, {
-            gap: '0.625rem',
-            duration: 0.75,
-            ease: 'power3.inOut'
-          }, 'syncReveal');
-          masterTl.to(
-            containers,
-            {
-              width: '42vw',
-              height: '42vw',
-              duration: 0.75,
-              ease: 'power3.inOut'
-            },
-            'syncReveal'
-          );
-        }
-
         containers.forEach(function (container) {
           var heroInner = container.querySelector('.hero__inner');
           var heroBg = container.querySelector('.hero_img-reveal');

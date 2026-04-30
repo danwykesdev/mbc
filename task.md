@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-30 00:00:00Z
+Last updated: 2026-04-30 19:44:56Z
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,108 @@ Last updated: 2026-04-30 00:00:00Z
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### investigating - switch nav transition cover to white
+- Date: 2026-04-30 22:16:05Z
+- Changes:
+  - Changed the mobile nav transition cover background from dark to white
+  - Bumped the temporary build banner version for the cover color tweak
+- Related to: Black flash still visible during mobile nav route handoff
+
+### investigating - crossfade nav transition cover
+- Date: 2026-04-30 22:05:14Z
+- Changes:
+  - Moved nav transition cover release earlier so it overlaps with the next page enter fade
+  - Kept the cover fallback on transition errors
+  - Updated the temporary build banner version for the crossfade tweak
+- Related to: Black flash between pages on mobile nav link clicks
+
+### investigating - smooth mobile nav route handoff
+- Date: 2026-04-30 22:05:14Z
+- Changes:
+  - Added a temporary nav transition cover during mobile-nav internal link handoff to Barba
+  - Release the cover after the next page enters so no content flashes between pages
+  - Updated the temporary build banner version for this transition smoothing pass
+- Related to: Flash between pages when clicking nav links from the open mobile menu
+
+### investigating - clear stale pageSections reference
+- Date: 2026-04-30 21:51:13Z
+- Changes:
+  - Removed the last stale pageSections killTweensOf reference from the mobile nav close timeline
+  - Bumped the temporary build banner version to match the final cleanup
+- Related to: Page sections animation removal in mobile nav
+
+### investigating - remove mobile nav page sections animation
+- Date: 2026-04-30 21:51:13Z
+- Changes:
+  - Removed page-section fade in/out from the mobile nav open and close timelines
+  - Kept the wrapper offscreen close and the mobile width clamp behavior intact
+  - Updated the temporary build banner version for this cleanup
+- Related to: Page sections animation not needed in mobile nav
+
+### investigating - collapse menu wrapper and clamp mobile nav width
+- Date: 2026-04-30 21:51:13Z
+- Changes:
+  - Moved the mobile menu wrapper offscreen after nav links animate out so the page behind can show during close
+  - Clamped the mobile `.nav` width during shared style sync to avoid oversized SPA home layouts
+  - Updated the temporary build banner version for this nav fix
+- Related to: Menu wrapper blocking content behind it and oversized mobile nav width on SPA home
+
+### investigating - block mobile nav auto-route on click
+- Date: 2026-04-30 20:42:05Z
+- Changes:
+  - Updated the Barba prevent hook so mobile menu links do not auto-route before the close animation completes
+  - Kept the mobile nav link handler on the delayed `barba.go()` path
+  - Bumped the temporary build banner version to reflect the routing guard change
+- Related to: Mobile nav click still skipping the visible close state
+
+### investigating - restore nav click exit timing
+- Date: 2026-04-30 20:42:05Z
+- Changes:
+  - Changed mobile nav link clicks to use the normal close timing so the exit animation plays before the route change
+  - Kept the forced close path for Barba handoff and transition cleanup
+  - Updated the temporary build banner version to match this nav timing tweak
+- Related to: Mobile nav closing too abruptly when clicking a link
+
+### investigating - fade page sections on mobile nav close
+- Date: 2026-04-30 20:17:38Z
+- Changes:
+  - Added a mobile-nav page-section fade so the content behind the menu fades out on open and returns on close
+  - Switched mobile menu close to an explicit exit timeline so nav links leave first, then the bottom line collapses, then the page reveals
+  - Bumped the temporary build banner version to match the current bug being tested and rebuilt the runtime
+- Related to: Mobile nav close feeling abrupt and page content showing too early
+
+### investigating - remove horizontal-scroll normalizeScroll debug probe
+- Date: 2026-04-30 20:10:16Z
+- Changes:
+  - Removed the `ScrollTrigger.normalizeScroll()` debug probe from horizontal scroll init so the function no longer touches that API while logging startup state
+  - Kept the existing horizontal scroll reflow and trigger behavior unchanged
+  - Rebuilt the runtime after the cleanup
+- Related to: Horizontal scroll init still referencing normalizeScroll during debug logging
+
+### investigating - soften mobile nav close
+- Date: 2026-04-30 20:04:02Z
+- Changes:
+  - Changed the mobile menu close behavior to reverse the open timeline instead of running a separate exit sequence
+  - Kept the menu panel covering the page longer so the content beneath does not pop in immediately
+  - Updated the mobile nav docs and rebuilt the runtime
+- Related to: Mobile menu close animation feeling too abrupt on close
+
+### investigating - silence runtime logs behind build banner
+- Date: 2026-04-30 19:44:56Z
+- Changes:
+  - Added a temporary console filter in the bundled runtime so MBC trace, route debug, and Finsweet logs stay hidden during the home animation test
+  - Bumped the build banner version so the console identifier changes with this update
+  - Rebuilt the runtime after the logging suppression change
+- Related to: Home animation debugging where only the build banner should remain visible in the console
+
+### investigating - add temporary home hero build banner
+- Date: 2026-04-30 19:39:47Z
+- Changes:
+  - Added a temporary startup console banner in the bundled runtime so the current home hero motion bug and build version are obvious in the browser console
+  - Simplified the mobile home hero panel animation so it starts centered and only settles downward into place
+  - Rebuilt the runtime after the animation and logging changes
+- Related to: Home animation debugging for the centered-then-drop table motion
 
 ### investigating - move runtime CDN base to a fresh branch for cache busting
 - Date: 2026-04-30 00:00:00Z

@@ -23,9 +23,11 @@ This module handles the mobile navigation menu. It manages the open/close state,
 
 ### Navigation Handling
 - Intercepts clicks on nav links
-- For same-site links: closes menu, then navigates via Barba
+- For same-site links: closes menu at normal speed, then navigates via Barba
 - For external/special links: closes menu, lets browser handle navigation
 - Prevents default behavior for same-site links to use Barba
+- Mobile menu links are prevented from Barba's automatic click routing so the close animation can finish before the route starts
+- The menu wrapper now moves up offscreen after the links animate out, so the page behind can show immediately on close
 
 ### Lenis Integration
 - Stops Lenis scrolling when menu opens
@@ -44,7 +46,7 @@ Initializes the mobile navigation. Returns a cleanup function.
 
 ### Internal Functions
 - `openMenu()` - opens the menu
-- `closeMenu(forceClose)` - Closes the menu. If `forceClose` is true, uses 2.5x speed animation for faster closing during transitions. Returns true if was open.
+- `closeMenu(forceClose)` - closes the menu with an explicit exit timeline so nav links stagger out first, then the menu wrapper moves offscreen and the bottom line collapses. If `forceClose` is true, the close runs slightly faster for route transitions. Returns true if the menu was open.
 - `onClick()` - handles menu button click
 - `onNavLinkClick(event)` - handles nav link clicks
 - `navigateToPendingHref()` - performs pending navigation after close
@@ -58,9 +60,9 @@ Initializes the mobile navigation. Returns a cleanup function.
 4. Nav links stagger in from left
 
 ### Close
-1. All animations reverse (1.15x speed for normal close, 2.5x speed for force close)
-2. After close, pending navigation executes
-3. Lenis scrolling resumes
+1. Nav links stagger out first
+2. The menu wrapper moves offscreen after the links clear
+3. The bottom line draws back after the links clear, then pending navigation executes and Lenis scrolling resumes
 
 ## Important Notes
 
@@ -68,13 +70,15 @@ Initializes the mobile navigation. Returns a cleanup function.
 This module only runs on mobile devices. On desktop, it returns immediately with an empty cleanup function.
 
 ### Global Close Function
-Exposes `window._closeMobileNav(force)` for external code to close the menu programmatically. When `force` is true, uses 2.5x speed animation for faster closing during transitions.
+Exposes `window._closeMobileNav(force)` for external code to close the menu programmatically. When `force` is true, uses the faster route-transition close path. Normal link clicks use the standard close timing so the exit animation is visible.
 
 ### Pending Navigation
 When a nav link is clicked, the navigation is deferred until the menu closes. This ensures the close animation plays before the page transition.
+An internal full-screen transition cover is shown at the handoff to Barba and released as the next page enters so no black frame appears between the close and the new page.
 
 ### Style Coordination
 The module calls `refreshMobileStyles()` on the nav feature to ensure mobile-specific styles are applied correctly.
+That shared sync also clamps the mobile `.nav` width so SPA transitions back to home do not inherit an oversized layout.
 
 ## Dependencies
 - GSAP (for animations)

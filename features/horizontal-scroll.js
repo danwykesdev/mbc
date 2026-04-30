@@ -190,7 +190,6 @@
       windowInnerWidth: window.innerWidth,
       windowInnerHeight: window.innerHeight,
       isTouch: ScrollTrigger.isTouch,
-      normalizeScrollActive: !!(typeof ScrollTrigger.normalizeScroll === 'function' && ScrollTrigger.normalizeScroll()),
       hadStaleInstance: !!(activeInstance && activeContainer !== container)
     });
 
