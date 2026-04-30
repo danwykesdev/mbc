@@ -20,13 +20,13 @@ This module handles the hero animation on the home page. It uses GSAP with match
 - Nav items stagger in from the left
 
 #### Tablet
-- Image panels reposition and resize to form a centered grid
-- Panels animate from scattered positions to the vertical center of the header parent
+- Image panels start centered in the hero component and resize to form a centered grid
+- Panels settle 4rem down from the centered start inside the header parent
 - Navigation behavior similar to desktop
 
 #### Mobile
 - Image panels follow the same centered grid flow as tablet, with tighter spacing
-- Panels resize to square cards and finish centered within the header parent
+- Panels resize to square cards and finish 4rem lower than the centered start within the header parent
 - Navigation behavior similar to desktop
 
 ### State Management

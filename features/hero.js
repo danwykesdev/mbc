@@ -40,6 +40,8 @@
       tabletGap: 10
     };
 
+    var settleOffsetPx = 4 * parseFloat(window.getComputedStyle(document.documentElement).fontSize || '16');
+
     function getCenteredTop(parentHeight, cardHeight) {
       return Math.max(0, (parentHeight - cardHeight) / 2);
     }
@@ -79,36 +81,33 @@
         });
         window.__homeHeroTL = masterTl;
 
-        var layoutParentRect = null;
-        var layoutInitialRects = [];
         var isTabletLayout = isTablet || isMobile;
 
         if (isTabletLayout && containers.length) {
           var parent = containers[0].parentNode;
-          layoutParentRect = parent.getBoundingClientRect();
-
-          layoutInitialRects = Array.from(containers).map(function (c) {
-            var r = c.getBoundingClientRect();
-            return {
-              width: r.width,
-              height: r.height,
-              left: r.left - layoutParentRect.left,
-              top: r.top - layoutParentRect.top
-            };
-          });
+          var parentRect = parent.getBoundingClientRect();
 
           gsap.set(parent, {
             position: 'relative',
-            height: layoutParentRect.height
+            height: parentRect.height
           });
 
           containers.forEach(function (c, i) {
+            var parentWidth = parentRect.width;
+            var parentHeight = parentRect.height;
+            var padding = isMobile ? 12 : 16;
+            var gap = isMobile ? 8 : config.tabletGap;
+            var totalGaps = gap * (containers.length - 1);
+            var cardWidth = (parentWidth - padding * 2 - totalGaps) / containers.length;
+            var targetLeft = padding + i * (cardWidth + gap);
+            var targetTop = getCenteredTop(parentHeight, cardWidth);
+
             gsap.set(c, {
               position: 'absolute',
-              top: layoutInitialRects[i].top,
-              left: layoutInitialRects[i].left,
-              width: layoutInitialRects[i].width,
-              height: layoutInitialRects[i].height,
+              top: targetTop,
+              left: targetLeft,
+              width: cardWidth,
+              height: cardWidth,
               margin: 0
             });
           });
@@ -156,13 +155,13 @@
           } else if (isTabletLayout) {
             var tabletParent = container.parentNode;
             var parentWidth = tabletParent.getBoundingClientRect().width;
-            var parentHeight = layoutParentRect ? layoutParentRect.height : tabletParent.getBoundingClientRect().height;
+            var parentHeight = tabletParent.getBoundingClientRect().height;
             var padding = isMobile ? 12 : 16;
             var gap = isMobile ? 8 : config.tabletGap;
             var totalGaps = gap * (containers.length - 1);
             var cardWidth = (parentWidth - padding * 2 - totalGaps) / containers.length;
             var targetLeft = padding + index * (cardWidth + gap);
-            var targetTabletTop = getCenteredTop(parentHeight, cardWidth);
+            var targetTabletTop = getCenteredTop(parentHeight, cardWidth) + settleOffsetPx;
 
             columnTl.to(
               container,
@@ -186,16 +185,11 @@
         masterTl.addLabel('syncReveal', '-=0.4');
 
         if (isMobile && containers.length) {
-          masterTl.to(
-            containers[0].parentNode,
-            {
-              gap: '0.625rem',
-              paddingTop: '5rem',
-              duration: 0.75,
-              ease: 'power3.inOut'
-            },
-            'syncReveal'
-          );
+          masterTl.to(containers[0].parentNode, {
+            gap: '0.625rem',
+            duration: 0.75,
+            ease: 'power3.inOut'
+          }, 'syncReveal');
           masterTl.to(
             containers,
             {
