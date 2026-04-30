@@ -114,7 +114,7 @@
     function openMenu() {
       if (isOpen) return;
       isOpen = true;
-      menuTl.timeScale(1).play();
+      menuTl.timeScale(1).restart();
       refreshNavStyles();
     }
 
