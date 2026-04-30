@@ -10,9 +10,10 @@
   var initialHomeCoverTimer = null;
 
   function resolveBasePath() {
-    var branch = window.MBC_CDN_BRANCH || 'latest';
+    var ref = window.MBC_CDN_HASH || window.MBC_CDN_BRANCH || 'latest';
+    var version = String(ref || 'latest').trim();
 
-    return 'https://cdn.jsdelivr.net/gh/danwykesdev/mbc@' + branch;
+    return 'https://cdn.jsdelivr.net/gh/danwykesdev/mbc@' + version;
   }
 
   var resolvedBasePath = resolveBasePath();
