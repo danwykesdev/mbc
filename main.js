@@ -9,7 +9,13 @@
 
   var initialHomeCoverTimer = null;
 
-  var resolvedBasePath = 'https://cdn.jsdelivr.net/gh/danwykesdev/mbc@main';
+  function resolveBasePath() {
+    var branch = window.MBC_CDN_BRANCH || 'jsdelivr-cache-bust';
+
+    return 'https://cdn.jsdelivr.net/gh/danwykesdev/mbc@' + branch;
+  }
+
+  var resolvedBasePath = resolveBasePath();
 
   if (typeof window.MBC_DEBUG !== 'boolean') {
     window.MBC_DEBUG = true;

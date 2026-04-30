@@ -1,6 +1,6 @@
 # Task Log
 
-Last updated: 2026-04-29 18:38:00Z
+Last updated: 2026-04-30 00:00:00Z
 
 ## Status rules
 - `Open` = reported, not fixed
@@ -8,6 +8,24 @@ Last updated: 2026-04-29 18:38:00Z
 - `Fixed` = implemented and verified working end-to-end
 
 ## Commit History
+
+### investigating - move runtime CDN base to a fresh branch for cache busting
+- Date: 2026-04-30 00:00:00Z
+- Branch: jsdelivr-cache-bust
+- Changes:
+  - Updated `main.js` to load modules from `https://cdn.jsdelivr.net/gh/danwykesdev/mbc@jsdelivr-cache-bust` instead of `@main`
+  - Created a fresh branch so jsDelivr can serve a branch-specific URL instead of the cached main branch
+  - Rebuilding the bundled runtime now will bake the branch URL into `dist/mbc.runtime.js`
+- Related to: Remote GitHub/jsDelivr testing was still hitting stale main-branch content
+
+### investigating - make jsDelivr branch selectable at boot
+- Date: 2026-04-30 00:00:00Z
+- Branch: jsdelivr-cache-bust
+- Changes:
+  - Added `window.MBC_CDN_BRANCH` support in `main.js` so the jsDelivr branch can be switched without editing source again
+  - Documented the override in the runtime entry docs
+  - Kept the default branch on `jsdelivr-cache-bust` so the current remote test path remains stable
+- Related to: Avoiding future hardcoded CDN branch edits during cache-bust testing
 
 ### investigating - clear destroyed Finsweet modules from fs.modules
 - Date: 2026-04-29 18:38:00Z

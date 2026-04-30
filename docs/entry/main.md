@@ -10,6 +10,7 @@ This is the main entry point for the MBC modular runtime system. It bootstraps t
 - Automatically detects environment based on script source URL (localhost vs jsdelivr CDN)
 - Sets the base path for loading modules accordingly
 - Supports manual override via `window.MBC_ENV`
+- Supports CDN branch overrides via `window.MBC_CDN_BRANCH`
 - Defaults shared `[MBC Trace]` logging on unless `window.MBC_DEBUG = false` is set before boot
 
 ### Global Initialization
@@ -73,6 +74,7 @@ Determines whether Barba should handle a navigation. Returns true for external l
 - It sets `window.__MBC_APP_ACTIVE` to prevent duplicate initialization
 - The file must be loaded after loader.js is available
 - Environment detection happens automatically but can be overridden
+- Set `window.MBC_CDN_BRANCH` before boot if you need to point jsDelivr at a fresh branch without changing source
 - Shared runtime trace logs default to enabled so route-enter diagnostics are available during live debugging; set `window.MBC_DEBUG = false` before the runtime boots to suppress them
 - `ScrollTrigger.config({ ignoreMobileResize: true })` is applied globally to avoid iOS address-bar height changes forcing refreshes during pinned sections
 - Barba does not replace `body`, so `beforeEnter` must synchronize any page-level body state that the runtime depends on
