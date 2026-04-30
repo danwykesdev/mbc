@@ -27,6 +27,15 @@ Last updated: 2026-04-30 00:00:00Z
   - Kept the default branch on `jsdelivr-cache-bust` so the current remote test path remains stable
 - Related to: Avoiding future hardcoded CDN branch edits during cache-bust testing
 
+### investigating - switch default CDN ref to latest
+- Date: 2026-04-30 00:00:00Z
+- Branch: jsdelivr-cache-bust
+- Changes:
+  - Changed the default jsDelivr ref in `main.js` from `jsdelivr-cache-bust` to `latest`
+  - Left `window.MBC_CDN_BRANCH` override support intact for branch-specific tests
+  - Updated the entry docs to match the new remote default
+- Related to: Easier remote testing with a purgeable `@latest` alias
+
 ### investigating - clear destroyed Finsweet modules from fs.modules
 - Date: 2026-04-29 18:38:00Z
 - Branch: main

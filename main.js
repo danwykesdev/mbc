@@ -10,7 +10,7 @@
   var initialHomeCoverTimer = null;
 
   function resolveBasePath() {
-    var branch = window.MBC_CDN_BRANCH || 'jsdelivr-cache-bust';
+    var branch = window.MBC_CDN_BRANCH || 'latest';
 
     return 'https://cdn.jsdelivr.net/gh/danwykesdev/mbc@' + branch;
   }
