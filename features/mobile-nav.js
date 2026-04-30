@@ -147,6 +147,8 @@
       var nextUrl;
       var currentPath;
       var nextPath;
+      var currentUrl;
+      var linkUrl;
 
       if (!link || !isOpen) return;
 
@@ -161,6 +163,13 @@
         currentPath = window.location.pathname.replace(/\/$/, '') || '/';
         nextPath = nextUrl.pathname.replace(/\/$/, '') || '/';
         if (nextUrl.origin !== window.location.origin || (currentPath === nextPath && nextUrl.hash)) {
+          closeMenu(false);
+          return;
+        }
+        currentUrl = (window.location.origin + window.location.pathname).replace(/\/$/, '') || '/';
+        linkUrl = (nextUrl.origin + nextUrl.pathname).replace(/\/$/, '') || '/';
+        if (currentUrl === linkUrl) {
+          event.preventDefault();
           closeMenu(false);
           return;
         }
