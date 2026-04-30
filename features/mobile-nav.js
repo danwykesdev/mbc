@@ -30,6 +30,18 @@
       }
     }
 
+    function hideNavLinksTogether() {
+      if (!navLinks.length || typeof gsap === 'undefined') return;
+
+      gsap.to(navLinks, {
+        autoAlpha: 0,
+        x: -14,
+        duration: 0.12,
+        stagger: 0,
+        overwrite: 'auto'
+      });
+    }
+
     function navigateToPendingHref() {
       var href = pendingHref;
       var target = pendingTarget;
@@ -87,6 +99,7 @@
     function closeMenu(forceClose) {
       if (!isOpen && !forceClose) return false;
       isOpen = false;
+      hideNavLinksTogether();
       menuTl.timeScale(forceClose ? 2.5 : 1.15).reverse();
       refreshNavStyles();
       return true;
