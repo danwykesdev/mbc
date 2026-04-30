@@ -21,12 +21,12 @@ This module handles the hero animation on the home page. It uses GSAP with match
 
 #### Tablet
 - Image panels reposition and resize to form a centered grid
-- Panels animate from scattered positions to centered layout
+- Panels animate from scattered positions to the vertical center of the header parent
 - Navigation behavior similar to desktop
 
 #### Mobile
-- Image panels stack vertically with gap animation
-- Panels resize from full-height strips to square cards
+- Image panels follow the same centered grid flow as tablet, with tighter spacing
+- Panels resize to square cards and finish centered within the header parent
 - Navigation behavior similar to desktop
 
 ### State Management

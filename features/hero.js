@@ -40,6 +40,10 @@
       tabletGap: 10
     };
 
+    function getCenteredTop(parentHeight, cardHeight) {
+      return Math.max(0, (parentHeight - cardHeight) / 2);
+    }
+
     MBC.core.state.heroAnimating = true;
 
     var mm = gsap.matchMedia();
@@ -75,50 +79,39 @@
         });
         window.__homeHeroTL = masterTl;
 
-        var tabletInitialRects = [];
+        var layoutParentRect = null;
+        var layoutInitialRects = [];
+        var isTabletLayout = isTablet || isMobile;
 
-        if (isTablet && containers.length) {
+        if (isTabletLayout && containers.length) {
           var parent = containers[0].parentNode;
-          var parentRect = parent.getBoundingClientRect();
+          layoutParentRect = parent.getBoundingClientRect();
 
-          tabletInitialRects = Array.from(containers).map(function (c) {
+          layoutInitialRects = Array.from(containers).map(function (c) {
             var r = c.getBoundingClientRect();
             return {
               width: r.width,
               height: r.height,
-              left: r.left - parentRect.left,
-              top: r.top - parentRect.top
+              left: r.left - layoutParentRect.left,
+              top: r.top - layoutParentRect.top
             };
           });
 
           gsap.set(parent, {
             position: 'relative',
-            height: parentRect.height
+            height: layoutParentRect.height
           });
 
           containers.forEach(function (c, i) {
             gsap.set(c, {
               position: 'absolute',
-              top: tabletInitialRects[i].top,
-              left: tabletInitialRects[i].left,
-              width: tabletInitialRects[i].width,
-              height: tabletInitialRects[i].height,
+              top: layoutInitialRects[i].top,
+              left: layoutInitialRects[i].left,
+              width: layoutInitialRects[i].width,
+              height: layoutInitialRects[i].height,
               margin: 0
             });
           });
-        }
-
-        if (isMobile && containers.length) {
-          gsap.set(containers[0].parentNode, {
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            alignContent: 'center',
-            minHeight: '100svh',
-            gap: '0rem',
-            paddingTop: '0rem'
-          });
-          gsap.set(containers, { width: '100%', height: '33.333svh' });
         }
 
         containers.forEach(function (container, index) {
@@ -160,15 +153,16 @@
               { y: '+=' + deltaY, duration: 0.75, ease: 'power3.out' },
               '<'
             );
-          } else if (isTablet) {
+          } else if (isTabletLayout) {
             var tabletParent = container.parentNode;
             var parentWidth = tabletParent.getBoundingClientRect().width;
-            var padding = 16;
-            var totalGaps = config.tabletGap * (containers.length - 1);
+            var parentHeight = layoutParentRect ? layoutParentRect.height : tabletParent.getBoundingClientRect().height;
+            var padding = isMobile ? 12 : 16;
+            var gap = isMobile ? 8 : config.tabletGap;
+            var totalGaps = gap * (containers.length - 1);
             var cardWidth = (parentWidth - padding * 2 - totalGaps) / containers.length;
-            var targetLeft = padding + index * (cardWidth + config.tabletGap);
-            var centerIndex = Math.floor(containers.length / 2);
-            var targetTabletTop = tabletInitialRects[centerIndex].top;
+            var targetLeft = padding + index * (cardWidth + gap);
+            var targetTabletTop = getCenteredTop(parentHeight, cardWidth);
 
             columnTl.to(
               container,

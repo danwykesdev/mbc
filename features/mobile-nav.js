@@ -15,6 +15,7 @@
     var navLogo = document.querySelector('.nav-logo_link');
     var isMobile = window.innerWidth <= 991;
     var isOpen = false;
+    var closeTl = null;
     var pendingHref = null;
     var pendingTarget = null;
 
@@ -28,18 +29,6 @@
       if (MBC.features.nav && typeof MBC.features.nav.refreshMobileStyles === 'function') {
         MBC.features.nav.refreshMobileStyles();
       }
-    }
-
-    function hideNavLinksTogether() {
-      if (!navLinks.length || typeof gsap === 'undefined') return;
-
-      gsap.to(navLinks, {
-        autoAlpha: 0,
-        x: -14,
-        duration: 0.12,
-        stagger: 0,
-        overwrite: 'auto'
-      });
     }
 
     function navigateToPendingHref() {
@@ -57,6 +46,39 @@
       }
 
       window.location.href = href;
+    }
+
+    function finishClose() {
+      nav.classList.remove('is-open');
+      menuBtn.classList.remove('w--open');
+      gsap.set(menuWrapper, { visibility: 'hidden', pointerEvents: 'none' });
+      if (window.lenis && typeof window.lenis.start === 'function') {
+        window.lenis.start();
+      }
+      refreshNavStyles();
+      navigateToPendingHref();
+    }
+
+    function runCloseSequence() {
+      if (closeTl) {
+        closeTl.kill();
+      }
+
+      gsap.set(navLinks, { autoAlpha: 1, x: 0 });
+
+      closeTl = gsap.timeline({
+        defaults: { ease: 'power2.out' },
+        onComplete: function () {
+          closeTl = null;
+          finishClose();
+        }
+      });
+
+      closeTl
+        .to(navLinks, { autoAlpha: 0, x: -14, duration: 0.18, stagger: 0.06 }, 0)
+        .to(navBottom, { width: '0%', duration: 0.32 }, '>-0.02')
+        .to(navLogo, { autoAlpha: 1, x: 0, duration: 0.18 }, '>-0.02')
+        .to(menuWrapper, { autoAlpha: 0, x: -16, duration: 0.22 }, '>-0.02');
     }
 
     var menuTl = gsap.timeline({
@@ -99,8 +121,8 @@
     function closeMenu(forceClose) {
       if (!isOpen && !forceClose) return false;
       isOpen = false;
-      hideNavLinksTogether();
-      menuTl.timeScale(forceClose ? 2.5 : 1.15).reverse();
+      menuTl.pause();
+      runCloseSequence();
       refreshNavStyles();
       return true;
     }
@@ -162,6 +184,10 @@
         gsap.set(navLinks, { autoAlpha: 0, x: -14 });
         gsap.set(navBottom, { width: "0%", zIndex: 999 });
         isOpen = false;
+        if (closeTl) {
+          closeTl.kill();
+          closeTl = null;
+        }
         if (window.lenis && typeof window.lenis.start === 'function') {
           window.lenis.start();
         }
@@ -207,6 +233,10 @@
       });
       if (isOpen) {
         closeMenu(true);
+      }
+      if (closeTl) {
+        closeTl.kill();
+        closeTl = null;
       }
       menuTl.kill();
       gsap.set([menuWrapper, navLinks, navBottom, navLogo], { clearProps: 'all' });
