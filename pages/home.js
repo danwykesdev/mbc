@@ -12,6 +12,14 @@
     var staggerHoverCleanup = null;
     var deferredHomeFeaturesPromise = null;
 
+    function traceMobileScroll(label, fn) {
+      if (typeof window.__MBC_TRACE_MOBILE_SCROLL === 'function') {
+        return window.__MBC_TRACE_MOBILE_SCROLL(label, fn);
+      }
+
+      return typeof fn === 'function' ? fn() : undefined;
+    }
+
     function bindHorizontalScroll(label) {
       if (!MBC.features.horizontalScroll || typeof MBC.features.horizontalScroll.init !== 'function') {
         return;
@@ -22,7 +30,9 @@
         horizontalScrollCleanup = null;
       }
 
-      var nextCleanup = MBC.features.horizontalScroll.init(container);
+      var nextCleanup = traceMobileScroll(label || 'home horizontalScroll.init', function () {
+        return MBC.features.horizontalScroll.init(container);
+      });
 
       if (typeof nextCleanup === 'function') {
         horizontalScrollCleanup = nextCleanup;

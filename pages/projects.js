@@ -272,6 +272,14 @@
   var activeProjectsMountToken = null;
   var activeProjectsMountContainer = null;
 
+  function traceMobileScroll(label, fn) {
+    if (typeof window.__MBC_TRACE_MOBILE_SCROLL === 'function') {
+      return window.__MBC_TRACE_MOBILE_SCROLL(label, fn);
+    }
+
+    return typeof fn === 'function' ? fn() : undefined;
+  }
+
   async function mount(ctx) {
     var container = ctx.container;
     var mountToken = typeof ctx.token === 'number' ? ctx.token : null;
@@ -310,7 +318,7 @@
         return;
       }
 
-      var nextCleanup = traceSync(label || 'projects horizontalScroll.init', function () {
+      var nextCleanup = traceMobileScroll(label || 'projects horizontalScroll.init', function () {
         return MBC.features.horizontalScroll.init(container);
       });
 
@@ -353,13 +361,17 @@
       }
 
       if (typeof ScrollTrigger !== 'undefined') {
-        ScrollTrigger.refresh(true);
+        traceMobileScroll('projects ScrollTrigger.refresh ' + reason, function () {
+          ScrollTrigger.refresh(true);
+        });
 
         // Add a delayed refresh to handle SPA transitions where the old Barba container
         // temporarily pushes the new container down, causing wrong ScrollTrigger start positions.
         setTimeout(function() {
           if (!isUnmounted && typeof ScrollTrigger !== 'undefined') {
-            ScrollTrigger.refresh(true);
+            traceMobileScroll('projects ScrollTrigger.refresh delayed ' + reason, function () {
+              ScrollTrigger.refresh(true);
+            });
           }
         }, 500);
       }
@@ -367,7 +379,9 @@
       if (MBC.features.horizontalScroll && typeof MBC.features.horizontalScroll.reflow === 'function') {
         setTimeout(function () {
           if (isUnmounted) return;
-          MBC.features.horizontalScroll.reflow();
+          traceMobileScroll('projects horizontalScroll.reflow ' + reason, function () {
+            MBC.features.horizontalScroll.reflow();
+          });
         }, 60);
       }
 

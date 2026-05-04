@@ -9,6 +9,7 @@
 
   var initialHomeCoverTimer = null;
   var navTransitionCoverTimer = null;
+  var NAV_TRANSITION_COVER_TOP = 72;
 
   function resolveBasePath() {
     var ref = window.MBC_CDN_HASH || window.MBC_CDN_BRANCH || 'latest';
@@ -36,6 +37,59 @@
 
   var MBC = window.MBC;
 
+  if (typeof window.MBC_MOBILE_SCROLL_DEBUG !== 'boolean') {
+    window.MBC_MOBILE_SCROLL_DEBUG = false;
+  }
+
+  function isTouchScrollDevice() {
+    if (typeof ScrollTrigger !== 'undefined' && typeof ScrollTrigger.isTouch === 'number') {
+      return ScrollTrigger.isTouch > 0;
+    }
+
+    if (typeof window.matchMedia === 'function') {
+      return window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    }
+
+    return false;
+  }
+
+  function traceMobileScroll(label, fn) {
+    var start;
+    var end;
+    var result;
+
+    if (typeof fn !== 'function') {
+      return undefined;
+    }
+
+    if (!window.MBC_MOBILE_SCROLL_DEBUG || !isTouchScrollDevice()) {
+      return fn();
+    }
+
+    start = typeof performance !== 'undefined' && typeof performance.now === 'function'
+      ? performance.now()
+      : Date.now();
+
+    console.log('[MobileScroll] start', label);
+
+    try {
+      result = fn();
+      end = typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now();
+      console.log('[MobileScroll] done', label, Math.round(end - start) + 'ms');
+      return result;
+    } catch (err) {
+      end = typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now();
+      console.warn('[MobileScroll] fail', label, Math.round(end - start) + 'ms', err);
+      throw err;
+    }
+  }
+
+  window.__MBC_TRACE_MOBILE_SCROLL = traceMobileScroll;
+
   // Disable scroll restoration for SPA behavior
   if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
@@ -58,10 +112,15 @@
 
   if (
     typeof ScrollTrigger !== 'undefined' &&
-    ScrollTrigger.isTouch === 1 &&
     typeof ScrollTrigger.normalizeScroll === 'function'
   ) {
-    ScrollTrigger.normalizeScroll(true);
+    if (isTouchScrollDevice()) {
+      traceMobileScroll('ScrollTrigger.normalizeScroll skipped on touch devices', function () {
+        return null;
+      });
+    } else {
+      ScrollTrigger.normalizeScroll(true);
+    }
   }
 
   /**
@@ -168,6 +227,21 @@
     }, 260);
   }
 
+  function positionNavTransitionCover(cover) {
+    if (!cover) return;
+
+    cover.style.position = 'fixed';
+    cover.style.top = NAV_TRANSITION_COVER_TOP + 'px';
+    cover.style.left = '0';
+    cover.style.right = '0';
+    cover.style.bottom = 'auto';
+    cover.style.height = 'calc(100vh - ' + NAV_TRANSITION_COVER_TOP + 'px)';
+
+    if (window.CSS && typeof window.CSS.supports === 'function' && window.CSS.supports('height', 'calc(100svh - 72px)')) {
+      cover.style.height = 'calc(100svh - ' + NAV_TRANSITION_COVER_TOP + 'px)';
+    }
+  }
+
   function showNavTransitionCover() {
     var cover = document.getElementById('mbc-nav-transition-cover');
 
@@ -175,8 +249,6 @@
       cover = document.createElement('div');
       cover.id = 'mbc-nav-transition-cover';
       cover.setAttribute('aria-hidden', 'true');
-      cover.style.position = 'fixed';
-      cover.style.inset = '0';
       cover.style.zIndex = '2147483646';
       cover.style.background = '#ffffff';
       cover.style.opacity = '1';
@@ -184,6 +256,8 @@
       cover.style.transition = 'opacity 160ms ease';
       (document.body || document.documentElement).appendChild(cover);
     }
+
+    positionNavTransitionCover(cover);
 
     if (navTransitionCoverTimer) {
       clearTimeout(navTransitionCoverTimer);
@@ -374,7 +448,9 @@
 
     if (MBC.core.state.lenis) {
       if (typeof MBC.core.state.lenis.resize === 'function') {
-        MBC.core.state.lenis.resize();
+        traceMobileScroll('settleAfterMount lenis.resize immediate', function () {
+          MBC.core.state.lenis.resize();
+        });
       }
       if (typeof MBC.core.state.lenis.start === 'function') {
         MBC.core.state.lenis.start();
@@ -382,14 +458,18 @@
     }
 
     if (typeof ScrollTrigger !== 'undefined') {
-      ScrollTrigger.refresh(true);
+      traceMobileScroll('settleAfterMount ScrollTrigger.refresh', function () {
+        ScrollTrigger.refresh(true);
+      });
     }
 
     // Secondary delayed resize so Lenis recalculates content height after layout fully settles
     if (MBC.core.state.lenis && typeof MBC.core.state.lenis.resize === 'function') {
       setTimeout(function () {
         if (MBC.core.state.lenis && typeof MBC.core.state.lenis.resize === 'function') {
-          MBC.core.state.lenis.resize();
+          traceMobileScroll('settleAfterMount lenis.resize delayed', function () {
+            MBC.core.state.lenis.resize();
+          });
         }
       }, 200);
     }

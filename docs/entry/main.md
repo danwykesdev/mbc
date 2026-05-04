@@ -77,5 +77,8 @@ Determines whether Barba should handle a navigation. Returns true for external l
 - Set `window.MBC_CDN_BRANCH` before boot if you need to point jsDelivr at a specific branch without changing source
 - Shared runtime trace logs default to enabled so route-enter diagnostics are available during live debugging; set `window.MBC_DEBUG = false` before the runtime boots to suppress them
 - `ScrollTrigger.config({ ignoreMobileResize: true })` is applied globally to avoid iOS address-bar height changes forcing refreshes during pinned sections
+- `ScrollTrigger.normalizeScroll(true)` is skipped on touch devices so mobile keeps the native scroll path while desktop still gets normalization
+- Set `window.MBC_MOBILE_SCROLL_DEBUG = true` before boot if you want the temporary mobile scroll timing traces in the console
+- The mobile nav transition cover starts 72px below the top edge so it sits under the fixed nav bar during page replacement
 - Barba does not replace `body`, so `beforeEnter` must synchronize any page-level body state that the runtime depends on
 - Barba may keep both current and next containers in the DOM until transition completion, so any document-wide third-party reinit that runs before cleanup should remove the old container first

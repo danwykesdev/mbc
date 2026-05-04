@@ -44,6 +44,7 @@ The GSAP ticker integration is critical. It ensures Lenis updates synchronously 
 
 ### Touch Devices
 Smooth scrolling is disabled on touch devices (`smoothTouch: false`) because touch scrolling is already smooth on mobile devices and adding Lenis can cause conflicts.
+`main.js` also skips `ScrollTrigger.normalizeScroll(true)` on touch devices so the mobile scroll path stays native instead of layering on extra normalization work.
 
 ### SPA Navigation
 After a Barba page transition, the main.js `settleAfterMount` function calls `lenis.resize()` immediately and again after a 200ms delay. The delayed resize ensures Lenis recalculates content height after the new container's layout has fully painted.

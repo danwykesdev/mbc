@@ -74,7 +74,7 @@ Exposes `window._closeMobileNav(force)` for external code to close the menu prog
 
 ### Pending Navigation
 When a nav link is clicked, the navigation is deferred until the menu closes. This ensures the close animation plays before the page transition.
-An internal full-screen transition cover is shown at the handoff to Barba and released as the next page enters so no black frame appears between the close and the new page.
+An internal transition cover is shown at the handoff to Barba and released as the next page enters so no black frame appears between the close and the new page. The cover starts 72px below the top edge so it sits under the fixed mobile nav bar during replacement.
 
 ### Style Coordination
 The module calls `refreshMobileStyles()` on the nav feature to ensure mobile-specific styles are applied correctly.
