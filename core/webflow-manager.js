@@ -13,6 +13,8 @@
     'data-bg-nav',
     'data-nav-blur'
   ];
+  var READY_PASS_WAIT = 45;
+  var STRONG_REINIT_SETTLE_WAIT = 30;
 
   function syncBodyState(nextBody) {
     if (!nextBody || !document.body) return;
@@ -145,7 +147,7 @@
       ScrollTrigger.refresh(true);
     }
 
-    await MBC.core.utils.wait(90);
+    await MBC.core.utils.wait(READY_PASS_WAIT);
   }
 
   /**
@@ -185,7 +187,7 @@
       // Force resize so ScrollTrigger recalculates
       dispatchLayoutEvents();
 
-      await MBC.core.utils.wait(60);
+      await MBC.core.utils.wait(STRONG_REINIT_SETTLE_WAIT);
 
       // Second pass — IX3 needs this after readystatechange settles
       if (typeof window.Webflow.ready === "function") {

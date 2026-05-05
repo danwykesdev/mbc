@@ -10,6 +10,9 @@
     });
   }
 
+  var FONT_LAYOUT_WAIT_TIMEOUT = 350;
+  var POST_LAYOUT_WAIT = 16;
+
   function raf2() {
     return new Promise(function (resolve) {
       requestAnimationFrame(function () {
@@ -23,11 +26,11 @@
 
     if (document.fonts && document.fonts.ready) {
       try {
-        await Promise.race([document.fonts.ready, wait(700)]);
+        await Promise.race([document.fonts.ready, wait(FONT_LAYOUT_WAIT_TIMEOUT)]);
       } catch (_) {}
     }
 
-    await wait(30);
+    await wait(POST_LAYOUT_WAIT);
   }
 
   function debounce(fn, ms) {

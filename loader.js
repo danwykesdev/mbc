@@ -25,12 +25,14 @@
     'features/stagger-hover': { src: 'features/stagger-hover.js', deps: [] },
     'features/tabs': { src: 'features/tabs.js', deps: [], domCheck: '.project_component' },
     'features/hero': { src: 'features/hero.js', deps: ['core/state'], domCheck: '.hero-animate' },
+    'features/hero2': { src: 'features/hero2.js', deps: ['core/state'], domCheck: '.hero-animate' },
     'features/videos': { src: 'features/videos.js', deps: [], domCheck: '#videoLoad, #video, [data-video], [data-vimeo-id], [fs-modal-element]' },
     'features/finsweet': { src: 'features/finsweet.js', deps: [], domCheck: '[fs-list-element], [fs-modal-element], [fs-slider-element], [fs-filter-element]' },
     'features/horizontal-scroll': { src: 'features/horizontal-scroll.js', deps: ['core/state'], domCheck: '[data-horizontal-scroll], [data-horizontal-scroll-wrap], [data-horizontal-track], [data-horizontal-scroll-panel]' },
 
     // Pages - loaded based on barba namespace
     'pages/home': { src: 'pages/home.js', deps: ['features/lenis', 'features/nav', 'features/hero', 'features/tabs', 'features/videos', 'features/finsweet', 'features/horizontal-scroll', 'features/stagger-hover'], namespace: 'home' },
+    'pages/home-2': { src: 'pages/home.js', deps: ['features/lenis', 'features/nav', 'features/hero2', 'features/tabs', 'features/videos', 'features/finsweet', 'features/horizontal-scroll', 'features/stagger-hover'], namespace: 'home-2' },
     'pages/projects': { src: 'pages/projects.js', deps: ['features/lenis', 'features/nav', 'features/horizontal-scroll', 'features/finsweet', 'features/stagger-hover'], namespace: 'projects' },
     'pages/project-detail': { src: 'pages/project-detail.js', deps: ['features/lenis', 'features/nav', 'features/videos', 'features/finsweet'], namespace: 'project-detail' },
     'pages/about': { src: 'pages/about.js', deps: ['features/lenis', 'features/nav'], namespace: 'about' },

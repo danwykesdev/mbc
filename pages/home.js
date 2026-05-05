@@ -12,6 +12,14 @@
     var staggerHoverCleanup = null;
     var deferredHomeFeaturesPromise = null;
 
+    function getHeroFeature(namespace) {
+      if (namespace === 'home-2' && MBC.features.hero2 && typeof MBC.features.hero2.init === 'function') {
+        return MBC.features.hero2;
+      }
+
+      return MBC.features.hero;
+    }
+
     function traceMobileScroll(label, fn) {
       if (typeof window.__MBC_TRACE_MOBILE_SCROLL === 'function') {
         return window.__MBC_TRACE_MOBILE_SCROLL(label, fn);
@@ -240,11 +248,12 @@
     bindStaggerHover('home staggerHover.init early');
 
     // Hero animation
-    if (MBC.features.hero) {
+    var heroFeature = getHeroFeature(ctx.namespace);
+    if (heroFeature) {
       prepareHeroEntryState();
       releaseStartupCover();
 
-      var heroCleanup = MBC.features.hero.init(container);
+      var heroCleanup = heroFeature.init(container);
       if (typeof heroCleanup === 'function') {
         cleanups.push(heroCleanup);
       }
@@ -303,9 +312,11 @@
   };
 
   MBC.pages.home = moduleDef;
+  MBC.pages['home-2'] = moduleDef;
 
   // Self-register with the page registry
   if (MBC.core && MBC.core.registry) {
     MBC.core.registry.register('home', moduleDef);
+    MBC.core.registry.register('home-2', moduleDef);
   }
 })();

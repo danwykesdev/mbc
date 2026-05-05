@@ -116,3 +116,5 @@ Home avoids page-level trace wrappers for the horizontal-scroll investigation. C
 
 ## Namespace
 Registered as 'home' in the page registry.
+
+The same page module also self-registers as `home-2` and switches to `MBC.features.hero2` for that namespace so the original mobile loader layout stays isolated from the default home route.

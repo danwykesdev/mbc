@@ -4,6 +4,10 @@
 
   MBC.features = MBC.features || {};
 
+  function normalizeComparableUrl(url) {
+    return String(url || '').split('#')[0].split('?')[0].replace(/\/$/, '') || '/';
+  }
+
   function initMobileNav() {
     if (typeof gsap === 'undefined') return function () {};
 
@@ -66,11 +70,12 @@
 
     var menuTl = gsap.timeline({
       paused: true,
-      defaults: { duration: 0.45, ease: 'power2.out' },
+      defaults: { duration: 0.32, ease: 'power2.out' },
       onStart: function () {
         nav.classList.add('is-open');
         menuBtn.classList.add('w--open');
         gsap.set(menuWrapper, { autoAlpha: 1, pointerEvents: 'auto' });
+        gsap.set(navBottom, { autoAlpha: 1 });
         if (window.lenis && typeof window.lenis.stop === 'function') {
           window.lenis.stop();
         }
@@ -79,10 +84,10 @@
     });
 
     menuTl
-      .to(navBottom, { width: '100vw', duration: 0.35 }, 0)
-      .to(navLogo, { autoAlpha: 1, duration: 0.25 }, 0)
-      .to(menuWrapper, { autoAlpha: 1, duration: 0.38 }, 0)
-      .to(navLinks, { autoAlpha: 1, x: 0, stagger: 0.15, duration: 0.5 }, 0);
+      .to(navBottom, { width: '100vw', duration: 0.22 }, 0)
+      .to(navLogo, { autoAlpha: 1, duration: 0.16 }, 0)
+      .to(menuWrapper, { autoAlpha: 1, duration: 0.2 }, 0.01)
+      .to(navLinks, { autoAlpha: 1, x: 0, stagger: 0.05, duration: 0.24 }, 0.04);
 
     function buildCloseTimeline(forceClose) {
       var closeSpeed = forceClose ? 1.15 : 1;
@@ -96,7 +101,7 @@
       gsap.set(navLinks, { autoAlpha: 1, x: 0 });
 
       closeTl = gsap.timeline({
-        defaults: { ease: 'power2.out' },
+        defaults: { ease: 'power2.inOut' },
         onComplete: function () {
           closeTl = null;
           finishClose();
@@ -104,11 +109,10 @@
       });
 
       closeTl
-        .to(navLinks, { autoAlpha: 0, x: -14, duration: 0.5, stagger: 0.15 }, 0)
-        .to(navLogo, { autoAlpha: 1, duration: 0.18 }, 0.05)
-        .addLabel('navLinksOut')
-        .to(menuWrapper, { autoAlpha: 0, duration: 0.22, ease: 'power2.in' }, 'navLinksOut+=0.02')
-        .to(navBottom, { width: '0%', duration: 0.25, ease: 'power2.in' }, 'navLinksOut+=0.08');
+        .to(navLinks, { autoAlpha: 0, duration: 0.22 }, 0)
+        .to(navBottom, { width: '0%', autoAlpha: 0, duration: 0.24 }, 0)
+        .to(navLogo, { autoAlpha: 1, duration: 0.18 }, 0.04)
+        .to(menuWrapper, { autoAlpha: 0, duration: 0.18 }, 0.04);
 
       closeTl.timeScale(closeSpeed);
     }
@@ -145,29 +149,27 @@
       var link = event.currentTarget;
       var href;
       var nextUrl;
-      var currentPath;
-      var nextPath;
       var currentUrl;
       var linkUrl;
 
       if (!link || !isOpen) return;
 
       href = link.getAttribute('href') || '';
-      if (!href || /^#/.test(href) || /^(mailto:|tel:|javascript:)/i.test(href) || link.target === '_blank' || link.hasAttribute('download') || link.hasAttribute('data-no-barba')) {
+      if (!href || /^(mailto:|tel:|javascript:)/i.test(href) || link.target === '_blank' || link.hasAttribute('download') || link.hasAttribute('data-no-barba')) {
         closeMenu(false);
         return;
       }
 
       try {
         nextUrl = new URL(href, window.location.origin);
-        currentPath = window.location.pathname.replace(/\/$/, '') || '/';
-        nextPath = nextUrl.pathname.replace(/\/$/, '') || '/';
-        if (nextUrl.origin !== window.location.origin || (currentPath === nextPath && nextUrl.hash)) {
+        if (nextUrl.origin !== window.location.origin) {
           closeMenu(false);
           return;
         }
-        currentUrl = (window.location.origin + window.location.pathname).replace(/\/$/, '') || '/';
-        linkUrl = (nextUrl.origin + nextUrl.pathname).replace(/\/$/, '') || '/';
+
+        currentUrl = normalizeComparableUrl(window.location.href);
+        linkUrl = normalizeComparableUrl(nextUrl.href);
+
         if (currentUrl === linkUrl) {
           event.preventDefault();
           closeMenu(false);
@@ -195,9 +197,9 @@
       if (force && !didClose) {
         nav.classList.remove('is-open');
         menuBtn.classList.remove('w--open');
-        gsap.set(navLinks, { autoAlpha: 0, x: -14 });
+        gsap.set(navLinks, { autoAlpha: 0, x: 0 });
         gsap.set(navLogo, { autoAlpha: 1});        
-        gsap.set(navBottom, { width: "0%", zIndex: 999 });
+        gsap.set(navBottom, { width: '0%', autoAlpha: 0, zIndex: 999 });
         gsap.set(menuWrapper, { autoAlpha: 0, pointerEvents: 'none' });        
         
         isOpen = false;

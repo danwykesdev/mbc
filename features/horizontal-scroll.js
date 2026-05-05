@@ -11,6 +11,7 @@
   var activeInstance = null;
   var activeContainer = null;
   var DEBUG_PREFIX = '[MBC HorizontalScroll Debug]';
+  var MOBILE_SETTLE_REFLOW_WINDOW = 2500;
 
   function isDebugEnabled() {
     return window.MBC_HORIZONTAL_SCROLL_DEBUG !== false;
@@ -219,17 +220,23 @@
     var lastTotalPanelWidth = 0;
     var suppressAutoReflow = ScrollTrigger.isTouch === 1 || window.innerWidth <= 991;
     var hasResizeObserver = typeof ResizeObserver !== 'undefined';
-    var useDelayedReflowFallback = !suppressAutoReflow && !hasResizeObserver;
+    var allowSettlingReflow = true;
+    var settlingReflowWindowTimer = null;
     var scrollSampleRaf = null;
     var lastScrollSample = null;
     var lastLoggedDirection = 0;
 
     debugLog('[MBC HorizontalScroll] auto reflow mode', {
       suppressAutoReflow: suppressAutoReflow,
-      useDelayedReflowFallback: useDelayedReflowFallback,
+      allowSettlingReflow: allowSettlingReflow,
       isTouch: ScrollTrigger.isTouch,
       windowInnerWidth: window.innerWidth
     });
+
+    settlingReflowWindowTimer = setTimeout(function () {
+      settlingReflowWindowTimer = null;
+      allowSettlingReflow = false;
+    }, MOBILE_SETTLE_REFLOW_WINDOW);
 
     function clearPanelTransforms(wrap) {
       if (!wrap) return;
@@ -554,7 +561,11 @@
     }
 
     function scheduleDelayedReflow(delay) {
-      if (cleanedUp || !useDelayedReflowFallback) {
+      if (cleanedUp) {
+        return;
+      }
+
+      if (suppressAutoReflow && !allowSettlingReflow) {
         return;
       }
 
@@ -685,6 +696,11 @@
       if (retryTimer) {
         clearTimeout(retryTimer);
         retryTimer = null;
+      }
+
+      if (settlingReflowWindowTimer) {
+        clearTimeout(settlingReflowWindowTimer);
+        settlingReflowWindowTimer = null;
       }
 
       if (delayedReflowTimer) {

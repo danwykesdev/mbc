@@ -23,6 +23,7 @@ import './features/load-animations.js';
 import './features/stagger-hover.js';
 import './features/tabs.js';
 import './features/hero.js';
+import './features/hero2.js';
 import './features/videos.js';
 import './features/finsweet.js';
 import './features/horizontal-scroll.js';

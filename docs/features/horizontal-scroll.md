@@ -68,10 +68,10 @@ Scroll distance is calculated from the live panel widths plus inter-panel gap, t
 The feature ignores height-only resize churn and only recreates the trigger when viewport width or horizontal layout measurements change. This prevents iOS browser chrome changes from reflowing the pinned section mid-scroll and creating large vertical gaps.
 
 ### Touch/Tablet Reflow Guard
-On touch devices or widths at `<= 991px`, the feature suppresses ResizeObserver-driven and delayed auto-reflows after the initial trigger creation. This avoids repeated trigger recreation while the user is actively scrolling through the pinned section.
+On touch devices or widths at `<= 991px`, the feature still suppresses continuous ResizeObserver-driven auto-reflows, but it now keeps a short settling window after mount so the initial trigger can correct itself after late layout/image changes. This avoids repeated trigger recreation while still letting the mobile pin lock onto the correct measurements.
 
 ### Delayed Reflow
-The module schedules delayed reflows at 600ms and 2000ms after initialization. This replaces the old `window.load` listener which only fired on hard loads and never on SPA navigation. Touch/tablet layouts suppress the automatic reflows and rely on the initial setup plus explicit page-driven `reflow()` calls.
+The module schedules delayed reflows at 600ms and 2000ms after initialization. This replaces the old `window.load` listener which only fired on hard loads and never on SPA navigation. Touch/tablet layouts use these reflows only during a short post-mount settling window, then fall back to the initial setup plus explicit page-driven `reflow()` calls.
 
 ### Trigger ID
 Uses a fixed ID 'horizontal-pin' for the ScrollTrigger. This allows targeted cleanup and prevents conflicts with other triggers.
