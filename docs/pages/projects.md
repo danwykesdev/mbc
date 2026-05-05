@@ -11,7 +11,7 @@ This is the page module for the Projects page. It handles Finsweet list/filter i
 - Normalizes the Projects DOM to one canonical `fs-list-element="list"` root before Finsweet init so duplicate list markers cannot trigger wrapper multiplication on SPA entry
 - Re-attaches the external filters form and filter scroll anchor to the `main` list instance before Finsweet initializes
 - Supports both live scroll-anchor contracts: `fs-list-element="scroll-anchor"` and `fs-list-element="scroll-anchor-filter"`
-- Removes any empty facet filter wrapper whose `.facet [fs-list-element="facet-count"]` value resolves to `0`
+- Removes any empty facet filter wrapper whose `[fs-list-element="facet-count"]` value resolves to `0`
 - Uses the init-safe Finsweet load path on SPA entry so the list can finish its async load sequence before layout rebinds
 - Re-syncs layout-sensitive features after Finsweet list updates
 - Queues restart requests until the list module is confirmed ready on route enter

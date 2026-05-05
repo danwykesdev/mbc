@@ -59,7 +59,7 @@
 
     var removedItems = [];
     var removedCount = 0;
-    var facetCounts = Array.from(scope.querySelectorAll('.facet [fs-list-element="facet-count"]'));
+    var facetCounts = Array.from(scope.querySelectorAll('[fs-list-element="facet-count"]'));
 
     facetCounts.forEach(function (countNode) {
       var countText = countNode && (countNode.textContent != null ? countNode.textContent : countNode.innerText);
