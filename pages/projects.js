@@ -6,21 +6,23 @@
 
   // Filter item animation helpers (projects-specific)
   function setPaneFiltersInactive(pane) {
-    var items = pane.querySelectorAll('.filters__item');
+    var items = getProjectsFilterItems(pane);
     if (!items.length) return;
     gsap.killTweensOf(items);
     gsap.set(items, { autoAlpha: 0, x: -14 });
   }
 
   function showPaneFiltersImmediately(pane) {
-    var items = pane.querySelectorAll('.filters__item');
+    var items = getProjectsFilterItems(pane);
     if (!items.length) return;
     gsap.killTweensOf(items);
     gsap.set(items, { autoAlpha: 1, x: 0, clearProps: 'transform,opacity,visibility' });
   }
 
   function animatePaneFilters(pane) {
-    var items = pane.querySelectorAll('.filters__item');
+    pruneEmptyFacetFilters(pane);
+
+    var items = getProjectsFilterItems(pane);
     if (!items.length) return;
 
     gsap.killTweensOf(items);
@@ -40,6 +42,61 @@
 
   function isNativeFormControl(el) {
     return !!(el && (el.closest && el.closest('input, select, textarea, button, label')));
+  }
+
+  function getProjectsFilterItems(scope) {
+    if (!scope || typeof scope.querySelectorAll !== 'function') {
+      return [];
+    }
+
+    return scope.querySelectorAll('.filters__item, .filter__item');
+  }
+
+  function pruneEmptyFacetFilters(scope) {
+    if (!scope || typeof scope.querySelectorAll !== 'function') {
+      return 0;
+    }
+
+    var removedItems = [];
+    var removedCount = 0;
+    var facetCounts = Array.from(scope.querySelectorAll('.facet [fs-list-element="facet-count"]'));
+
+    facetCounts.forEach(function (countNode) {
+      var countText = countNode && (countNode.textContent != null ? countNode.textContent : countNode.innerText);
+      var count = parseInt(String(countText || '').replace(/[^\d-]/g, ''), 10);
+
+      if (isNaN(count) || count > 0) {
+        return;
+      }
+
+      var facet = countNode.closest ? countNode.closest('.facet') : null;
+      var filterItem = facet && facet.closest ? facet.closest('.filter__item, .filters__item') : null;
+
+      if (!filterItem && facet && facet.parentElement && facet.parentElement.parentElement) {
+        var fallbackItem = facet.parentElement.parentElement;
+
+        if (
+          fallbackItem &&
+          fallbackItem.classList &&
+          (fallbackItem.classList.contains('filter__item') || fallbackItem.classList.contains('filters__item'))
+        ) {
+          filterItem = fallbackItem;
+        }
+      }
+
+      if (!filterItem || removedItems.indexOf(filterItem) !== -1) {
+        return;
+      }
+
+      removedItems.push(filterItem);
+
+      if (filterItem.parentNode) {
+        filterItem.parentNode.removeChild(filterItem);
+        removedCount += 1;
+      }
+    });
+
+    return removedCount;
   }
 
   function findProjectsFilterInput(scope) {
@@ -213,7 +270,7 @@
       listElements: '[fs-list-element]',
       filterElements: '[fs-filter-element]',
       filterInputs: 'input[fs-list-field], input[fs-list-value], select[fs-list-field], textarea[fs-list-field]',
-      filterItems: '.filters__item',
+      filterItems: '.filters__item, .filter__item',
       paginationNext: '[data-pagination-next], [fs-list-element="pagination-next"]',
       paginationPrev: '[data-pagination-prev], [fs-list-element="pagination-previous"]',
       customPaginationNext: '[data-pagination="next"]',
@@ -233,7 +290,7 @@
     listItems: '[fs-list-element="item"]',
     filterElements: '[fs-filter-element]',
     filterInputs: 'input[fs-list-field], input[fs-list-value], select[fs-list-field], textarea[fs-list-field]',
-    filters: '.filters__item',
+    filters: '.filters__item, .filter__item',
     paginationNext: '[data-pagination-next], [fs-list-element="pagination-next"]',
     paginationPrev: '[data-pagination-prev], [fs-list-element="pagination-previous"]',
     dynLists: '.w-dyn-list',
@@ -352,6 +409,7 @@
       }
 
       didInitialBindings = true;
+      pruneEmptyFacetFilters(container);
       applyProjectsCardBottomInset(container);
       bindHorizontalScroll('projects horizontalScroll.init ' + reason);
       bindStaggerHover('projects staggerHover.init ' + reason);
@@ -405,6 +463,8 @@
             MBC.features.finsweet.inspect(container, 'projects ' + reason);
           });
         }
+
+        pruneEmptyFacetFilters(container);
         logProjectsDiagnostics(container, reason);
         refreshProjectsBindings(reason);
       }).catch(function () { });
@@ -598,6 +658,8 @@
         await traceAsync('projects finsweet init', function () {
           return MBC.features.finsweet.init(container, { modules: finsweetModules, label: 'projects' });
         }).catch(function () { });
+
+        pruneEmptyFacetFilters(container);
 
         if (routeDebug) {
           routeDebug('projects finsweet after init', container, {

@@ -11,6 +11,7 @@ This is the page module for the Projects page. It handles Finsweet list/filter i
 - Normalizes the Projects DOM to one canonical `fs-list-element="list"` root before Finsweet init so duplicate list markers cannot trigger wrapper multiplication on SPA entry
 - Re-attaches the external filters form and filter scroll anchor to the `main` list instance before Finsweet initializes
 - Supports both live scroll-anchor contracts: `fs-list-element="scroll-anchor"` and `fs-list-element="scroll-anchor-filter"`
+- Removes any empty facet filter wrapper whose `.facet [fs-list-element="facet-count"]` value resolves to `0`
 - Uses the init-safe Finsweet load path on SPA entry so the list can finish its async load sequence before layout rebinds
 - Re-syncs layout-sensitive features after Finsweet list updates
 - Queues restart requests until the list module is confirmed ready on route enter
@@ -18,6 +19,7 @@ This is the page module for the Projects page. It handles Finsweet list/filter i
 
 ### Custom Filter Bridge
 - Bridges `.filters__item` wrappers to hidden Finsweet inputs
+- Also supports the `.filter__item` wrapper variant used by the facet UI
 - Supports radio and checkbox style filter controls inside the custom UI
 - Cancels wrapper clicks before triggering the hidden input so filter chips do not steal navigation or scroll position
 - Leaves filtering to Finsweet's native form listeners once the main list instance wiring is restored
@@ -29,6 +31,7 @@ This is the page module for the Projects page. It handles Finsweet list/filter i
 ### Filter Item Animation
 - Animate filter items in when tab becomes active
 - Hide filter items when tab is inactive
+- Prunes empty facet wrappers before animating the visible filter items
 - Staggered animation with GSAP
 - Uses MutationObserver to detect tab changes
 
@@ -76,6 +79,7 @@ Main mount function with Finsweet and tab handling.
 - `bindHorizontalScroll(label)` - initializes horizontal scroll with cleanup
 - `bindStaggerHover(label)` - initializes stagger hover with cleanup
 - `animatePaneFilters(pane)` - animates filter items in
+- `pruneEmptyFacetFilters(scope)` - removes zero-count facet wrappers before they can render
 - `setPaneFiltersInactive(pane)` - hides filter items
 - `showPaneFiltersImmediately(pane)` - shows filter items without animation
 - `findProjectsFilterInput(scope)` - finds Finsweet filter input
@@ -125,6 +129,8 @@ The page expects a `main` list instance for the filtered project grid and a stan
 If multiple `fs-list-element="list"` nodes are present in the Projects container, the page module picks the canonical list root with the strongest main-list signal and strips the `list` marker from the rest before Finsweet initializes.
 
 The page also supports both live scroll-anchor selector variants on staging and production deploys, so either `fs-list-element="scroll-anchor"` or `fs-list-element="scroll-anchor-filter"` can be used.
+
+Empty facet filters are pruned from the DOM before the Projects filter UI is refreshed, and the same cleanup runs again after list restarts and when tab panes activate.
 
 Projects waits for the Finsweet init path to settle before the first horizontal-scroll and ScrollTrigger refresh pass, which keeps the SPA entry contract aligned with the hard-load contract.
 
